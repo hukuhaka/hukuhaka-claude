@@ -1,0 +1,18 @@
+{
+  "name": "hukuhaka-plugin",
+  "owner": {
+    "name": "hukuhaka"
+  },
+  "metadata": {
+    "description": "Claude Code plugins for codebase analysis and documentation",
+    "version": "1.0.2"
+  },
+  "plugins": [
+    {
+      "name": "project-mapper",
+      "version": "1.0.2",
+      "source": "./project-mapper",
+      "description": "Codebase analysis and .claude/ documentation generation using semantic code search"
+    }
+  ]
+}

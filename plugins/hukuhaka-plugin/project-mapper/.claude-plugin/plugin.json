@@ -1,0 +1,15 @@
+{
+  "name": "project-mapper",
+  "version": "1.0.2",
+  "description": "Codebase analysis and .claude/ documentation generation using semantic code search",
+  "author": {
+    "name": "hukuhaka"
+  },
+  "keywords": [
+    "codebase",
+    "analysis",
+    "documentation",
+    "code-search",
+    "project-mapper"
+  ]
+}

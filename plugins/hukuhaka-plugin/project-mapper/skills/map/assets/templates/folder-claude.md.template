@@ -1,0 +1,16 @@
+# {{FOLDER_NAME}}
+
+{{DESCRIPTION}}
+
+## Files
+{{#FILES}}
+- [{{NAME}}]({{NAME}}): {{DESCRIPTION}}
+{{/FILES}}
+
+## See Also
+{{#PARENT}}
+- [../](../CLAUDE.md): Parent directory
+{{/PARENT}}
+{{#CHILDREN}}
+- [{{NAME}}/]({{NAME}}/CLAUDE.md): {{DESCRIPTION}}
+{{/CHILDREN}}
