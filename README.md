@@ -24,10 +24,11 @@ Codebase analysis and `.claude/` documentation generation using semantic code se
 |-------|-------------|
 | `/codex-coworker` | Collaborative problem-solving with OpenAI Codex |
 | `/bug-finder` | Find bug locations (identification only, no fixes) |
-| `/pdf` | PDF manipulation: extract, merge, create, fill forms |
 | `/summarize` | Execute commands with token-efficient summarized output |
-| `/skill-creator` | Step-by-step guide for creating new skills |
-| `/mcp-builder` | Build and test MCP servers |
+| `/skill-creator`* | Step-by-step guide for creating new skills |
+| `/mcp-builder`* | Build and test MCP servers |
+
+*From Anthropic (Apache 2.0)
 
 ### Standalone Agents
 
@@ -118,6 +119,20 @@ Requires HuggingFace token for model access:
 └── settings.json       # Plugin configuration
 ```
 
+## Resources
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code GitHub](https://github.com/anthropics/claude-code)
+
+## Credits
+
+The following skills are from [Anthropic's official Claude Code](https://github.com/anthropics/claude-code):
+
+| Skill | License |
+|-------|---------|
+| `/mcp-builder` | Apache 2.0 |
+| `/skill-creator` | Apache 2.0 |
+
 ## License
 
-MIT
+MIT (except for Apache 2.0 licensed Anthropic skills above)
