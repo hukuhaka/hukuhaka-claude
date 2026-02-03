@@ -217,10 +217,15 @@ fi
 echo "[*] Checking HuggingFace token..."
 
 HF_TOKEN_PATH="$HOME/.cache/huggingface/token"
+LOCAL_TOKEN_FILE="$SCRIPT_DIR/token.txt"
 
-if [ -f "$HF_TOKEN_PATH" ]; then
+# Check order: local token.txt > cached token > prompt
+if [ -f "$LOCAL_TOKEN_FILE" ]; then
+    source "$LOCAL_TOKEN_FILE"
+    echo "[+] HuggingFace token: Found (token.txt)"
+elif [ -f "$HF_TOKEN_PATH" ]; then
     HF_TOKEN=$(cat "$HF_TOKEN_PATH")
-    echo "[+] HuggingFace token: Found"
+    echo "[+] HuggingFace token: Found (cached)"
 else
     echo "[!] HuggingFace token: Not found"
     echo "    Get token at: https://huggingface.co/settings/tokens"
