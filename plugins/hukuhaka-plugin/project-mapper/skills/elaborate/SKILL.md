@@ -27,7 +27,6 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--dry-run` | false | Show JSON only, don't modify implementation.md |
 | `--model <m>` | opus | Override agent model |
 
 ## Output
@@ -45,7 +44,6 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 ### Step 1: Parse Input
 
 Extract requirement from input. Parse options:
-- `--dry-run`: Boolean flag
 - `--model`: Override model (default: opus)
 
 If no requirement provided, ask user for requirement.
@@ -106,11 +104,9 @@ Show the JSON result to user in formatted output:
 - {prerequisites}
 ```
 
-### Step 5: Confirm (unless --dry-run)
+### Step 5: Confirm
 
-If `--dry-run` flag is set, exit after displaying result.
-
-Otherwise, ask user:
+Ask user:
 
 ```
 AskUserQuestion: "Add these tasks to implementation.md?"
@@ -134,6 +130,12 @@ Options:
      ```
 4. Write updated implementation.md
 5. Confirm: "Added {n} tasks to implementation.md"
+
+### Step 7: STOP
+
+**This skill ends here. Do NOT start implementing.**
+
+Wait for user's next instruction.
 
 </workflow>
 

@@ -18,7 +18,6 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--dry-run` | false | Show JSON only, don't modify implementation.md |
 | `--model` | opus | Override agent model |
 
 ## Examples
@@ -32,9 +31,6 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 
 # Refactoring
 /project-mapper:elaborate Refactor test files to use fixtures
-
-# Dry run (preview only)
-/project-mapper:elaborate Add email verification --dry-run
 ```
 
 ## Output
