@@ -134,6 +134,10 @@ Run Codex with the appropriate command:
 codex exec --json "<prompt>" 2>&1
 ```
 
+**Capture from first response (for multi-iteration):**
+- Parse `thread.started` event from JSONL output → store `thread_id`
+- This enables conversation continuity across iterations
+
 **For review (v0.93+ native command):**
 ```bash
 codex review --uncommitted ["<custom_instructions>"]
@@ -145,8 +149,10 @@ codex review --commit <sha> ["<custom_instructions>"]
 
 **For ask/plan/solve/compare (using `codex exec --json`):**
 Parse JSONL output to extract:
+- `thread.started` → `thread_id` (save for resume in multi-iteration)
 - `item.completed` with `type: "agent_message"` → response text
 - `item.completed` with `type: "command_execution"` → executed commands
+- `turn.completed` → `usage` object (accumulate for statistics)
 
 **For review (using native `codex review`):**
 Output is plain text (NOT JSONL). Capture stdout directly without JSON parsing.
@@ -186,28 +192,30 @@ Output is plain text (NOT JSONL). Capture stdout directly without JSON parsing.
 3. Would a follow-up question materially improve the result?
 
 **If YES and iterations remaining:**
+- Use `codex exec resume --json "{thread_id}" "{follow_up_prompt}"` to maintain conversation context
+- Codex will have access to all previous conversation history
 - Formulate a focused follow-up prompt based on gaps identified
-- Include: original context + Codex's response + specific questions
-- Execute Codex again with refined prompt
 - Return to Step 4
+
+**Resume command (maintains context):**
+```bash
+codex exec resume --json "{thread_id}" "{follow_up_prompt}" 2>&1
+```
 
 **Follow-up prompt template:**
 ```
-Previous context: {original_question}
-
-Your previous response: {codex_response_summary}
-
 Follow-up questions to address gaps:
 {claude_identified_gaps}
 
 Please refine your answer addressing these specific points.
 ```
+Note: With resume, no need to repeat original context - Codex remembers the conversation.
 
 **Exit conditions (stop iterating):**
 - Max iterations reached
 - Claude analysis shows no significant gaps
 - Codex response fully addresses the question
-- Diminishing returns detected (similar responses)
+- Circular refinement detected (current response ≈ previous response in key points)
 
 ### Step 6: Synthesize Final Output
 Combine all iterations into final output:
@@ -233,6 +241,17 @@ Combine all iterations into final output:
 ```
 ## Result
 [Synthesized result only - no Codex response or Claude analysis sections]
+```
+
+**Usage Statistics (always shown unless --compact):**
+```
+## Usage Statistics
+| Metric | Value |
+|--------|-------|
+| Input Tokens | {sum of input_tokens from turn.completed events} |
+| Cached Tokens | {sum of cached_input_tokens} |
+| Output Tokens | {sum of output_tokens} |
+| Iterations | {count} |
 ```
 
 **For `compare` command:**
@@ -354,7 +373,20 @@ With `--compact`: Only "## Result" section (no intermediate analysis).
 - Use `--json` flag for parseable output (exec command)
 - Use `--context` to give Codex awareness of project architecture
 
+**Multi-iteration continuity:**
+- First call captures `thread_id` from `thread.started` event
+- Subsequent iterations use `codex exec resume` with stored `thread_id`
+- This allows Codex to remember context from previous iterations
+- Single iteration mode uses standard `codex exec` (no resume needed)
+
 **Iteration warnings:**
 - Each iteration = ~1 Codex API call + token cost
 - After 3 iterations, risk of "circular refinement" (same points repeated)
+- Claude compares current vs previous response; if 90%+ similar key points, stop early
 - If stuck in loop, Claude should synthesize with available info and note limitations
+
+**Usage statistics:**
+- Token usage extracted from `turn.completed` events in JSONL
+- Accumulated across all iterations
+- Helps users understand API cost per query
+- Hidden in `--compact` mode for cleaner output
