@@ -47,7 +47,7 @@ if [ -n "$SHELL_RC" ]; then
     if ! grep -q "huku-update" "$SHELL_RC" 2>/dev/null; then
         echo "" >> "$SHELL_RC"
         echo "# hukuhaka-claude" >> "$SHELL_RC"
-        echo "alias huku-update='cd $INSTALL_DIR && git pull && ./deploy.sh'" >> "$SHELL_RC"
+        echo "alias huku-update='cd $INSTALL_DIR && git checkout -- . && git pull && ./deploy.sh'" >> "$SHELL_RC"
         echo "[+] Added 'huku-update' alias to $SHELL_RC"
         echo "    Run: source $SHELL_RC"
     fi
