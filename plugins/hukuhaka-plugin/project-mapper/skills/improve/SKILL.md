@@ -66,7 +66,9 @@ If files don't exist, inform user to run `/project-mapper:map init` first.
 
 ### Step 3: Analyze
 
-Launch analyzer agent in improve mode:
+Launch **exactly ONE** Task call. The agent handles all categories internally.
+
+**CRITICAL:** The subagent_type MUST be `"project-mapper:analyzer"` (full qualified name). Do NOT use `"analyzer"` alone. Do NOT split into multiple parallel calls.
 
 ```
 Task(
@@ -87,6 +89,8 @@ Task(
   "
 )
 ```
+
+Wait for the single agent to return before proceeding to Step 4.
 
 ### Step 4: Display Findings
 
