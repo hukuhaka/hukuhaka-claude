@@ -18,6 +18,13 @@ Analyze codebase and return structured JSON. Do NOT generate prose.
 
 ```json
 {
+  "stats": {
+    "files_scanned": 42,
+    "queries_run": 5,
+    "todos_found": 12,
+    "entry_points_found": 3,
+    "components_found": 8
+  },
   "entry_points": [
     {"name": "main", "path": "src/cli.py:main", "description": "CLI entry"}
   ],
@@ -70,9 +77,18 @@ Group by directory for structure analysis.
 Grep: "TODO|FIXME" in source files
 ```
 
-### 4. Return JSON
+### 4. Collect Stats
 
-Return the structured JSON. Nothing else.
+Track counts during analysis:
+- `files_scanned`: Total files from Glob
+- `queries_run`: Number of semantic searches
+- `todos_found`: Count from TODO/FIXME grep
+- `entry_points_found`: Length of entry_points array
+- `components_found`: Length of components array
+
+### 5. Return JSON
+
+Return the structured JSON with `stats` as first field. Nothing else.
 
 ---
 
@@ -90,6 +106,9 @@ When prompt starts with `scatter:`, do lightweight folder analysis.
 
 ```json
 {
+  "stats": {
+    "files_in_folder": 5
+  },
   "folder_path": "src/utils",
   "folder_name": "utils",
   "purpose": "Utility functions",

@@ -14,17 +14,17 @@ Check all file/symbol references in `.claude/` docs. Return JSON results.
 
 ```json
 {
+  "stats": {
+    "links_checked": 15,
+    "valid": 12,
+    "broken": 3
+  },
   "valid": [
     {"path": "src/main.py", "source": "map.md:5"}
   ],
   "invalid": [
     {"path": "src/missing.py", "source": "map.md:12", "reason": "File not found"}
-  ],
-  "summary": {
-    "total": 15,
-    "valid": 12,
-    "invalid": 3
-  }
+  ]
 }
 ```
 
@@ -49,16 +49,18 @@ Regex: `\[([^\]]+)\]\(([^)]+)\)`
 
 ### 4. Report
 
-Group by source file:
+Output completion report:
 ```
-## Results
+✓ Validate complete
+  Links checked: {stats.links_checked}
+  Valid: {stats.valid}
+  Broken: {stats.broken}
+```
 
-### map.md
-- ✓ [main](src/cli.py:main)
-- ✗ [Model](src/old.py:Model) - File not found
-
-### design.md
-- ✓ [Factory](src/factory.py)
+If broken links exist, list them:
+```
+  Broken links:
+    - map.md:12 → src/old.py:Model (File not found)
 ```
 
 ## Skip

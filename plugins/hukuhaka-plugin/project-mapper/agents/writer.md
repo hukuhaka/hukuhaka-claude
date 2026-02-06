@@ -15,6 +15,13 @@ Generate `.claude/` documentation from analyzer JSON. Maintain clean, concise do
 Expects JSON from analyzer:
 ```json
 {
+  "stats": {
+    "files_scanned": 42,
+    "queries_run": 5,
+    "todos_found": 12,
+    "entry_points_found": 3,
+    "components_found": 8
+  },
   "entry_points": [...],
   "data_flow": "...",
   "components": [...],
@@ -41,6 +48,22 @@ Expects JSON from analyzer:
 - NO code blocks for data flow (use plain text with arrows)
 - NO ASCII art
 - Concise descriptions (1 sentence max)
+
+## Completion Report
+
+**IMPORTANT**: After writing all files, output a summary report:
+
+```
+✓ Sync complete
+  Files scanned: {stats.files_scanned}
+  Queries run: {stats.queries_run}
+  Docs generated: map.md, design.md, implementation.md, changelog.md
+  Entry points: {stats.entry_points_found}
+  Components: {stats.components_found}
+  TODOs found: {stats.todos_found}
+```
+
+This report is your final output after all file operations.
 
 ---
 
@@ -199,3 +222,12 @@ When prompt starts with `scatter:`, generate folder CLAUDE.md files.
 - File descriptions: 1 short sentence max
 - Never modify root `./CLAUDE.md`
 - Skip gitignore patterns
+
+### Scatter Report
+
+After writing folder CLAUDE.md:
+
+```
+✓ Scatter: {folder_path}/CLAUDE.md
+  Files documented: {stats.files_in_folder}
+```

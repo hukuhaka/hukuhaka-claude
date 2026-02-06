@@ -95,7 +95,28 @@ Note: `{model}` = user-specified or omit for agent default.
 2. Run `scatter`
 3. Run `validate`
 
-Report all results at end.
+**Final Report:**
+```
+✓ Full sync complete
+  ─────────────────────────────────
+  Phase 1 (sync)
+    Files scanned: 42
+    Queries run: 5
+    Docs generated: 4 (map.md, design.md, implementation.md, changelog.md)
+    Entry points: 3
+    Components: 8
+    TODOs: 12
+
+  Phase 2 (scatter)
+    Folders processed: 6
+    CLAUDE.md created: 6
+
+  Phase 3 (validate)
+    Links checked: 23
+    Valid: 23
+    Broken: 0
+  ─────────────────────────────────
+```
 
 ### scatter [path]
 
