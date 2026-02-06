@@ -24,6 +24,7 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "[*] Updating existing installation..."
     cd "$INSTALL_DIR"
+    git checkout -- . 2>/dev/null || true
     git pull --ff-only
 else
     echo "[*] Cloning repository..."
@@ -43,14 +44,24 @@ elif [ -f "$HOME/.bashrc" ]; then
     SHELL_RC="$HOME/.bashrc"
 fi
 
+ALIAS_LINE="alias huku-update='bash $INSTALL_DIR/update.sh'"
 if [ -n "$SHELL_RC" ]; then
-    if ! grep -q "huku-update" "$SHELL_RC" 2>/dev/null; then
+    if grep -q "huku-update" "$SHELL_RC" 2>/dev/null; then
+        # Replace existing alias (macOS/Linux sed compatible)
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "/alias huku-update=/c\\
+$ALIAS_LINE" "$SHELL_RC"
+        else
+            sed -i "/alias huku-update=/c\\$ALIAS_LINE" "$SHELL_RC"
+        fi
+        echo "[+] Updated 'huku-update' alias in $SHELL_RC"
+    else
         echo "" >> "$SHELL_RC"
         echo "# hukuhaka-claude" >> "$SHELL_RC"
-        echo "alias huku-update='cd $INSTALL_DIR && git checkout -- . && git pull && ./deploy.sh'" >> "$SHELL_RC"
+        echo "$ALIAS_LINE" >> "$SHELL_RC"
         echo "[+] Added 'huku-update' alias to $SHELL_RC"
-        echo "    Run: source $SHELL_RC"
     fi
+    echo "    Run: source $SHELL_RC"
 fi
 
 echo ""

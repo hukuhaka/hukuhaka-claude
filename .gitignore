@@ -2,5 +2,6 @@
 .claude
 token.txt
 official-docs/
+tests/
 
 **/.DS_Store

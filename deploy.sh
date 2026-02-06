@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+cleanup_on_error() {
+    echo ""
+    echo "[!] Deployment failed. Your previous installation should still work."
+    echo "    To retry: ./deploy.sh"
+    echo "    To clean install: ./deploy.sh --clean --yes"
+}
+trap cleanup_on_error ERR
+
 # ----------------------------------------
 # Parse command line options
 # ----------------------------------------
@@ -445,25 +453,6 @@ if [ -d "$MARKETPLACE_SOURCE" ]; then
     fi
     echo "[+] Marketplace copied to: $MARKETPLACE_TARGET"
 
-    # Sync marketplace.json version from plugin.json (target only, not source)
-    TARGET_MARKETPLACE_JSON="$MARKETPLACE_TARGET/.claude-plugin/marketplace.json"
-    TARGET_PLUGIN_JSON="$MARKETPLACE_TARGET/$PLUGIN_NAME/.claude-plugin/plugin.json"
-    if [ -f "$TARGET_MARKETPLACE_JSON" ] && [ -f "$TARGET_PLUGIN_JSON" ] && [ -n "${PLUGIN_VERSION:-}" ] && [ "$PLUGIN_VERSION" != "unknown" ]; then
-        if command -v jq &> /dev/null; then
-            jq --arg ver "$PLUGIN_VERSION" '.metadata.version = $ver | .plugins[0].version = $ver' \
-                "$TARGET_MARKETPLACE_JSON" > "$TARGET_MARKETPLACE_JSON.tmp" && mv "$TARGET_MARKETPLACE_JSON.tmp" "$TARGET_MARKETPLACE_JSON"
-        elif command -v python3 &> /dev/null; then
-            python3 -c "
-import json
-with open('$TARGET_MARKETPLACE_JSON', 'r') as f: data = json.load(f)
-data['metadata']['version'] = '$PLUGIN_VERSION'
-data['plugins'][0]['version'] = '$PLUGIN_VERSION'
-with open('$TARGET_MARKETPLACE_JSON', 'w') as f: json.dump(data, f, indent=2)
-"
-        fi
-        echo "[+] Synced marketplace.json version to $PLUGIN_VERSION"
-    fi
-
     # Update settings.json with directory marketplace
     echo "[*] Updating settings.json..."
 
@@ -578,14 +567,36 @@ elif [ -f "$HOME/.bashrc" ]; then
 fi
 
 if [ -n "$SHELL_RC" ]; then
-    if grep -q "# claude-base:alias" "$SHELL_RC"; then
-        # macOS sed requires '' after -i, Linux sed doesn't accept it
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' '/# claude-base:alias/{N;d;}' "$SHELL_RC" 2>/dev/null || true
-        else
-            sed -i '/# claude-base:alias/{N;d;}' "$SHELL_RC" 2>/dev/null || true
+    if [ "$DRY_RUN" = true ]; then
+        if grep -q "# claude-base:alias" "$SHELL_RC" 2>/dev/null; then
+            echo "[DRY-RUN] Would remove old claude-base alias"
         fi
-        echo "[+] Old alias removed"
+        if grep -q "alias huku-update=" "$SHELL_RC" 2>/dev/null && ! grep -q "update.sh" "$SHELL_RC" 2>/dev/null; then
+            echo "[DRY-RUN] Would migrate huku-update alias to update.sh"
+        fi
+    else
+        if grep -q "# claude-base:alias" "$SHELL_RC"; then
+            # macOS sed requires '' after -i, Linux sed doesn't accept it
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' '/# claude-base:alias/{N;d;}' "$SHELL_RC" 2>/dev/null || true
+            else
+                sed -i '/# claude-base:alias/{N;d;}' "$SHELL_RC" 2>/dev/null || true
+            fi
+            echo "[+] Old claude-base alias removed"
+        fi
+
+        # Migrate old inline alias to update.sh
+        INSTALL_DIR="$HOME/.hukuhaka-claude"
+        ALIAS_LINE="alias huku-update='bash $INSTALL_DIR/update.sh'"
+        if grep -q "alias huku-update=" "$SHELL_RC" 2>/dev/null && ! grep -q "update.sh" "$SHELL_RC" 2>/dev/null; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "/alias huku-update=/c\\
+$ALIAS_LINE" "$SHELL_RC"
+            else
+                sed -i "/alias huku-update=/c\\$ALIAS_LINE" "$SHELL_RC"
+            fi
+            echo "[+] Migrated huku-update alias to update.sh"
+        fi
     fi
 fi
 
