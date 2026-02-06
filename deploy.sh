@@ -400,49 +400,20 @@ else
 fi
 
 # ----------------------------------------
-# 5. Update plugin version from VERSION file
+# 5. Read plugin version from plugin.json (no source modification)
 # ----------------------------------------
-VERSION_FILE="$SCRIPT_DIR/VERSION"
-if [ -f "$VERSION_FILE" ]; then
-    PLUGIN_VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+PLUGIN_JSON="$MARKETPLACE_SOURCE/$PLUGIN_NAME/.claude-plugin/plugin.json"
+if [ -f "$PLUGIN_JSON" ]; then
+    if command -v jq &> /dev/null; then
+        PLUGIN_VERSION=$(jq -r '.version' "$PLUGIN_JSON")
+    elif command -v python3 &> /dev/null; then
+        PLUGIN_VERSION=$(python3 -c "import json; print(json.load(open('$PLUGIN_JSON'))['version'])")
+    else
+        PLUGIN_VERSION="unknown"
+    fi
     echo "[*] Plugin version: $PLUGIN_VERSION"
-
-    # Update marketplace.json
-    MARKETPLACE_JSON="$MARKETPLACE_SOURCE/.claude-plugin/marketplace.json"
-    if [ -f "$MARKETPLACE_JSON" ]; then
-        if command -v jq &> /dev/null; then
-            jq --arg ver "$PLUGIN_VERSION" '.metadata.version = $ver | .plugins[0].version = $ver' \
-                "$MARKETPLACE_JSON" > "$MARKETPLACE_JSON.tmp" && mv "$MARKETPLACE_JSON.tmp" "$MARKETPLACE_JSON"
-        elif command -v python3 &> /dev/null; then
-            python3 -c "
-import json
-with open('$MARKETPLACE_JSON', 'r') as f: data = json.load(f)
-data['metadata']['version'] = '$PLUGIN_VERSION'
-data['plugins'][0]['version'] = '$PLUGIN_VERSION'
-with open('$MARKETPLACE_JSON', 'w') as f: json.dump(data, f, indent=2)
-"
-        fi
-        echo "[+] Updated: marketplace.json"
-    fi
-
-    # Update plugin.json
-    PLUGIN_JSON="$MARKETPLACE_SOURCE/$PLUGIN_NAME/.claude-plugin/plugin.json"
-    if [ -f "$PLUGIN_JSON" ]; then
-        if command -v jq &> /dev/null; then
-            jq --arg ver "$PLUGIN_VERSION" '.version = $ver' \
-                "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp" && mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
-        elif command -v python3 &> /dev/null; then
-            python3 -c "
-import json
-with open('$PLUGIN_JSON', 'r') as f: data = json.load(f)
-data['version'] = '$PLUGIN_VERSION'
-with open('$PLUGIN_JSON', 'w') as f: json.dump(data, f, indent=2)
-"
-        fi
-        echo "[+] Updated: plugin.json"
-    fi
 else
-    echo "[~] No VERSION file found, using existing versions"
+    echo "[~] No plugin.json found"
 fi
 
 # ----------------------------------------
@@ -473,6 +444,25 @@ if [ -d "$MARKETPLACE_SOURCE" ]; then
         fi
     fi
     echo "[+] Marketplace copied to: $MARKETPLACE_TARGET"
+
+    # Sync marketplace.json version from plugin.json (target only, not source)
+    TARGET_MARKETPLACE_JSON="$MARKETPLACE_TARGET/.claude-plugin/marketplace.json"
+    TARGET_PLUGIN_JSON="$MARKETPLACE_TARGET/$PLUGIN_NAME/.claude-plugin/plugin.json"
+    if [ -f "$TARGET_MARKETPLACE_JSON" ] && [ -f "$TARGET_PLUGIN_JSON" ] && [ -n "${PLUGIN_VERSION:-}" ] && [ "$PLUGIN_VERSION" != "unknown" ]; then
+        if command -v jq &> /dev/null; then
+            jq --arg ver "$PLUGIN_VERSION" '.metadata.version = $ver | .plugins[0].version = $ver' \
+                "$TARGET_MARKETPLACE_JSON" > "$TARGET_MARKETPLACE_JSON.tmp" && mv "$TARGET_MARKETPLACE_JSON.tmp" "$TARGET_MARKETPLACE_JSON"
+        elif command -v python3 &> /dev/null; then
+            python3 -c "
+import json
+with open('$TARGET_MARKETPLACE_JSON', 'r') as f: data = json.load(f)
+data['metadata']['version'] = '$PLUGIN_VERSION'
+data['plugins'][0]['version'] = '$PLUGIN_VERSION'
+with open('$TARGET_MARKETPLACE_JSON', 'w') as f: json.dump(data, f, indent=2)
+"
+        fi
+        echo "[+] Synced marketplace.json version to $PLUGIN_VERSION"
+    fi
 
     # Update settings.json with directory marketplace
     echo "[*] Updating settings.json..."
