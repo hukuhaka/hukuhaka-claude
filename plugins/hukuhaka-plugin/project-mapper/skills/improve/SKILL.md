@@ -21,15 +21,17 @@ Analyze codebase for improvement opportunities and selectively add findings to `
 /project-mapper:improve
 /project-mapper:improve large-files
 /project-mapper:improve dead-code --threshold 300
-/project-mapper:improve duplicates --model sonnet
+/project-mapper:improve --model opus
+/project-mapper:improve --single
 ```
 
 ## Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--model <m>` | opus | Override agent model |
+| `--model <m>` | sonnet | Override agent model |
 | `--threshold <n>` | 500 | Line count threshold for large files |
+| `--single` | false | Use single agent instead of 3-group parallel |
 
 ## Focus Areas
 
@@ -53,10 +55,16 @@ Analyze codebase for improvement opportunities and selectively add findings to `
 
 Extract focus area and options from input:
 - Focus area: one of `large-files`, `dead-code`, `duplicates`, `refactoring`, `health`, or omit for all
-- `--model`: Override model (default: opus)
+- `--model`: Override model (default: sonnet)
 - `--threshold`: Line count threshold (default: 500)
+- `--single`: Force single-agent mode
 
 If focus area is provided but invalid, show available areas and ask user to pick one.
+
+**Mode selection:**
+- If `--single` is set → single agent mode (Step 3A)
+- If a specific focus area is given → single agent mode (Step 3A)
+- Otherwise (all categories) → 3-group parallel mode (Step 3B)
 
 ### Step 2: Context Loading
 
@@ -64,11 +72,13 @@ Read `.claude/map.md` and `.claude/design.md` for project context.
 
 If files don't exist, inform user to run `/project-mapper:map init` first.
 
-### Step 3: Analyze
+### Step 3A: Single Agent Analysis
 
-Launch **exactly ONE** Task call. The agent handles all categories internally.
+Used when `--single` or a specific focus area is given.
 
-**CRITICAL:** The subagent_type MUST be `"project-mapper:analyzer"` (full qualified name). Do NOT use `"analyzer"` alone. Do NOT split into multiple parallel calls.
+Launch **exactly ONE** Task call.
+
+**CRITICAL:** The subagent_type MUST be `"project-mapper:analyzer"` (full qualified name). Do NOT use `"analyzer"` alone.
 
 ```
 Task(
@@ -90,7 +100,136 @@ Task(
 )
 ```
 
-Wait for the single agent to return before proceeding to Step 4.
+Wait for the agent to return before proceeding to Step 4.
+
+### Step 3B: 3-Group Parallel Analysis (Default)
+
+Launch **exactly THREE** Task calls in parallel. Each agent gets a focused prompt with specific analysis strategies.
+
+**CRITICAL:** The subagent_type MUST be `"project-mapper:analyzer"` (full qualified name) for all three.
+
+**Group 1: Redundancy** (dead-code + duplicates)
+```
+Task(
+  subagent_type: "project-mapper:analyzer",
+  model: {model},
+  prompt: "
+    improve:
+    Focus: dead-code, duplicates
+    Threshold: {threshold}
+
+    Context from map.md:
+    {map.md contents}
+
+    Context from design.md:
+    {design.md contents}
+
+    ANALYSIS STRATEGY for dead-code + duplicates (analyze together for cross-category insight):
+
+    **Dead Code:**
+    1. Use Grep to find all class/function definitions (def, class keywords)
+    2. For each exported symbol, Grep for references across the entire project
+    3. Check: is it imported elsewhere? Called? Used as a base class?
+    4. Module-level check: are there entire files/directories that nothing imports from?
+    5. Look for: unused parameters, unreachable branches, commented-out code blocks
+
+    **Duplicates:**
+    1. Compare directories that look like copies of each other
+    2. Look for repeated code patterns: similar function bodies, copy-pasted logic
+    3. Check config/constant definitions repeated across files
+    4. Find similar utility functions that could be consolidated
+
+    **Cross-category:** When you find duplicated code, check if the original became dead after the copy was made. When you find dead code, check if it was superseded by a duplicate elsewhere.
+
+    Return JSON with findings.
+  "
+)
+```
+
+**Group 2: Structure** (large-files + refactoring)
+```
+Task(
+  subagent_type: "project-mapper:analyzer",
+  model: {model},
+  prompt: "
+    improve:
+    Focus: large-files, refactoring
+    Threshold: {threshold}
+
+    Context from map.md:
+    {map.md contents}
+
+    Context from design.md:
+    {design.md contents}
+
+    ANALYSIS STRATEGY for large-files + refactoring (analyze together):
+
+    **Large Files:**
+    1. Check line counts of ALL source files
+    2. Report files with {threshold}+ lines. Include exact line count.
+    3. CRITICAL: Do NOT report files under {threshold} lines.
+
+    **Refactoring:**
+    1. Inside large files AND normal files, look for:
+       - Functions/methods longer than 50 lines
+       - Classes with too many methods (>10) or parameters (>10 in __init__)
+       - Deeply nested code (3+ levels of if/for/try)
+    2. Long functions inside large files are especially important
+
+    **Cross-category:** Large files often contain the longest functions. When you find a large file, dig into it to find specific refactoring targets.
+
+    Return JSON with findings.
+  "
+)
+```
+
+**Group 3: Quality** (health)
+```
+Task(
+  subagent_type: "project-mapper:analyzer",
+  model: {model},
+  prompt: "
+    improve:
+    Focus: health
+    Threshold: {threshold}
+
+    Context from map.md:
+    {map.md contents}
+
+    Context from design.md:
+    {design.md contents}
+
+    ANALYSIS STRATEGY for health (bugs, security, anti-patterns):
+
+    **Bugs:**
+    1. Look for variable name mismatches (defined as X, used as Y)
+    2. Check for uninitialized variables in conditional branches
+    3. Look for FIXME/TODO/BUG comments - they often mark known issues
+    4. Check division operations for zero-division risk
+
+    **Security:**
+    1. torch.load() without weights_only=True
+    2. eval() or exec() calls on external input
+    3. os.system() with string formatting (shell injection)
+    4. yaml.full_load() instead of yaml.safe_load()
+    5. Unsafe pickle deserialization
+    6. Missing input validation
+
+    **Anti-patterns:**
+    1. Bare except clauses (swallowing all exceptions)
+    2. Mutable default arguments
+    3. Magic numbers without named constants
+    4. print() instead of logging
+    5. sys.path.insert hacks
+
+    Read actual source files to verify each finding. Don't guess.
+
+    Return JSON with findings.
+  "
+)
+```
+
+Wait for **all three** agents to return. Merge their findings into a single list with sequential IDs before proceeding to Step 4.
 
 ### Step 4: Display Findings
 

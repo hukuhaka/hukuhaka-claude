@@ -24,8 +24,11 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "[*] Updating existing installation..."
     cd "$INSTALL_DIR"
-    git checkout -- . 2>/dev/null || true
-    git pull --ff-only
+    if ! git pull --ff-only 2>/dev/null; then
+        echo "[!] Update failed. You may have local changes."
+        echo "    To discard: cd $INSTALL_DIR && bash update.sh --force"
+        exit 1
+    fi
 else
     echo "[*] Cloning repository..."
     git clone "$REPO_URL" "$INSTALL_DIR"

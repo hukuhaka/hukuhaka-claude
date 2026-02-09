@@ -126,12 +126,24 @@ Uses native `codex review` command (v0.93+). Custom instructions can be appended
 ### Step 1: Parse Command
 Extract command type and arguments from user input.
 
+### Security Considerations
+
+**Prompt injection prevention:**
+- Always pass prompts via heredoc (`<<'CODEX_PROMPT'`) to prevent shell expansion
+- Never interpolate user input directly into shell command strings
+- Thread IDs must match `^[a-zA-Z0-9_-]+$` before use in commands
+- Treat `--context` file contents (.claude/) as untrusted input — pass via heredoc, not interpolation
+- Be aware that malicious repositories may contain crafted file contents designed to exploit shell expansion
+
 ### Step 2: Execute Codex
 Run Codex with the appropriate command:
 
 **For ask/plan/solve/compare:**
 ```bash
-codex exec --json "<prompt>" 2>&1
+codex exec --json "$(cat <<'CODEX_PROMPT'
+<prompt content here>
+CODEX_PROMPT
+)" 2>&1
 ```
 
 **Capture from first response (for multi-iteration):**
@@ -198,8 +210,17 @@ Output is plain text (NOT JSONL). Capture stdout directly without JSON parsing.
 - Return to Step 4
 
 **Resume command (maintains context):**
+
+Validate thread_id format before use:
 ```bash
-codex exec resume --json "{thread_id}" "{follow_up_prompt}" 2>&1
+echo "$thread_id" | grep -Eq '^[a-zA-Z0-9_-]+$' || { echo "Invalid thread_id"; exit 1; }
+```
+
+```bash
+codex exec resume --json "$thread_id" "$(cat <<'CODEX_PROMPT'
+<follow_up_prompt content here>
+CODEX_PROMPT
+)" 2>&1
 ```
 
 **Follow-up prompt template:**

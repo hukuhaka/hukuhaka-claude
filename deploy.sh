@@ -229,7 +229,7 @@ LOCAL_TOKEN_FILE="$SCRIPT_DIR/token.txt"
 
 # Check order: local token.txt > cached token > prompt
 if [ -f "$LOCAL_TOKEN_FILE" ]; then
-    source "$LOCAL_TOKEN_FILE"
+    HF_TOKEN=$(grep '^HF_TOKEN=' "$LOCAL_TOKEN_FILE" | head -n1 | sed 's/^HF_TOKEN="\{0,1\}\(.*\)"\{0,1\}$/\1/')
     echo "[+] HuggingFace token: Found (token.txt)"
 elif [ -f "$HF_TOKEN_PATH" ]; then
     HF_TOKEN=$(cat "$HF_TOKEN_PATH")
@@ -237,12 +237,18 @@ elif [ -f "$HF_TOKEN_PATH" ]; then
 else
     echo "[!] HuggingFace token: Not found"
     echo "    Get token at: https://huggingface.co/settings/tokens"
-    read -p "    Enter HuggingFace token: " HF_TOKEN
-    if [ -n "$HF_TOKEN" ]; then
-        mkdir -p "$(dirname "$HF_TOKEN_PATH")"
-        echo "$HF_TOKEN" > "$HF_TOKEN_PATH"
-        chmod 600 "$HF_TOKEN_PATH"
-        echo "[+] HuggingFace token: Saved"
+    if [ -t 0 ]; then
+        read -sp "    Enter HuggingFace token: " HF_TOKEN
+        echo ""
+        if [ -n "$HF_TOKEN" ]; then
+            mkdir -p "$(dirname "$HF_TOKEN_PATH")"
+            echo "$HF_TOKEN" > "$HF_TOKEN_PATH"
+            chmod 600 "$HF_TOKEN_PATH"
+            echo "[+] HuggingFace token: Saved"
+        fi
+    else
+        echo "[!] Non-interactive mode. Set HF_TOKEN env var or create token.txt"
+        echo "    Continuing without HuggingFace token..."
     fi
 fi
 
