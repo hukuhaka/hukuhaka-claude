@@ -32,11 +32,11 @@ Generate and maintain `.claude/` documentation.
 
 | Agent | Model | Role |
 |-------|-------|------|
-| analyzer | sonnet | Code analysis → JSON |
-| writer | sonnet | JSON → .claude/ docs |
-| validator | haiku | Link verification |
-| summarizer | haiku | Compress docs |
-| migrator | sonnet | Import existing docs |
+| project-mapper:analyzer | sonnet | Code analysis → JSON |
+| project-mapper:writer | sonnet | JSON → .claude/ docs |
+| project-mapper:validator | haiku | Link verification |
+| project-mapper:summarizer | haiku | Compress docs |
+| project-mapper:migrator | sonnet | Import existing docs |
 
 ---
 
@@ -81,8 +81,8 @@ No analysis, just scaffolding for manual editing.
 
 ```
 mcp__code-search__index_directory(path)
-Task(subagent_type: "analyzer", model: {model}, prompt: "Analyze {path}")
-Task(subagent_type: "writer", model: {model}, prompt: "Generate .claude/ from: {json}")
+Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "Analyze {path}")
+Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {json}")
 ```
 
 Note: `{model}` = user-specified or omit for agent default.
@@ -132,22 +132,22 @@ Generate `CLAUDE.md` in each subdirectory.
 
 ```
 For each subdir:
-  Task(subagent_type: "analyzer", model: {model}, prompt: "scatter: {folder}")
-  Task(subagent_type: "writer", model: {model} or "haiku", prompt: "scatter: {json}")
+  Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "scatter: {folder}")
+  Task(subagent_type: "project-mapper:writer", model: {model} or "haiku", prompt: "scatter: {json}")
 ```
 
 ### analyze [path]
 
 Analysis only, returns JSON:
 ```
-Task(subagent_type: "analyzer", model: {model}, prompt: "Analyze {path}")
+Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "Analyze {path}")
 ```
 
 ### validate
 
 Check all references in `.claude/`:
 ```
-Task(subagent_type: "validator", model: {model}, prompt: "Validate .claude/ links")
+Task(subagent_type: "project-mapper:validator", model: {model}, prompt: "Validate .claude/ links")
 ```
 
 ### diff
@@ -168,7 +168,7 @@ mcp__code-search__get_index_status()
 
 Trigger changelog cleanup:
 ```
-Task(subagent_type: "writer", model: {model}, prompt: "Prune changelog.md")
+Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Prune changelog.md")
 ```
 
 - Keep recent 10 entries
@@ -189,7 +189,7 @@ Report: count deleted, paths
 
 Compress `.claude/` for LLM context:
 ```
-Task(subagent_type: "summarizer", model: {model}, prompt: "Summarize .claude/")
+Task(subagent_type: "project-mapper:summarizer", model: {model}, prompt: "Summarize .claude/")
 ```
 
 Output: Single markdown block, <500 lines
@@ -198,8 +198,8 @@ Output: Single markdown block, <500 lines
 
 Import from existing documentation:
 ```
-Task(subagent_type: "migrator", model: {model}, prompt: "Import from existing docs")
-Task(subagent_type: "writer", model: {model}, prompt: "Generate .claude/ from: {migrator_json}")
+Task(subagent_type: "project-mapper:migrator", model: {model}, prompt: "Import from existing docs")
+Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {migrator_json}")
 ```
 
 Sources: README.md, docs/, ARCHITECTURE.md, etc.
