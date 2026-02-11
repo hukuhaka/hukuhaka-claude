@@ -1,8 +1,7 @@
 ---
 name: query
 description: >
-  Answer questions about the project using .claude/ docs and code search.
-  Natural language queries about architecture, patterns, and implementation.
+  Use when answering questions about project architecture, patterns, or implementation using .claude/ docs.
 ---
 
 # Query
@@ -24,9 +23,26 @@ Answer project questions using `.claude/` documentation and semantic code search
 /project-mapper:query Why do we use factory pattern here?
 ```
 
-## Workflow
+---
 
-### 1. Parse Question
+## Iron Law
+
+**You MUST NOT spawn Task agents.** Handle all analysis directly using Read, Grep, Glob, and Bash tools.
+
+---
+
+## Pre-flight
+
+**BEFORE any other action:**
+
+1. Read `.claude/design.md`, `.claude/map.md`, `.claude/implementation.md`
+2. If files are missing, note it but continue with available context
+
+---
+
+## The Process
+
+### Step 1: Parse Question
 
 Identify question type:
 
@@ -37,7 +53,7 @@ Identify question type:
 | Why | "why", "reason", "decision" | design.md Decisions |
 | What | "what is", "explain" | design.md + map.md |
 
-### 2. Search Strategy
+### Step 2: Search and Analyze
 
 **For "How" questions:**
 1. Search map.md for component/entry point
@@ -58,7 +74,7 @@ Identify question type:
 1. Search all .claude/ docs
 2. Summarize relevant sections
 
-### 3. Answer Format
+### Step 3: Format Answer
 
 ```markdown
 ## Answer
@@ -77,38 +93,27 @@ Identify question type:
 - {related topics user might want to explore}
 ```
 
+---
+
+## Common Mistakes
+
+| Mistake | Correction |
+|---------|------------|
+| Spawning Task agents | Handle ALL analysis directly — no delegation |
+| Skipping .claude/ doc loading | ALWAYS read design.md, map.md, implementation.md FIRST |
+| Answering without citing sources | ALWAYS link to files or docs |
+| Over-explaining beyond the question | Stay scoped — answer the question, suggest follow-ups |
+
+---
+
 ## Quality Rules
 
-1. **Always cite sources** - link to files or docs
-2. **Admit uncertainty** - "Based on docs..." or "Code suggests..."
-3. **Stay scoped** - answer the question, don't over-explain
-4. **Suggest follow-ups** - related questions user might have
+1. **Always cite sources** — link to files or docs
+2. **Admit uncertainty** — "Based on docs..." or "Code suggests..."
+3. **Stay scoped** — answer the question, don't over-explain
+4. **Suggest follow-ups** — related questions user might have
 
 ## MCP Tools
 
 - `mcp__code-search__search_code`: Semantic search for concepts
 - `mcp__code-search__find_similar_code`: Related implementations
-
-## Examples
-
-**Q: "How does the API handle errors?"**
-```markdown
-## Answer
-Errors are handled through a centralized ErrorHandler middleware that catches exceptions and formats them as JSON responses.
-
-### Details
-The middleware in `src/middleware/error.py` wraps all routes...
-
-### References
-- [ErrorHandler](src/middleware/error.py:ErrorHandler): Central error handling
-- design.md: "Centralized error handling for consistent API responses"
-```
-
-**Q: "Why do we use Redis for caching?"**
-```markdown
-## Answer
-Redis was chosen for its pub/sub capability needed for real-time features, per ADR-003.
-
-### References
-- design.md Decision: "Redis over Memcached for pub/sub support"
-```

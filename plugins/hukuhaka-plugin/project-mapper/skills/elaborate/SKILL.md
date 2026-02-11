@@ -1,8 +1,7 @@
 ---
 name: elaborate
 description: >
-  Elaborate requirements into detailed implementation plans.
-  Converts user requirements into .claude/implementation.md tasks.
+  Use when breaking down a requirement into concrete implementation tasks for .claude/implementation.md.
 ---
 
 # Elaborate
@@ -15,6 +14,12 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 - Identify affected files and architecture impact
 - Generate structured plans ready for implementation
 
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--model <m>` | opus | Override agent model |
+
 ## Usage
 
 ```
@@ -23,23 +28,42 @@ Convert requirements into detailed, actionable tasks for `.claude/implementation
 /project-mapper:elaborate Refactor test files to use fixtures
 ```
 
-## Options
+---
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--model <m>` | opus | Override agent model |
+## Iron Law
 
-## Output
+**YOU MUST DELEGATE.** You are an orchestrator, NOT a worker.
 
-1. Display JSON result:
-   - Tasks (title, description, acceptance criteria)
-   - Affected files
-   - Architecture impact
-   - Prerequisites
+You MUST spawn the elaborator agent via a Task call. You MUST NOT:
+- Analyze the requirement yourself
+- Validate feasibility yourself
+- Make judgments about applicability
+- Skip agent spawning for any reason
+- Perform the agent's work "because it seems simple"
 
-2. After confirmation, add to implementation.md Planned section
+Even if the requirement seems inapplicable to the project, the agent handles all analysis.
 
-<workflow>
+No exceptions. No shortcuts. No rationalizations.
+
+**Agent for this skill:**
+
+| Agent | Qualified Name | Role |
+|-------|---------------|------|
+| elaborator | `project-mapper:elaborator` | Requirement → tasks breakdown |
+
+---
+
+## Pre-flight
+
+**BEFORE any other action:**
+
+1. Read `.claude/map.md` and `.claude/design.md`
+2. If either is missing → inform user: "Run `/project-mapper:map init` first" and STOP
+3. Do NOT proceed without project context
+
+---
+
+## The Process
 
 ### Step 1: Parse Input
 
@@ -48,20 +72,16 @@ Extract requirement from input. Parse options:
 
 If no requirement provided, ask user for requirement.
 
-### Step 2: Context Loading
+### Step 2: Delegate to Elaborator
 
-Read `.claude/map.md` and `.claude/design.md` for project context.
+Launch **exactly ONE** Task call.
 
-If files don't exist, inform user to run `/project-mapper:map init` first.
-
-### Step 3: Elaborate
-
-Launch elaborator agent:
+**CRITICAL:** subagent_type MUST use fully qualified name `"project-mapper:elaborator"`.
 
 ```
 Task(
   subagent_type: "project-mapper:elaborator",
-  model: {model},
+  model: {model or "opus"},
   prompt: "
     Requirement: {requirement}
 
@@ -76,7 +96,9 @@ Task(
 )
 ```
 
-### Step 4: Display Result
+Wait for the agent to return before proceeding.
+
+### Step 3: Display Result
 
 Show the JSON result to user in formatted output:
 
@@ -104,19 +126,19 @@ Show the JSON result to user in formatted output:
 - {prerequisites}
 ```
 
-### Step 5: Confirm
+### Step 4: Confirm
 
 Ask user:
 
 ```
 AskUserQuestion: "Add these tasks to implementation.md?"
 Options:
-- Yes: Proceed to Step 6
+- Yes: Proceed to Step 5
 - No: Exit without changes
 - Edit: Allow user to modify, then re-confirm
 ```
 
-### Step 6: Merge to implementation.md
+### Step 5: Merge to implementation.md
 
 1. Read existing `.claude/implementation.md`
 2. Parse the `## Planned` section
@@ -131,66 +153,45 @@ Options:
 4. Write updated implementation.md
 5. Confirm: "Added {n} tasks to implementation.md"
 
-### Step 7: STOP
+### Step 6: STOP
 
-**This skill ends here. Do NOT start implementing.**
-
+**This skill ends here.** Do NOT start implementing.
 Wait for user's next instruction.
 
-</workflow>
+---
 
-## Examples
+## Common Mistakes
 
-**Input:**
-```
-/project-mapper:elaborate Add OAuth2 authentication
-```
+| Mistake | Correction |
+|---------|------------|
+| Bare agent name `"elaborator"` | Fully qualified `"project-mapper:elaborator"` |
+| Analyzing requirement yourself | ALWAYS spawn agent, even for "simple" requirements |
+| Judging requirement as inapplicable | Let agent decide — it has full code context |
+| Skipping .claude/ pre-loading | ALWAYS Read map.md and design.md FIRST |
+| Starting implementation after elaboration | STOP after displaying results and merging |
+| Retrying denied permissions 5+ times | After 2 failures, inform user and ask |
+| Output without agent result | Output MUST be based on agent's returned data |
 
-**Output:**
-```json
-{
-  "requirement": "Add OAuth2 authentication",
-  "type": "feature",
-  "tasks": [
-    {
-      "id": 1,
-      "title": "Add OAuth2 provider configuration",
-      "description": "Create config module for OAuth2 providers (Google, GitHub)",
-      "acceptance_criteria": [
-        "Config supports multiple providers",
-        "Secrets read from environment"
-      ],
-      "files_affected": ["src/config/oauth.py"]
-    },
-    {
-      "id": 2,
-      "title": "Implement OAuth2 callback handler",
-      "description": "Handle OAuth2 redirect and token exchange",
-      "acceptance_criteria": [
-        "Token exchange works for all providers",
-        "User session created on success"
-      ],
-      "files_affected": ["src/auth/oauth.py", "src/routes/auth.py"]
-    }
-  ],
-  "architecture_impact": {
-    "decisions_affected": ["Authentication strategy"],
-    "new_patterns": ["OAuth2 flow"],
-    "scope": "medium"
-  },
-  "prerequisites": ["Environment variables for OAuth secrets"]
-}
-```
+---
 
-**After confirmation, added to implementation.md:**
-```markdown
-## Planned
+## Red Flags
 
-- **Add OAuth2 provider configuration**: Create config module for OAuth2 providers
-  - Files: src/config/oauth.py
-  - Criteria: Config supports multiple providers, Secrets read from environment
+If you find yourself doing any of these, STOP and re-read the Iron Law:
 
-- **Implement OAuth2 callback handler**: Handle OAuth2 redirect and token exchange
-  - Files: src/auth/oauth.py, src/routes/auth.py
-  - Criteria: Token exchange works, User session created on success
-```
+- Using Read/Grep/Glob to analyze code instead of spawning a Task
+- Using bare agent names without `project-mapper:` prefix
+- Skipping pre-flight .claude/ doc loading
+- Continuing after pre-flight failure
+- Writing code or starting implementation after displaying results
+- Deciding a requirement is "not applicable" without agent analysis
+
+---
+
+## Related Skills
+
+- `project-mapper:improve` - Discover improvement opportunities
+- `project-mapper:map` - Generate project documentation
+
+## MCP Tools
+
+- `mcp__code-search__search_code`: Used by agent for finding relevant code

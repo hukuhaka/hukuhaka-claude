@@ -1,8 +1,7 @@
 ---
 name: flow-tracer
 description: >
-  Trace code flow, call chains, and data flow through the codebase.
-  Visualize function relationships and understand how features work.
+  Use when understanding execution paths, function call chains, or data flow through features.
 ---
 
 # Flow Tracer
@@ -15,14 +14,6 @@ Trace code flow and call chains with multiple output formats.
 - "What functions does authenticate() call?"
 - "Where does this variable get used?"
 - Visualize call chains as text or Mermaid diagrams
-
-## Usage
-
-```
-/project-mapper:flow-tracer trace [feature]
-/project-mapper:flow-tracer chain [file:func]
-/project-mapper:flow-tracer data [variable]
-```
 
 ## Commands
 
@@ -39,153 +30,137 @@ Trace code flow and call chains with multiple output formats.
 | `--format` | text | text / detailed / mermaid |
 | `--depth` | 3 | Trace depth (1-5) |
 | `--direction` | down | down / up / both |
+| `--model <m>` | (agent default) | Override agent model |
 
-## Examples
+## Usage
 
-```bash
-# Trace login feature flow
+```
 /project-mapper:flow-tracer trace login
-
-# Function call chain with depth 2
 /project-mapper:flow-tracer chain src/auth.ts:authenticate --depth 2
-
-# Mermaid diagram output
 /project-mapper:flow-tracer trace auth --format mermaid
-
-# Who calls this function (reverse trace)
 /project-mapper:flow-tracer chain src/db.ts:findUser --direction up
-
-# Track a variable
 /project-mapper:flow-tracer data userId
 ```
 
-## Workflow
+---
 
-### 1. Parse Command
+## Iron Law
+
+**YOU MUST DELEGATE.** You are an orchestrator, NOT a worker.
+
+You MUST spawn the required agent via a Task call. You MUST NOT:
+- Analyze code yourself
+- Search for call chains yourself
+- Skip agent spawning for any reason
+- Perform the agent's work "because it seems simple"
+- Pre-validate whether the target exists before spawning
+- Use Grep/Read/Glob to check if a feature or function exists
+
+**ALWAYS spawn the agent.** Even if the target seems nonexistent, let the agent search and report back.
+
+**Agent for this skill:**
+
+| Agent | Qualified Name | Role |
+|-------|---------------|------|
+| flow-tracer | `project-mapper:flow-tracer` | Trace code flow and call chains |
+
+---
+
+## Pre-flight
+
+**Your FIRST action MUST be:**
+
+1. Read `.claude/map.md` and `.claude/design.md` — do this IMMEDIATELY, before parsing input
+2. If either is missing → inform user: "Run `/project-mapper:map init` first" and STOP
+3. Do NOT proceed without project context
+
+---
+
+## The Process
+
+### Step 1: Parse Input
 
 Extract:
 - Command type (trace/chain/data)
 - Target (feature name, file:func, variable)
-- Options (format, depth, direction)
+- Options (format, depth, direction, model)
 
-### 2. Invoke Agent
+### Step 2: Invoke Agent
 
-Call flow-tracer agent with parameters:
+Launch **exactly ONE** Task call.
+
+**CRITICAL:** subagent_type MUST use fully qualified name `"project-mapper:flow-tracer"`.
+
 ```
-Task: flow-tracer agent
-Prompt: [command] [target] depth=[n] direction=[dir]
+Task(
+  subagent_type: "project-mapper:flow-tracer",
+  model: {model},
+  prompt: "[command] [target] depth=[n] direction=[dir] format=[fmt]
+
+  Context from map.md:
+  {map.md contents}
+
+  Context from design.md:
+  {design.md contents}
+  "
+)
 ```
 
-### 3. Format Output
+Note: `{model}` = user-specified via `--model` or omit for agent default.
+
+Wait for the agent to return before formatting output.
+
+### Step 3: Format Output
 
 Transform agent JSON based on `--format`:
 
-## Output Formats
-
-### text (default)
-
-Simple arrow chain:
+**text (default):** Simple arrow chain
 ```
 handleLogin → authenticate → findUser → verifyPassword
            → createSession → generateToken
 ```
 
-### detailed
+**detailed:** Step-by-step breakdown with file:line references, data flow tracking
 
-Step-by-step breakdown:
-```markdown
-## Flow: login
-
-### Step 1: api/handler.ts:handleLogin (line 10)
-- Receives: { email, password }
-- Calls: authenticate(email, password) at line 15
-
-### Step 2: services/auth.ts:authenticate (line 20)
-- Receives: email, password
-- Calls: findUser(email) at line 25
-- Calls: verifyPassword(user, password) at line 30
-- Returns: { user, token }
-
-### Step 3: db/users.ts:findUser (line 5)
-- Receives: email
-- Returns: User | null
-
-### Data Flow
-- email: handler.ts:10 → auth.ts:20 → users.ts:5
-- user: users.ts:8 → auth.ts:28 → handler.ts:18
-```
-
-### mermaid
-
-Flowchart diagram:
+**mermaid:** Flowchart diagram
 ```mermaid
 flowchart TD
     A[handleLogin] --> B[authenticate]
     B --> C[findUser]
     B --> D[verifyPassword]
-    A --> E[createSession]
-    E --> F[generateToken]
 ```
 
-## Format Conversion
+### Step 4: STOP
 
-### JSON to Text
+**This skill ends here.** Do NOT start implementing, fixing, or acting on results.
+Wait for user's next instruction.
 
-```python
-def to_text(chain):
-    lines = []
-    current = chain[0]["caller"]
-    callees = [c["callee"] for c in chain if c["caller"] == current]
-    lines.append(f"{current} → {' → '.join(callees)}")
-    # Continue for nested calls
-    return '\n'.join(lines)
-```
+---
 
-### JSON to Mermaid
+## Common Mistakes
 
-```python
-def to_mermaid(chain):
-    nodes = {}
-    edges = []
-    for c in chain:
-        caller_id = to_node_id(c["caller"])
-        callee_id = to_node_id(c["callee"])
-        nodes[caller_id] = c["caller"].split(":")[-1]
-        nodes[callee_id] = c["callee"].split(":")[-1]
-        edges.append(f"    {caller_id} --> {callee_id}")
+| Mistake | Correction |
+|---------|------------|
+| Bare agent name `"flow-tracer"` | Fully qualified `"project-mapper:flow-tracer"` |
+| Searching code with Grep/Read yourself | ALWAYS spawn agent, even for "simple" traces |
+| Pre-validating target before spawning | Let agent handle validation and error messages |
+| Skipping .claude/ pre-loading | ALWAYS Read map.md and design.md FIRST |
+| Retrying denied permissions 5+ times | After 2 failures, inform user and ask |
+| Output without agent result | Output MUST be based on agent's returned data |
 
-    header = "flowchart TD"
-    node_defs = [f"    {k}[{v}]" for k, v in nodes.items()]
-    return '\n'.join([header] + node_defs + edges)
-```
+---
 
-## Direction Examples
+## Red Flags
 
-### down (default)
-What does this function call?
-```
-/project-mapper:flow-tracer chain src/api.ts:handleRequest --direction down
+If you find yourself doing any of these, STOP and re-read the Iron Law:
 
-handleRequest → validateInput → processData → saveResult
-```
+- Using Read/Grep/Glob to analyze code instead of spawning a Task
+- Using bare agent names without `project-mapper:` prefix
+- Skipping pre-flight .claude/ doc loading
+- Continuing after pre-flight failure
+- Writing code or fixing issues after displaying results
 
-### up
-Who calls this function?
-```
-/project-mapper:flow-tracer chain src/db.ts:saveResult --direction up
-
-saveResult ← processData ← handleRequest ← router
-```
-
-### both
-Full context around function:
-```
-/project-mapper:flow-tracer chain src/auth.ts:validate --direction both
-
-Callers: login, register, middleware
-validate
-Callees: checkToken, refreshToken
-```
+---
 
 ## Error Handling
 
@@ -207,14 +182,14 @@ handleLogin → authenticate → findUser → [depth limit reached]
 Use --depth 5 to trace deeper.
 ```
 
+---
+
+## Related Skills
+
+- `project-mapper:query` - Answer project questions
+- `project-mapper:elaborate` - Break down requirements
+
 ## MCP Tools
 
 - `mcp__code-search__search_code`: Find entry points
 - Agent uses: Read, Grep, Glob for chain tracing
-
-## Quality Rules
-
-1. **Validate target** - check file:func exists before tracing
-2. **Show progress** - for deep traces, indicate progress
-3. **Handle cycles** - mark recursive/circular calls
-4. **Cross-file links** - show full paths in detailed format

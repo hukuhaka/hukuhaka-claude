@@ -1,13 +1,19 @@
 ---
 name: map
 description: >
-  Codebase documentation generator. Commands:
-  init, sync, full-sync, scatter, analyze, validate, diff, status, prune, clean, summary, import
+  Use when generating, updating, or validating .claude/ project documentation.
 ---
 
 # Project Mapper
 
 Generate and maintain `.claude/` documentation.
+
+## Purpose
+
+- Generate project documentation from codebase analysis
+- Keep `.claude/` docs in sync with code changes
+- Validate documentation links and references
+- Import from existing documentation
 
 ## Commands
 
@@ -26,101 +32,140 @@ Generate and maintain `.claude/` documentation.
 | `summary` | Compress docs for LLM context | No |
 | `import` | Import from existing docs | Yes |
 
----
-
-## Agents
-
-| Agent | Model | Role |
-|-------|-------|------|
-| project-mapper:analyzer | sonnet | Code analysis → JSON |
-| project-mapper:writer | sonnet | JSON → .claude/ docs |
-| project-mapper:validator | haiku | Link verification |
-| project-mapper:summarizer | haiku | Compress docs |
-| project-mapper:migrator | sonnet | Import existing docs |
-
----
-
 ## Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--model <m>` | (per agent) | Override model for all agents: `haiku`, `sonnet`, `opus` |
 
-**Usage:**
-```
-/project-mapper:map sync . --model opus
-/project-mapper:map full-sync . --model sonnet
-```
+## Usage
 
-When `--model` specified, ALL spawned agents use that model instead of their defaults.
+```
+/project-mapper:map init
+/project-mapper:map sync .
+/project-mapper:map full-sync . --model opus
+/project-mapper:map scatter src/
+/project-mapper:map validate
+```
 
 ---
 
-## Command Details
+## Iron Law
+
+**YOU MUST DELEGATE.** You are an orchestrator, NOT a worker.
+
+For commands that require agents (sync, full-sync, scatter, analyze, validate, prune, summary, import), you MUST spawn the required agent(s) via Task calls. You MUST NOT:
+- Analyze code yourself
+- Generate documentation yourself
+- Skip agent spawning for any reason
+- Perform the agent's work "because it seems simple"
+
+No exceptions. No shortcuts. No rationalizations.
+
+**Exception:** `init`, `status`, `diff`, `clean` do NOT require agents — handle these directly.
+
+**Agents for this skill:**
+
+| Agent | Qualified Name | Role |
+|-------|---------------|------|
+| analyzer | `project-mapper:analyzer` | Code analysis → JSON |
+| writer | `project-mapper:writer` | JSON → .claude/ docs |
+| validator | `project-mapper:validator` | Link verification |
+| summarizer | `project-mapper:summarizer` | Compress docs |
+| migrator | `project-mapper:migrator` | Import existing docs |
+
+**CRITICAL:** All `subagent_type` values MUST use fully qualified names with `project-mapper:` prefix.
+Do NOT use bare names like `"analyzer"` — always use `"project-mapper:analyzer"`.
+
+---
+
+## Pre-flight
+
+**BEFORE any agent-spawning command:**
+
+1. Read `.claude/map.md` and `.claude/design.md`
+2. If both are missing AND command is NOT `init`, `sync`, `full-sync`, or `import` → inform user: "Run `/project-mapper:map init` first" and STOP
+3. For `init`, `sync`, `full-sync`, `import`: proceed even without existing docs (they will be created)
+
+---
+
+## The Process
 
 ### init
 
-Create empty `.claude/` folder with templates:
+Create all 4 files unconditionally:
 ```
 .claude/
-├── map.md            # Empty template
-├── design.md         # Empty template
-├── implementation.md # With Planned/In Progress sections
-└── changelog.md      # Empty Recent/Archive
+├── map.md
+├── design.md
+├── implementation.md
+└── changelog.md
 ```
 
-No analysis, just scaffolding for manual editing.
+If files already exist, overwrite with fresh templates.
+Do NOT skip initialization because files exist.
+No analysis, no agents — just scaffolding.
 
 ### sync [path]
 
 **Full pipeline: index → analyze → write**
 
-1. Refresh code search index
-2. Spawn analyzer
-3. Spawn writer with results
+**NON-NEGOTIABLE PIPELINE:** You MUST execute all 3 steps. Do NOT skip agents or write files directly.
 
+**Step 1:** Call mcp__code-search__index_directory and WAIT for completion.
 ```
 mcp__code-search__index_directory(path)
-Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "Analyze {path}")
-Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {json}")
 ```
 
-Note: `{model}` = user-specified or omit for agent default.
+**Step 2:** ONLY AFTER indexing completes, spawn analyzer and WAIT for its JSON result.
+```
+Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "Analyze {path}")
+```
+
+**Step 3:** ONLY AFTER analyzer completes, spawn writer with analyzer's output.
+```
+Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {analyzer JSON result}")
+```
+
+If any step fails, explain the failure. Do NOT attempt workarounds or write files directly.
 
 ### full-sync [path]
 
-**One-stop complete documentation:**
+**One-stop complete documentation — 3 sequential phases.**
 
-1. Run `sync`
-2. Run `scatter`
-3. Run `validate`
+**WARNING:** Each phase MUST complete before the next begins. Do NOT run phases in parallel.
+
+**Phase 1 (sync):** index → analyzer → writer (sequential, wait between each)
+Run the full `sync` pipeline above. WAIT for all 3 sync steps to complete.
+
+**Phase 2 (scatter):** ONLY AFTER Phase 1 completes.
+Run `scatter` on the path. WAIT for completion.
+
+**Phase 3 (validate):** ONLY AFTER Phase 2 completes.
+Run `validate`. WAIT for completion.
 
 **Final Report:**
 ```
 ✓ Full sync complete
   ─────────────────────────────────
   Phase 1 (sync)
-    Files scanned: 42
-    Queries run: 5
-    Docs generated: 4 (map.md, design.md, implementation.md, changelog.md)
-    Entry points: 3
-    Components: 8
-    TODOs: 12
+    Files scanned: {n}
+    Docs generated: 4
 
   Phase 2 (scatter)
-    Folders processed: 6
-    CLAUDE.md created: 6
+    CLAUDE.md created: {n}
 
   Phase 3 (validate)
-    Links checked: 23
-    Valid: 23
-    Broken: 0
+    Links checked: {n}
+    Broken: {n}
   ─────────────────────────────────
 ```
 
 ### scatter [path]
 
 Generate `CLAUDE.md` in each subdirectory.
+
+**DELEGATION RULE:** You MUST spawn `project-mapper:analyzer` then `project-mapper:writer` for each subdirectory. Do NOT write CLAUDE.md files yourself.
 
 **Rules:**
 - Never touch root `./CLAUDE.md`
@@ -133,6 +178,7 @@ Generate `CLAUDE.md` in each subdirectory.
 ```
 For each subdir:
   Task(subagent_type: "project-mapper:analyzer", model: {model}, prompt: "scatter: {folder}")
+  → WAIT for result →
   Task(subagent_type: "project-mapper:writer", model: {model} or "haiku", prompt: "scatter: {json}")
 ```
 
@@ -159,7 +205,7 @@ Compare `.claude/` docs with current code:
 
 ### status
 
-Direct MCP call:
+Direct MCP call (no agent needed):
 ```
 mcp__code-search__get_index_status()
 ```
@@ -176,7 +222,7 @@ Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Prune chan
 
 ### clean
 
-Remove all scattered CLAUDE.md files:
+Remove all scattered CLAUDE.md files (no agent needed):
 
 ```
 Glob: **/CLAUDE.md (exclude root)
@@ -196,13 +242,47 @@ Output: Single markdown block, <500 lines
 
 ### import
 
-Import from existing documentation:
+Import from existing documentation (README.md, docs/, ARCHITECTURE.md, etc).
+
+**WARNING:** These steps are SEQUENTIAL — do NOT call both agents in the same message.
+
+**Step 1:** Spawn migrator and WAIT for its JSON result.
 ```
 Task(subagent_type: "project-mapper:migrator", model: {model}, prompt: "Import from existing docs")
-Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {migrator_json}")
 ```
 
-Sources: README.md, docs/, ARCHITECTURE.md, etc.
+**Step 2:** ONLY AFTER migrator completes, spawn writer with migrator's output.
+```
+Task(subagent_type: "project-mapper:writer", model: {model}, prompt: "Generate .claude/ from: {migrator JSON result}")
+```
+
+---
+
+## Common Mistakes
+
+| Mistake | Correction |
+|---------|------------|
+| Bare agent name `"analyzer"` | Fully qualified `"project-mapper:analyzer"` |
+| Writing .claude/ docs yourself | ALWAYS spawn writer agent with analyzer output |
+| Running sync steps in parallel | Steps are SEQUENTIAL: index → analyzer → writer |
+| Running import agents in parallel | migrator MUST complete before writer starts |
+| Scatter without analyzer+writer | MUST use both agents per subdirectory |
+| Skipping .claude/ pre-loading | ALWAYS Read map.md and design.md FIRST |
+| Retrying denied permissions 5+ times | After 2 failures, inform user and ask |
+| Output without agent result | Output MUST be based on agent's returned data |
+
+---
+
+## Red Flags
+
+If you find yourself doing any of these, STOP and re-read the Iron Law:
+
+- Using Read/Grep/Glob to analyze code instead of spawning a Task
+- Using bare agent names without `project-mapper:` prefix
+- Running sequential agents in the same message (parallel)
+- Skipping pre-flight .claude/ doc loading
+- Continuing after pre-flight failure
+- Writing .claude/ markdown files directly instead of using writer agent
 
 ---
 
@@ -229,8 +309,6 @@ Stack, patterns, key decisions
 
 - `project-mapper:review` - Code review with context
 - `project-mapper:query` - Answer project questions
-
----
 
 ## MCP Tools
 

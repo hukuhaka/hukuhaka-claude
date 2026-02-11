@@ -1,10 +1,7 @@
 ---
 name: review
 description: >
-  Code review with .claude/ context. Commands:
-  pr [number] - review PR with project context,
-  changes [path] - review local changes,
-  file [path] - review specific file
+  Use when reviewing code changes against project patterns, conventions, and architectural decisions.
 ---
 
 # Review
@@ -25,35 +22,64 @@ Code review powered by `.claude/` project documentation.
 | `changes [path]` | Review uncommitted changes |
 | `file [path]` | Review specific file |
 
-## Workflow
+## Usage
 
-### 1. Load Context
-
-Read `.claude/` documentation:
-- design.md → Patterns, Decisions
-- map.md → Components, Structure
-- implementation.md → Current plans
-
-### 2. Analyze Changes
-
-For PR:
 ```
+/project-mapper:review pr 42
+/project-mapper:review changes src/
+/project-mapper:review file src/auth.ts
+```
+
+---
+
+## Iron Law
+
+**You MUST NOT spawn Task agents.** Handle all analysis directly using Read, Grep, Glob, and Bash tools.
+
+---
+
+## Pre-flight
+
+**BEFORE any other action:**
+
+1. Read `.claude/design.md`, `.claude/map.md`, `.claude/implementation.md`
+2. Do NOT skip this step. Do NOT proceed to analyzing changes without reading these files first
+3. If any file is missing, note it but continue with available context
+
+---
+
+## The Process
+
+### Step 1: Parse Input
+
+Identify command type and target:
+- `pr [number]` → GitHub PR review
+- `changes [path]` → Local uncommitted changes
+- `file [path]` → Specific file review
+
+### Step 2: Analyze Changes
+
+**For PR:**
+**CORRECT:** `gh pr diff {number}` — shows actual code changes
+**WRONG:** `gh pr view {number}` — shows metadata, NOT code changes
+
+```bash
 gh pr diff {number}
 ```
 
-For local changes:
-```
+**For local changes:**
+```bash
 git diff [path]
 ```
 
-For file:
+**For file:**
 ```
 Read file + Grep for related code
 ```
 
-### 3. Review Against Context
+### Step 3: Review Against Context
 
-Check each change:
+Check each change against `.claude/` documentation:
 
 | Check | Source |
 |-------|--------|
@@ -62,7 +88,9 @@ Check each change:
 | Architecture fit | design.md Decisions |
 | TODO alignment | implementation.md Planned |
 
-### 4. Output
+### Step 4: Format Output
+
+**MUST include all of the following sections:**
 
 ```markdown
 ## Review: {target}
@@ -72,13 +100,13 @@ Check each change:
 
 ### Findings
 
-#### ✓ Good
+#### Good
 - {positive observations}
 
-#### ⚠ Suggestions
+#### Suggestions
 - {improvements, not blocking}
 
-#### ✗ Issues
+#### Issues
 - {problems that should be fixed}
 
 ### Context Used
@@ -86,15 +114,27 @@ Check each change:
 - Decision: {relevant decision}
 ```
 
-## Integration
+---
 
-Can be called by other plugins:
-```
-Task(
-  subagent_type: "project-mapper:review",
-  prompt: "Review changes in {path} against project patterns"
-)
-```
+## Common Mistakes
+
+| Mistake | Correction |
+|---------|------------|
+| Using `gh pr view` for code changes | Use `gh pr diff {number}` for actual diffs |
+| Skipping .claude/ doc loading | ALWAYS read design.md, map.md, implementation.md FIRST |
+| Spawning Task agents | Handle ALL analysis directly — no delegation |
+| Missing output sections | MUST include: Summary, Good, Suggestions, Issues, Context Used |
+| Retrying denied permissions 5+ times | After 2 failures, inform user and ask for alternatives |
+| Reviewing without architectural context | Pre-flight docs give patterns and decisions to check against |
+
+---
+
+## Quality Rules
+
+1. **Cite sources** — reference specific design.md patterns or decisions
+2. **Be specific** — point to exact lines, not general observations
+3. **Prioritize** — issues before suggestions before praise
+4. **Stay scoped** — review what was changed, don't critique unrelated code
 
 ## MCP Tools
 
