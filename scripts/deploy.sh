@@ -103,13 +103,15 @@ with open(sys.argv[3],'w') as out:
 cleanup_marketplace() {
     local installed="$CLAUDE_DIR/plugins/installed_plugins.json"
     local known="$CLAUDE_DIR/plugins/known_marketplaces.json"
+    local settings="$CLAUDE_DIR/settings.json"
 
     # Check if cleanup is needed
     local needed=false
     [ -d "$CLAUDE_DIR/plugins/hukuhaka-plugin" ] && needed=true
     [ -d "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" ] && needed=true
-    [ -f "$installed" ] && grep -q "hukuhaka-plugin" "$installed" 2>/dev/null && needed=true
-    [ -f "$known" ] && grep -q "hukuhaka-plugin" "$known" 2>/dev/null && needed=true
+    for f in "$installed" "$known" "$settings"; do
+        [ -f "$f" ] && grep -q "hukuhaka-plugin" "$f" 2>/dev/null && needed=true
+    done
 
     $needed || return 0
 
@@ -117,11 +119,33 @@ cleanup_marketplace() {
     echo "Cleaning up hukuhaka-plugin marketplace:"
 
     if $DRY_RUN; then
-        echo "  [dry-run] would clean installed_plugins.json, known_marketplaces.json, cache"
+        echo "  [dry-run] would clean settings.json, installed_plugins.json, known_marketplaces.json, cache"
         return 0
     fi
 
     if command -v python3 &>/dev/null; then
+        # settings.json — remove enabledPlugins entries and extraKnownMarketplaces
+        [ -f "$settings" ] && python3 -c "
+import json,sys
+f=sys.argv[1]
+with open(f) as fh: d=json.load(fh)
+changed=False
+ep=d.get('enabledPlugins',{})
+for k in [k for k in ep if 'hukuhaka-plugin' in k]:
+    del ep[k]; changed=True
+if not ep and 'enabledPlugins' in d:
+    del d['enabledPlugins']; changed=True
+ekm=d.get('extraKnownMarketplaces',{})
+if 'hukuhaka-plugin' in ekm:
+    del ekm['hukuhaka-plugin']; changed=True
+if not ekm and 'extraKnownMarketplaces' in d:
+    del d['extraKnownMarketplaces']; changed=True
+if not changed: sys.exit(0)
+with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
+print('  [ok] cleaned settings.json')
+" "$settings" 2>/dev/null || true
+
+        # installed_plugins.json
         [ -f "$installed" ] && python3 -c "
 import json,sys
 f=sys.argv[1]
@@ -134,6 +158,7 @@ with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
 print('  [ok] cleaned installed_plugins.json')
 " "$installed" 2>/dev/null || true
 
+        # known_marketplaces.json
         [ -f "$known" ] && python3 -c "
 import json,sys
 f=sys.argv[1]
@@ -144,6 +169,15 @@ with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
 print('  [ok] cleaned known_marketplaces.json')
 " "$known" 2>/dev/null || true
     elif command -v jq &>/dev/null; then
+        if [ -f "$settings" ] && grep -q "hukuhaka-plugin" "$settings" 2>/dev/null; then
+            jq '(.enabledPlugins // {}) |= with_entries(select(.key | contains("hukuhaka-plugin") | not))
+                | if .enabledPlugins == {} then del(.enabledPlugins) else . end
+                | del(.extraKnownMarketplaces["hukuhaka-plugin"])
+                | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end' \
+                "$settings" > "$settings.tmp"
+            mv "$settings.tmp" "$settings"
+            echo "  [ok] cleaned settings.json"
+        fi
         if [ -f "$installed" ] && jq -e '.plugins | keys[] | select(contains("hukuhaka-plugin"))' "$installed" &>/dev/null; then
             jq '.plugins |= with_entries(select(.key | contains("hukuhaka-plugin") | not))' "$installed" > "$installed.tmp"
             mv "$installed.tmp" "$installed"

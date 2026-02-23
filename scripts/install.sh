@@ -80,6 +80,38 @@ for f in m.get('files',[]):
         fi
     done <<< "$files"
 
+    # Clean up old marketplace registration (settings.json, installed_plugins, known_marketplaces, dirs)
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys,os
+claude=sys.argv[1]
+for name,path,keys in [
+    ('settings.json', claude+'/settings.json', ['enabledPlugins','extraKnownMarketplaces']),
+    ('installed_plugins.json', claude+'/plugins/installed_plugins.json', ['plugins']),
+    ('known_marketplaces.json', claude+'/plugins/known_marketplaces.json', None),
+]:
+    if not os.path.isfile(path): continue
+    with open(path) as f: d=json.load(f)
+    changed=False
+    if keys is None:
+        if 'hukuhaka-plugin' in d:
+            del d['hukuhaka-plugin']; changed=True
+    else:
+        for k in keys:
+            obj=d.get(k,{})
+            for ek in [ek for ek in obj if 'hukuhaka-plugin' in ek]:
+                del obj[ek]; changed=True
+            if not obj and k in d:
+                del d[k]; changed=True
+    if changed:
+        with open(path,'w') as f: json.dump(d,f,indent=2); f.write('\n')
+" "$CLAUDE_DIR" 2>/dev/null || true
+    fi
+
+    for d in "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" "$CLAUDE_DIR/plugins/hukuhaka-plugin"; do
+        [ -d "$d" ] && rm -rf "$d"
+    done
+
     find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
     rm -f "$MANIFEST"
 
