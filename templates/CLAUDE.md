@@ -61,4 +61,6 @@ Guidelines:
 
 ## Git
 
-Do not include 'Co-authored-by' or any co-worker attributions in commit messages.
+- Branch → commit → merge to main (fast-forward) → delete branch → push
+- Branch prefix: `feat/`, `fix/`, `eval/`
+- No Co-authored-by or co-worker attributions in commit messages
