@@ -95,6 +95,78 @@ with open(sys.argv[3],'w') as out:
     fi
 }
 
+# ── Marketplace migration helper ─────────────────────────────────────
+#
+# Old installs registered hukuhaka-plugin as a marketplace in Claude Code.
+# This removes those entries so only plugins/project-mapper/ is used.
+
+cleanup_marketplace() {
+    local installed="$CLAUDE_DIR/plugins/installed_plugins.json"
+    local known="$CLAUDE_DIR/plugins/known_marketplaces.json"
+
+    # Check if cleanup is needed
+    local needed=false
+    [ -d "$CLAUDE_DIR/plugins/hukuhaka-plugin" ] && needed=true
+    [ -d "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" ] && needed=true
+    [ -f "$installed" ] && grep -q "hukuhaka-plugin" "$installed" 2>/dev/null && needed=true
+    [ -f "$known" ] && grep -q "hukuhaka-plugin" "$known" 2>/dev/null && needed=true
+
+    $needed || return 0
+
+    echo ""
+    echo "Cleaning up hukuhaka-plugin marketplace:"
+
+    if $DRY_RUN; then
+        echo "  [dry-run] would clean installed_plugins.json, known_marketplaces.json, cache"
+        return 0
+    fi
+
+    if command -v python3 &>/dev/null; then
+        [ -f "$installed" ] && python3 -c "
+import json,sys
+f=sys.argv[1]
+with open(f) as fh: d=json.load(fh)
+plugins=d.get('plugins',{})
+keys=[k for k in plugins if 'hukuhaka-plugin' in k]
+if not keys: sys.exit(0)
+for k in keys: del plugins[k]
+with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
+print('  [ok] cleaned installed_plugins.json')
+" "$installed" 2>/dev/null || true
+
+        [ -f "$known" ] && python3 -c "
+import json,sys
+f=sys.argv[1]
+with open(f) as fh: d=json.load(fh)
+if 'hukuhaka-plugin' not in d: sys.exit(0)
+del d['hukuhaka-plugin']
+with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
+print('  [ok] cleaned known_marketplaces.json')
+" "$known" 2>/dev/null || true
+    elif command -v jq &>/dev/null; then
+        if [ -f "$installed" ] && jq -e '.plugins | keys[] | select(contains("hukuhaka-plugin"))' "$installed" &>/dev/null; then
+            jq '.plugins |= with_entries(select(.key | contains("hukuhaka-plugin") | not))' "$installed" > "$installed.tmp"
+            mv "$installed.tmp" "$installed"
+            echo "  [ok] cleaned installed_plugins.json"
+        fi
+        if [ -f "$known" ] && jq -e '.["hukuhaka-plugin"]' "$known" &>/dev/null; then
+            jq 'del(.["hukuhaka-plugin"])' "$known" > "$known.tmp"
+            mv "$known.tmp" "$known"
+            echo "  [ok] cleaned known_marketplaces.json"
+        fi
+    fi
+
+    if [ -d "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" ]; then
+        rm -rf "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin"
+        echo "  [ok] removed cache/hukuhaka-plugin"
+    fi
+
+    if [ -d "$CLAUDE_DIR/plugins/hukuhaka-plugin" ]; then
+        rm -rf "$CLAUDE_DIR/plugins/hukuhaka-plugin"
+        echo "  [ok] removed plugins/hukuhaka-plugin"
+    fi
+}
+
 # ── Version ───────────────────────────────────────────────────────────
 
 VERSION=""
@@ -136,6 +208,8 @@ if $UNINSTALL; then
         fi
     done < <(manifest_files)
 
+    cleanup_marketplace
+
     if ! $DRY_RUN; then
         find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
         rm -f "$MANIFEST"
@@ -170,12 +244,6 @@ collect() {
 # Plugin
 [ -d "$PLUGIN_SRC" ] && collect "$PLUGIN_SRC" "plugins/project-mapper"
 
-# Marketplace overlay (only if already installed via marketplace)
-MARKETPLACE_PARENT="$CLAUDE_DIR/plugins/hukuhaka-plugin"
-if [ -d "$MARKETPLACE_PARENT" ]; then
-    collect "$PLUGIN_SRC" "plugins/hukuhaka-plugin/project-mapper"
-fi
-
 # Standalone skills
 for skill_dir in "$SKILLS_SRC"/*/; do
     [ -d "$skill_dir" ] || continue
@@ -187,9 +255,21 @@ done
 # Template
 [ -f "$TEMPLATE_SRC" ] && echo "CLAUDE.md" >> "$NEW_LIST"
 
-# ── Load old manifest & sort ─────────────────────────────────────────
+# ── Load old manifest (or scan for migration) ───────────────────────
 
-manifest_files | sort > "$OLD_LIST"
+if [ -f "$MANIFEST" ]; then
+    manifest_files | sort > "$OLD_LIST"
+else
+    # First manifest-based deploy: scan existing dirs to detect stale files
+    for scan_dir in "$CLAUDE_DIR/plugins/project-mapper" "$CLAUDE_DIR/plugins/hukuhaka-plugin/project-mapper"; do
+        [ -d "$scan_dir" ] || continue
+        find "$scan_dir" -type f | while IFS= read -r file; do
+            echo "${file#"$CLAUDE_DIR"/}"
+        done
+    done | sort > "$OLD_LIST"
+    [ -s "$OLD_LIST" ] && echo "Migrating from pre-manifest install..."
+fi
+
 sort -o "$NEW_LIST" "$NEW_LIST"
 
 # ── Deploy files ──────────────────────────────────────────────────────
@@ -199,8 +279,6 @@ resolve_src() {
     case "$rel" in
         plugins/project-mapper/*)
             echo "$PLUGIN_SRC/${rel#plugins/project-mapper/}" ;;
-        plugins/hukuhaka-plugin/project-mapper/*)
-            echo "$PLUGIN_SRC/${rel#plugins/hukuhaka-plugin/project-mapper/}" ;;
         skills/*/*)
             echo "$SKILLS_SRC/${rel#skills/}" ;;
         CLAUDE.md)
@@ -247,6 +325,10 @@ if [ -s "$STALE_LIST" ]; then
         fi
     done < "$STALE_LIST"
 fi
+
+# ── Marketplace migration ────────────────────────────────────────────
+
+cleanup_marketplace
 
 # ── Clean empty directories ──────────────────────────────────────────
 
