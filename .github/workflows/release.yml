@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag matches plugin.json version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PLUGIN_VERSION=$(python3 -c "import json; print(json.load(open('marketplace/project-mapper/.claude-plugin/plugin.json'))['version'])")
+          if [ "$TAG" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Tag v$TAG does not match plugin.json version $PLUGIN_VERSION"
+            exit 1
+          fi
+          echo "Version verified: $PLUGIN_VERSION"
+
+      - name: Run validation
+        run: scripts/validate.sh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

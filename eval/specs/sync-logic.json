@@ -1,0 +1,59 @@
+{
+  "spec_id": "sync-logic",
+  "skill": "map-sync",
+  "description": "Sync pipeline compliance rules for map-sync skill",
+  "rules": [
+    {
+      "rule_id": "SYNC-G01",
+      "severity": "critical",
+      "type": "must",
+      "description": "All Task calls must use fully qualified subagent_type with 'project-mapper:' prefix (e.g., 'project-mapper:analyzer', not 'analyzer')"
+    },
+    {
+      "rule_id": "SYNC-PRE-01",
+      "severity": "major",
+      "type": "must",
+      "description": "Must read existing .claude/ docs (map.md, design.md) before first Task call. Can use Glob to check existence first."
+    },
+    {
+      "rule_id": "SYNC-02",
+      "severity": "critical",
+      "type": "must",
+      "description": "Analyzer Task must complete and return result before Writer Task is spawned. Sequential ordering required."
+    },
+    {
+      "rule_id": "SYNC-03",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Analyzer and Writer Tasks must not appear in the same message block. They must be in separate sequential messages."
+    },
+    {
+      "rule_id": "SYNC-04",
+      "severity": "critical",
+      "type": "must",
+      "description": "Scatter phase must execute after core write: spawn analyzer+writer pairs for subdirectories to generate CLAUDE.md files."
+    },
+    {
+      "rule_id": "SYNC-05",
+      "severity": "critical",
+      "type": "must",
+      "description": "Validator Task (project-mapper:validator) must be spawned after all scatter writers complete. It is the final Task in the pipeline."
+    },
+    {
+      "rule_id": "SYNC-06",
+      "severity": "major",
+      "type": "must",
+      "description": "Final output must contain a 4-step summary report: Step 1 (analyze), Step 2 (write), Step 3 (scatter), Step 4 (validate) with counts."
+    },
+    {
+      "rule_id": "SYNC-08",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "During scatter phase, root ./CLAUDE.md must never be written to. Only subdirectory CLAUDE.md files are valid scatter targets."
+    }
+  ],
+  "scenarios": [
+    "SYNC-LOGIC-S01",
+    "SYNC-LOGIC-S02"
+  ]
+}

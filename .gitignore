@@ -1,0 +1,27 @@
+# eval artifacts
+eval/results/
+eval/transcripts/
+eval/testbed/
+eval/outputs/
+eval/.testbed-worker-*
+
+# claude project docs
+.claude/
+
+# official docs cache (fetched from code.claude.com)
+docs/officials/
+
+# third-party skills (Apache 2.0, not redistributable)
+skills/skill-creator/
+skills/mcp-builder/
+
+# OS
+.DS_Store
+
+# secrets
+token.txt
+*.env
+
+# cache
+.pytest_cache/
+__pycache__/

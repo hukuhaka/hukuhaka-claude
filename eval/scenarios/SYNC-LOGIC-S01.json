@@ -1,0 +1,12 @@
+{
+  "scenario_id": "SYNC-LOGIC-S01",
+  "scenario_name": "sync logic: MCP on",
+  "skill": "map-sync",
+  "eval_type": "logic",
+  "spec": "sync-logic",
+  "prompt": "/project-mapper:map-sync sync .",
+  "cwd": "eval/testbed",
+  "mcp_mode": "on",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions"
+}

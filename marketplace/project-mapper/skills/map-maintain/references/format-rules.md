@@ -1,0 +1,42 @@
+# .claude/ Document Format Rules
+
+These rules apply when generating or updating .claude/ project documentation. The writer agent references this via `skills: [project-mapper:map-sync]`.
+
+## 4 Files
+
+- `map.md` — entry points, data flow, components, directory structure
+- `design.md` — tech stack, architecture patterns, key decisions
+- `implementation.md` — planned work, in-progress items, discovered TODOs
+- `changelog.md` — recent changes (10 max) + archived history by month
+
+## Reference Style
+
+Every item MUST use this format: `[name](path): description`
+
+One line per item. Use `file:symbol` for specific symbols (e.g., `src/model.py:Model`). Descriptions MUST be 1 sentence max.
+
+## Line Limits
+
+- map.md: under 100 lines
+- design.md: under 100 lines
+- implementation.md: under 80 lines
+- changelog.md: under 50 entries in Recent section
+
+## NEVER Use
+
+- Code blocks for data flow — use plain text with arrows instead
+- ASCII art
+- Long tables (more than 5 rows)
+
+## implementation.md Required Sections
+
+- `## Planned` — future work
+- `## In Progress` — active items
+- `## Discovered TODOs` — auto-scanned from codebase
+
+If any section is missing, create it. Do NOT rename or merge these sections.
+
+## changelog.md Required Sections
+
+- `## Recent` — latest 10 entries, format: `- [YYYY-MM-DD] description`
+- `## Archive` — consolidated by month, format: `- YYYY-MM: summary`
