@@ -12,6 +12,18 @@ Add `project-mapper` from the Claude Code plugin marketplace:
 claude /install project-mapper
 ```
 
+### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash
+```
+
+Install a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash -s -- --version 0.0.1
+```
+
 ### Local Install (Development)
 
 ```bash
@@ -42,17 +54,33 @@ Codebase analysis and `.claude/` documentation generation.
 ## Deploy Options
 
 ```bash
-# Local deploy (plugin + standalone skills)
+# Deploy plugin + standalone skills
 scripts/deploy.sh
 
 # Preview changes
 scripts/deploy.sh --dry-run
+
+# Remove all deployed files
+scripts/deploy.sh --uninstall
+
+# Remove without confirmation
+scripts/deploy.sh --uninstall --force
+```
+
+### Uninstall
+
+```bash
+# If installed via curl
+curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash -s -- --uninstall
+
+# If installed via git clone
+scripts/deploy.sh --uninstall
 ```
 
 ## Dependencies
 
-- **Required**: git, jq or python3
-- **Optional**: rsync (falls back to cp), [codex CLI](https://github.com/openai/codex) (for codex-coworker)
+- **Required**: git, python3 or jq
+- **Optional**: [codex CLI](https://github.com/openai/codex) (for codex-coworker)
 
 ## License
 

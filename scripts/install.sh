@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+#
+# hukuhaka-claude installer
+#
+# curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash
+#
+# Flags:
+#   --version VERSION  Install specific version (default: latest release or main)
+#   --uninstall        Remove installed files using manifest
+#   --help             Show usage
+
+set -euo pipefail
+
+REPO="hukuhaka/hukuhaka-claude"
+CLAUDE_DIR="$HOME/.claude"
+MANIFEST="$CLAUDE_DIR/.hukuhaka-manifest.json"
+
+VERSION=""
+UNINSTALL=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --version) VERSION="$2"; shift 2 ;;
+        --uninstall) UNINSTALL=true; shift ;;
+        -h|--help)
+            sed -n '3,11p' "$0"
+            exit 0 ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
+# ── Prerequisites ─────────────────────────────────────────────────────
+
+has_json_tool() {
+    command -v python3 &>/dev/null || command -v jq &>/dev/null
+}
+
+if ! has_json_tool; then
+    echo "Error: python3 or jq is required." >&2
+    exit 1
+fi
+
+if ! $UNINSTALL; then
+    for cmd in curl tar; do
+        if ! command -v "$cmd" &>/dev/null; then
+            echo "Error: $cmd is required but not found." >&2
+            exit 1
+        fi
+    done
+fi
+
+# ── Uninstall ─────────────────────────────────────────────────────────
+
+if $UNINSTALL; then
+    if [ ! -f "$MANIFEST" ]; then
+        echo "No manifest found — nothing to uninstall."
+        exit 0
+    fi
+
+    echo "Uninstalling hukuhaka-claude..."
+
+    if command -v python3 &>/dev/null; then
+        files=$(python3 -c "
+import json,sys
+m=json.load(open(sys.argv[1]))
+for f in m.get('files',[]):
+    print(f)
+" "$MANIFEST")
+    else
+        files=$(jq -r '.files[]' "$MANIFEST")
+    fi
+
+    count=0
+    while IFS= read -r rel; do
+        [ -z "$rel" ] && continue
+        target="$CLAUDE_DIR/$rel"
+        if [ -f "$target" ]; then
+            rm "$target"
+            count=$((count + 1))
+        fi
+    done <<< "$files"
+
+    find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
+    rm -f "$MANIFEST"
+
+    echo "Removed $count files."
+    exit 0
+fi
+
+# ── Version resolution ────────────────────────────────────────────────
+
+if [ -z "$VERSION" ]; then
+    VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+        | grep -o '"tag_name":[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"v\{0,1\}\([^"]*\)"/\1/' || true)
+fi
+
+if [ -n "$VERSION" ]; then
+    VERSION="${VERSION#v}"
+    ARCHIVE_URL="https://github.com/$REPO/archive/refs/tags/v${VERSION}.tar.gz"
+    echo "Installing hukuhaka-claude v${VERSION}..."
+else
+    ARCHIVE_URL="https://github.com/$REPO/archive/refs/heads/main.tar.gz"
+    echo "Installing hukuhaka-claude (main)..."
+fi
+
+# ── Download & extract ────────────────────────────────────────────────
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "Downloading..."
+curl -fsSL "$ARCHIVE_URL" | tar xz -C "$TMPDIR"
+
+# Find extracted directory (hukuhaka-claude-VERSION or hukuhaka-claude-main)
+SRC_DIR=$(find "$TMPDIR" -maxdepth 1 -type d ! -path "$TMPDIR" | head -1)
+
+if [ -z "$SRC_DIR" ] || [ ! -f "$SRC_DIR/scripts/deploy.sh" ]; then
+    echo "Error: deploy.sh not found in archive." >&2
+    exit 1
+fi
+
+# ── Deploy ────────────────────────────────────────────────────────────
+
+bash "$SRC_DIR/scripts/deploy.sh"
+
+echo ""
+echo "Done! Restart Claude Code to load the plugins."

@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 #
-# Local Deploy — development/testing only
+# hukuhaka-claude deploy — manifest-based
 #
-# Copies marketplace plugin and standalone skills to ~/.claude/
-# For production, use GitHub Marketplace.
+# Tracks installed files in ~/.claude/.hukuhaka-manifest.json
+# Only removes files it deployed; safe alongside other plugins.
 #
 # Usage:
-#   scripts/deploy.sh              # deploy
-#   scripts/deploy.sh --dry-run    # preview only
+#   scripts/deploy.sh                     # deploy
+#   scripts/deploy.sh --dry-run           # preview only
+#   scripts/deploy.sh --uninstall         # remove deployed files
+#   scripts/deploy.sh --uninstall --force # remove without confirmation
 
 set -euo pipefail
 
@@ -20,115 +22,247 @@ TEMPLATE_SRC="$REPO_DIR/templates/CLAUDE.md"
 PLUGIN_JSON="$PLUGIN_SRC/.claude-plugin/plugin.json"
 
 CLAUDE_DIR="$HOME/.claude"
-PLUGIN_DST="$CLAUDE_DIR/plugins/project-mapper"
-MARKETPLACE_DST="$CLAUDE_DIR/plugins/hukuhaka-plugin/project-mapper"
-SKILLS_DST="$CLAUDE_DIR/skills"
+MANIFEST="$CLAUDE_DIR/.hukuhaka-manifest.json"
 
 DRY_RUN=false
+UNINSTALL=false
+FORCE=false
 SKIP_SKILLS="mcp-builder skill-creator"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run) DRY_RUN=true; shift ;;
+        --uninstall) UNINSTALL=true; shift ;;
+        --force) FORCE=true; shift ;;
         -h|--help)
-            sed -n '3,9p' "$0"
+            sed -n '3,13p' "$0"
             exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
 
-# Read version from plugin.json
-VERSION=""
-if command -v python3 &>/dev/null; then
-    VERSION=$(python3 -c "import json; print(json.load(open('$PLUGIN_JSON'))['version'])" 2>/dev/null)
-elif command -v jq &>/dev/null; then
-    VERSION=$(jq -r '.version' "$PLUGIN_JSON" 2>/dev/null)
+# ── Prereq check ──────────────────────────────────────────────────────
+
+if ! command -v python3 &>/dev/null && ! command -v jq &>/dev/null; then
+    echo "Error: python3 or jq is required." >&2
+    exit 1
 fi
 
-echo "hukuhaka-claude deploy v${VERSION:-unknown}"
-echo ""
+# ── JSON helpers ──────────────────────────────────────────────────────
 
-# Choose copy command
-COPY_CMD="cp -R"
-if command -v rsync &>/dev/null; then
-    COPY_CMD="rsync -a --delete"
-fi
-
-deploy_dir() {
-    local src="$1" dst="$2" label="$3"
-    if [ ! -d "$src" ]; then
-        echo "  [skip] $label — source not found: $src"
-        return
+read_version() {
+    local file="$1"
+    if command -v python3 &>/dev/null; then
+        python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$file" 2>/dev/null || true
+    elif command -v jq &>/dev/null; then
+        jq -r '.version' "$file" 2>/dev/null || true
     fi
-
-    if $DRY_RUN; then
-        echo "  [dry-run] $label: $src → $dst"
-        return
-    fi
-
-    mkdir -p "$dst"
-    if [[ "$COPY_CMD" == rsync* ]]; then
-        $COPY_CMD "$src/" "$dst/"
-    else
-        rm -rf "$dst"
-        $COPY_CMD "$src" "$dst"
-    fi
-    echo "  [ok] $label → $dst"
 }
 
-# 0. Clear plugin cache (stale cached versions override local deploy)
-CACHE_DIR="$CLAUDE_DIR/plugins/cache"
-if [ -d "$CACHE_DIR" ]; then
-    if $DRY_RUN; then
-        echo "Cache:"
-        echo "  [dry-run] Would remove $CACHE_DIR"
-    else
-        echo "Cache:"
-        rm -rf "$CACHE_DIR"
-        echo "  [ok] Cleared $CACHE_DIR"
+manifest_files() {
+    [ -f "$MANIFEST" ] || return 0
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys
+m=json.load(open(sys.argv[1]))
+for f in m.get('files',[]):
+    print(f)
+" "$MANIFEST"
+    elif command -v jq &>/dev/null; then
+        jq -r '.files[]' "$MANIFEST"
     fi
-    echo ""
+}
+
+manifest_write() {
+    local version="$1" file_list="$2"
+    mkdir -p "$(dirname "$MANIFEST")"
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys,datetime
+version=sys.argv[1]
+with open(sys.argv[2]) as f:
+    files=sorted(line.strip() for line in f if line.strip())
+data={'version':version,'timestamp':datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),'files':files}
+with open(sys.argv[3],'w') as out:
+    json.dump(data,out,indent=2)
+    out.write('\n')
+" "$version" "$file_list" "$MANIFEST"
+    elif command -v jq &>/dev/null; then
+        jq -R -s --arg v "$version" --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{version:$v,timestamp:$t,files:(split("\n")|map(select(length>0))|sort)}' \
+            < "$file_list" > "$MANIFEST.tmp"
+        mv "$MANIFEST.tmp" "$MANIFEST"
+    fi
+}
+
+# ── Version ───────────────────────────────────────────────────────────
+
+VERSION=""
+if [ -f "$PLUGIN_JSON" ]; then
+    VERSION=$(read_version "$PLUGIN_JSON")
 fi
 
-# 1. Deploy plugin
-echo "Plugin:"
-deploy_dir "$PLUGIN_SRC" "$PLUGIN_DST" "project-mapper"
-
-# 1b. Deploy to marketplace source (Claude Code loads from here)
-if [ -d "$(dirname "$MARKETPLACE_DST")" ]; then
-    deploy_dir "$PLUGIN_SRC" "$MARKETPLACE_DST" "project-mapper (marketplace)"
-fi
-
-# 2. Deploy standalone skills
+echo "hukuhaka-claude v${VERSION:-unknown}"
 echo ""
-echo "Standalone skills:"
+
+# ── Uninstall ─────────────────────────────────────────────────────────
+
+if $UNINSTALL; then
+    if [ ! -f "$MANIFEST" ]; then
+        echo "No manifest found — nothing to uninstall."
+        exit 0
+    fi
+
+    if ! $FORCE && ! $DRY_RUN; then
+        echo "This will remove all hukuhaka-claude files from $CLAUDE_DIR."
+        printf "Continue? [y/N] "
+        read -r answer
+        [[ "$answer" =~ ^[Yy] ]] || { echo "Aborted."; exit 1; }
+    fi
+
+    echo "Uninstalling:"
+    count=0
+    while IFS= read -r rel; do
+        [ -z "$rel" ] && continue
+        target="$CLAUDE_DIR/$rel"
+        if [ -f "$target" ]; then
+            if $DRY_RUN; then
+                echo "  [dry-run] rm $rel"
+            else
+                rm "$target"
+                echo "  [ok] rm $rel"
+            fi
+            count=$((count + 1))
+        fi
+    done < <(manifest_files)
+
+    if ! $DRY_RUN; then
+        find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
+        rm -f "$MANIFEST"
+    fi
+
+    echo ""
+    if $DRY_RUN; then
+        echo "Dry run — no files modified."
+    else
+        echo "Uninstalled $count files."
+    fi
+    exit 0
+fi
+
+# ── Temp files ────────────────────────────────────────────────────────
+
+NEW_LIST=$(mktemp)
+OLD_LIST=$(mktemp)
+STALE_LIST=$(mktemp)
+cleanup() { rm -f "$NEW_LIST" "$OLD_LIST" "$STALE_LIST"; }
+trap cleanup EXIT
+
+# ── Build new file list ──────────────────────────────────────────────
+
+collect() {
+    local src_root="${1%/}" dst_prefix="$2"
+    find "$src_root" -type f | while IFS= read -r file; do
+        echo "$dst_prefix/${file#"$src_root"/}"
+    done >> "$NEW_LIST"
+}
+
+# Plugin
+[ -d "$PLUGIN_SRC" ] && collect "$PLUGIN_SRC" "plugins/project-mapper"
+
+# Marketplace overlay (only if already installed via marketplace)
+MARKETPLACE_PARENT="$CLAUDE_DIR/plugins/hukuhaka-plugin"
+if [ -d "$MARKETPLACE_PARENT" ]; then
+    collect "$PLUGIN_SRC" "plugins/hukuhaka-plugin/project-mapper"
+fi
+
+# Standalone skills
 for skill_dir in "$SKILLS_SRC"/*/; do
     [ -d "$skill_dir" ] || continue
     skill_name="$(basename "$skill_dir")"
-    if [[ " $SKIP_SKILLS " == *" $skill_name "* ]]; then
-        echo "  [skip] $skill_name — excluded from public deploy"
-        continue
-    fi
-    deploy_dir "$skill_dir" "$SKILLS_DST/$skill_name" "$skill_name"
+    [[ " $SKIP_SKILLS " == *" $skill_name "* ]] && continue
+    collect "$skill_dir" "skills/$skill_name"
 done
 
-# 3. Deploy CLAUDE.md template
-echo ""
-echo "Template:"
-if [ -f "$TEMPLATE_SRC" ]; then
-    if $DRY_RUN; then
-        echo "  [dry-run] CLAUDE.md: $TEMPLATE_SRC → $CLAUDE_DIR/CLAUDE.md"
-    else
-        cp "$TEMPLATE_SRC" "$CLAUDE_DIR/CLAUDE.md"
-        echo "  [ok] CLAUDE.md → $CLAUDE_DIR/CLAUDE.md"
+# Template
+[ -f "$TEMPLATE_SRC" ] && echo "CLAUDE.md" >> "$NEW_LIST"
+
+# ── Load old manifest & sort ─────────────────────────────────────────
+
+manifest_files | sort > "$OLD_LIST"
+sort -o "$NEW_LIST" "$NEW_LIST"
+
+# ── Deploy files ──────────────────────────────────────────────────────
+
+resolve_src() {
+    local rel="$1"
+    case "$rel" in
+        plugins/project-mapper/*)
+            echo "$PLUGIN_SRC/${rel#plugins/project-mapper/}" ;;
+        plugins/hukuhaka-plugin/project-mapper/*)
+            echo "$PLUGIN_SRC/${rel#plugins/hukuhaka-plugin/project-mapper/}" ;;
+        skills/*/*)
+            echo "$SKILLS_SRC/${rel#skills/}" ;;
+        CLAUDE.md)
+            echo "$TEMPLATE_SRC" ;;
+    esac
+}
+
+echo "Deploying:"
+count=0
+while IFS= read -r rel; do
+    [ -z "$rel" ] && continue
+    src=$(resolve_src "$rel")
+    dst="$CLAUDE_DIR/$rel"
+    if [ -z "$src" ] || [ ! -f "$src" ]; then
+        continue
     fi
-else
-    echo "  [skip] CLAUDE.md — source not found: $TEMPLATE_SRC"
+    if $DRY_RUN; then
+        echo "  [dry-run] $rel"
+    else
+        mkdir -p "$(dirname "$dst")"
+        cp "$src" "$dst"
+    fi
+    count=$((count + 1))
+done < "$NEW_LIST"
+echo "  $count files"
+
+# ── Remove stale files ───────────────────────────────────────────────
+
+comm -23 "$OLD_LIST" "$NEW_LIST" > "$STALE_LIST"
+
+if [ -s "$STALE_LIST" ]; then
+    echo ""
+    echo "Removing stale:"
+    while IFS= read -r rel; do
+        [ -z "$rel" ] && continue
+        target="$CLAUDE_DIR/$rel"
+        if [ -f "$target" ]; then
+            if $DRY_RUN; then
+                echo "  [dry-run] rm $rel"
+            else
+                rm "$target"
+                echo "  [ok] rm $rel"
+            fi
+        fi
+    done < "$STALE_LIST"
+fi
+
+# ── Clean empty directories ──────────────────────────────────────────
+
+if ! $DRY_RUN; then
+    find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
+fi
+
+# ── Write manifest ────────────────────────────────────────────────────
+
+if ! $DRY_RUN; then
+    manifest_write "${VERSION:-unknown}" "$NEW_LIST"
 fi
 
 echo ""
 if $DRY_RUN; then
     echo "Dry run complete. No files were modified."
 else
-    echo "Deploy complete. v${VERSION:-unknown}"
+    echo "Deploy complete. v${VERSION:-unknown} ($count files)"
 fi
