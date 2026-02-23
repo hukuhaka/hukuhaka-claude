@@ -62,7 +62,7 @@ description: >
 Project context:
 {.claude/map.md contents}
 {.claude/design.md contents}
-{if full: .claude/implementation.md contents}
+{if full: .claude/backlog.md contents}
 {if full: relevant code snippets}
 
 ---

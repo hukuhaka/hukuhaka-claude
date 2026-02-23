@@ -12,7 +12,7 @@ Compress `.claude/` documentation into a single, context-efficient summary.
 
 ## Input
 
-Read all `.claude/*.md` files: map.md, design.md, implementation.md, changelog.md
+Read all `.claude/*.md` files: map.md, design.md, backlog.md, changelog.md
 
 ## Output
 

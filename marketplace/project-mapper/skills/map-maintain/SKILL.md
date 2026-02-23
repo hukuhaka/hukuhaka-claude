@@ -29,11 +29,11 @@ Display the validator's result. Do NOT validate links yourself.
 
 ## compact
 
-Clean up changelog.md and implementation.md.
+Clean up changelog.md and backlog.md.
 Spawn exactly 1 writer agent. The writer MUST process both files.
 
 ```
-Task(subagent_type: "project-mapper:writer", prompt: "Compact .claude/ docs: consolidate changelog.md (keep recent 10, archive older by month) and clean implementation.md (move completed items to changelog, remove empty sections). Process both files.")
+Task(subagent_type: "project-mapper:writer", prompt: "Compact .claude/ docs: consolidate changelog.md (keep recent 10, archive older by month) and clean backlog.md (move completed items to changelog, remove empty sections). Process both files.")
 ```
 
 Do NOT read the files and decide they are "already clean" yourself. The writer agent makes that decision.

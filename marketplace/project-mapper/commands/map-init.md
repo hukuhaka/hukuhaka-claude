@@ -38,9 +38,9 @@ Create empty `.claude/` documentation scaffolding. No agents — handle directly
 ## Decisions
 ```
 
-**implementation.md** (MUST include these sections):
+**backlog.md** (MUST include these sections):
 ```
-# Implementation
+# Backlog
 
 ## Planned
 

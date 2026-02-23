@@ -6,7 +6,7 @@ These rules apply when generating or updating .claude/ project documentation. Th
 
 - `map.md` — entry points, data flow, components, directory structure
 - `design.md` — tech stack, architecture patterns, key decisions
-- `implementation.md` — planned work, in-progress items, discovered TODOs
+- `backlog.md` — planned work, in-progress items, discovered TODOs
 - `changelog.md` — recent changes (10 max) + archived history by month
 
 ## Reference Style
@@ -19,7 +19,7 @@ One line per item. Use `file:symbol` for specific symbols (e.g., `src/model.py:M
 
 - map.md: under 100 lines
 - design.md: under 100 lines
-- implementation.md: under 80 lines
+- backlog.md: under 80 lines
 - changelog.md: under 50 entries in Recent section
 
 ## NEVER Use
@@ -28,7 +28,7 @@ One line per item. Use `file:symbol` for specific symbols (e.g., `src/model.py:M
 - ASCII art
 - Long tables (more than 5 rows)
 
-## implementation.md Required Sections
+## backlog.md Required Sections
 
 - `## Planned` — future work
 - `## In Progress` — active items

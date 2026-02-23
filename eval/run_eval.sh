@@ -90,7 +90,7 @@ run_scenario() {
     mkdir -p "$testbed_dir/.claude"
 
     # Seed empty .claude/ files
-    for doc in map.md design.md implementation.md changelog.md; do
+    for doc in map.md design.md backlog.md changelog.md; do
       [[ -f "$testbed_dir/.claude/$doc" ]] || touch "$testbed_dir/.claude/$doc"
     done
 

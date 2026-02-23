@@ -23,7 +23,7 @@ Create empty `.claude/` template. Handle directly — no agents.
 2. Write these 4 files using the Write tool:
    - `.claude/map.md` — empty template with sections: Entry Points, Data Flow, Components, Structure
    - `.claude/design.md` — empty template with sections: Stack, Patterns, Decisions
-   - `.claude/implementation.md` — MUST include `## Planned`, `## In Progress`, `## Discovered TODOs`
+   - `.claude/backlog.md` — MUST include `## Planned`, `## In Progress`, `## Discovered TODOs`
    - `.claude/changelog.md` — empty template with sections: Recent, Archive
 3. Report: "Init complete — created .claude/ with 4 template files"
 
