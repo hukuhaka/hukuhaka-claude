@@ -24,6 +24,10 @@ PLUGIN_JSON="$PLUGIN_SRC/.claude-plugin/plugin.json"
 CLAUDE_DIR="$HOME/.claude"
 MANIFEST="$CLAUDE_DIR/.hukuhaka-manifest.json"
 
+MARKETPLACE_NAME="hukuhaka-plugin"
+PLUGIN_NAME="project-mapper"
+PLUGIN_KEY="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
+
 DRY_RUN=false
 UNINSTALL=false
 FORCE=false
@@ -95,109 +99,205 @@ with open(sys.argv[3],'w') as out:
     fi
 }
 
-# ── Marketplace migration helper ─────────────────────────────────────
+# ── Plugin registration ──────────────────────────────────────────────
 #
-# Old installs registered hukuhaka-plugin as a marketplace in Claude Code.
-# This removes those entries so only plugins/project-mapper/ is used.
+# Ensures project-mapper is registered as a plugin in Claude Code's
+# marketplace system (settings.json, installed_plugins.json, known_marketplaces.json).
 
-cleanup_marketplace() {
+ensure_plugin_registered() {
+    local version="$1"
+    local settings="$CLAUDE_DIR/settings.json"
     local installed="$CLAUDE_DIR/plugins/installed_plugins.json"
     local known="$CLAUDE_DIR/plugins/known_marketplaces.json"
-    local settings="$CLAUDE_DIR/settings.json"
-
-    # Check if cleanup is needed
-    local needed=false
-    [ -d "$CLAUDE_DIR/plugins/hukuhaka-plugin" ] && needed=true
-    [ -d "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" ] && needed=true
-    for f in "$installed" "$known" "$settings"; do
-        [ -f "$f" ] && grep -q "hukuhaka-plugin" "$f" 2>/dev/null && needed=true
-    done
-
-    $needed || return 0
+    local mkt_dir="$CLAUDE_DIR/plugins/$MARKETPLACE_NAME"
+    local now
+    now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
     echo ""
-    echo "Cleaning up hukuhaka-plugin marketplace:"
+    echo "Plugin registration:"
 
     if $DRY_RUN; then
-        echo "  [dry-run] would clean settings.json, installed_plugins.json, known_marketplaces.json, cache"
+        echo "  [dry-run] would register $PLUGIN_KEY in settings/installed/known"
         return 0
     fi
 
     if command -v python3 &>/dev/null; then
-        # settings.json — remove enabledPlugins entries and extraKnownMarketplaces
-        [ -f "$settings" ] && python3 -c "
-import json,sys
-f=sys.argv[1]
-with open(f) as fh: d=json.load(fh)
+        python3 -c "
+import json,sys,os
+
+claude_dir=sys.argv[1]
+mkt_name=sys.argv[2]
+plugin_key=sys.argv[3]
+version=sys.argv[4]
+now=sys.argv[5]
+mkt_dir=sys.argv[6]
+
+# settings.json
+sf=os.path.join(claude_dir,'settings.json')
+if os.path.isfile(sf):
+    with open(sf) as f: s=json.load(f)
+else:
+    s={}
 changed=False
-ep=d.get('enabledPlugins',{})
-for k in [k for k in ep if 'hukuhaka-plugin' in k]:
-    del ep[k]; changed=True
-if not ep and 'enabledPlugins' in d:
-    del d['enabledPlugins']; changed=True
-ekm=d.get('extraKnownMarketplaces',{})
-if 'hukuhaka-plugin' in ekm:
-    del ekm['hukuhaka-plugin']; changed=True
-if not ekm and 'extraKnownMarketplaces' in d:
-    del d['extraKnownMarketplaces']; changed=True
-if not changed: sys.exit(0)
-with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
-print('  [ok] cleaned settings.json')
-" "$settings" 2>/dev/null || true
+ep=s.setdefault('enabledPlugins',{})
+if plugin_key not in ep:
+    ep[plugin_key]=True; changed=True
+ekm=s.setdefault('extraKnownMarketplaces',{})
+if mkt_name not in ekm:
+    ekm[mkt_name]={'source':{'source':'directory','path':mkt_dir}}; changed=True
+if changed:
+    with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
+    print('  [ok] settings.json')
+else:
+    print('  [ok] settings.json (no change)')
 
-        # installed_plugins.json
-        [ -f "$installed" ] && python3 -c "
-import json,sys
-f=sys.argv[1]
-with open(f) as fh: d=json.load(fh)
-plugins=d.get('plugins',{})
-keys=[k for k in plugins if 'hukuhaka-plugin' in k]
-if not keys: sys.exit(0)
-for k in keys: del plugins[k]
-with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
-print('  [ok] cleaned installed_plugins.json')
-" "$installed" 2>/dev/null || true
+# installed_plugins.json
+ip=os.path.join(claude_dir,'plugins','installed_plugins.json')
+if os.path.isfile(ip):
+    with open(ip) as f: d=json.load(f)
+else:
+    d={'version':2,'plugins':{}}
+plugins=d.setdefault('plugins',{})
+entry={'scope':'user','installPath':os.path.join(mkt_dir,'project-mapper'),'version':version,'installedAt':now,'lastUpdated':now}
+existing=plugins.get(plugin_key,[])
+if existing:
+    existing[0]['version']=version
+    existing[0]['lastUpdated']=now
+    existing[0]['installPath']=entry['installPath']
+else:
+    plugins[plugin_key]=[entry]
+with open(ip,'w') as f: json.dump(d,f,indent=2); f.write('\n')
+print('  [ok] installed_plugins.json')
 
-        # known_marketplaces.json
-        [ -f "$known" ] && python3 -c "
-import json,sys
-f=sys.argv[1]
-with open(f) as fh: d=json.load(fh)
-if 'hukuhaka-plugin' not in d: sys.exit(0)
-del d['hukuhaka-plugin']
-with open(f,'w') as fh: json.dump(d,fh,indent=2); fh.write('\n')
-print('  [ok] cleaned known_marketplaces.json')
-" "$known" 2>/dev/null || true
+# known_marketplaces.json
+kf=os.path.join(claude_dir,'plugins','known_marketplaces.json')
+if os.path.isfile(kf):
+    with open(kf) as f: k=json.load(f)
+else:
+    k={}
+if mkt_name not in k:
+    k[mkt_name]={'source':{'source':'directory','path':mkt_dir},'installLocation':mkt_dir,'lastUpdated':now}
+    with open(kf,'w') as f: json.dump(k,f,indent=2); f.write('\n')
+    print('  [ok] known_marketplaces.json')
+else:
+    print('  [ok] known_marketplaces.json (no change)')
+" "$CLAUDE_DIR" "$MARKETPLACE_NAME" "$PLUGIN_KEY" "$version" "$now" "$mkt_dir"
     elif command -v jq &>/dev/null; then
-        if [ -f "$settings" ] && grep -q "hukuhaka-plugin" "$settings" 2>/dev/null; then
-            jq '(.enabledPlugins // {}) |= with_entries(select(.key | contains("hukuhaka-plugin") | not))
-                | if .enabledPlugins == {} then del(.enabledPlugins) else . end
-                | del(.extraKnownMarketplaces["hukuhaka-plugin"])
-                | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end' \
+        # settings.json
+        if [ -f "$settings" ]; then
+            jq --arg pk "$PLUGIN_KEY" --arg mn "$MARKETPLACE_NAME" --arg mp "$mkt_dir" \
+                '.enabledPlugins[$pk] = true
+                 | .extraKnownMarketplaces[$mn] = {"source":{"source":"directory","path":$mp}}' \
                 "$settings" > "$settings.tmp"
             mv "$settings.tmp" "$settings"
-            echo "  [ok] cleaned settings.json"
+        else
+            jq -n --arg pk "$PLUGIN_KEY" --arg mn "$MARKETPLACE_NAME" --arg mp "$mkt_dir" \
+                '{enabledPlugins:{($pk):true},extraKnownMarketplaces:{($mn):{"source":{"source":"directory","path":$mp}}}}' \
+                > "$settings"
         fi
-        if [ -f "$installed" ] && jq -e '.plugins | keys[] | select(contains("hukuhaka-plugin"))' "$installed" &>/dev/null; then
-            jq '.plugins |= with_entries(select(.key | contains("hukuhaka-plugin") | not))' "$installed" > "$installed.tmp"
+        echo "  [ok] settings.json"
+
+        # installed_plugins.json
+        local install_path="$mkt_dir/$PLUGIN_NAME"
+        if [ -f "$installed" ]; then
+            jq --arg pk "$PLUGIN_KEY" --arg v "$version" --arg t "$now" --arg ip "$install_path" \
+                '.plugins[$pk] = [{"scope":"user","installPath":$ip,"version":$v,"installedAt":$t,"lastUpdated":$t}]' \
+                "$installed" > "$installed.tmp"
             mv "$installed.tmp" "$installed"
-            echo "  [ok] cleaned installed_plugins.json"
+        else
+            mkdir -p "$(dirname "$installed")"
+            jq -n --arg pk "$PLUGIN_KEY" --arg v "$version" --arg t "$now" --arg ip "$install_path" \
+                '{version:2,plugins:{($pk):[{"scope":"user","installPath":$ip,"version":$v,"installedAt":$t,"lastUpdated":$t}]}}' \
+                > "$installed"
         fi
-        if [ -f "$known" ] && jq -e '.["hukuhaka-plugin"]' "$known" &>/dev/null; then
-            jq 'del(.["hukuhaka-plugin"])' "$known" > "$known.tmp"
+        echo "  [ok] installed_plugins.json"
+
+        # known_marketplaces.json
+        if [ -f "$known" ]; then
+            jq --arg mn "$MARKETPLACE_NAME" --arg mp "$mkt_dir" --arg t "$now" \
+                '.[$mn] //= {"source":{"source":"directory","path":$mp},"installLocation":$mp,"lastUpdated":$t}' \
+                "$known" > "$known.tmp"
             mv "$known.tmp" "$known"
-            echo "  [ok] cleaned known_marketplaces.json"
+        else
+            jq -n --arg mn "$MARKETPLACE_NAME" --arg mp "$mkt_dir" --arg t "$now" \
+                '{($mn):{"source":{"source":"directory","path":$mp},"installLocation":$mp,"lastUpdated":$t}}' \
+                > "$known"
+        fi
+        echo "  [ok] known_marketplaces.json"
+    fi
+}
+
+# ── Unregister plugin ────────────────────────────────────────────────
+
+unregister_plugin() {
+    local settings="$CLAUDE_DIR/settings.json"
+    local installed="$CLAUDE_DIR/plugins/installed_plugins.json"
+    local known="$CLAUDE_DIR/plugins/known_marketplaces.json"
+
+    echo ""
+    echo "Unregistering plugin:"
+
+    if $DRY_RUN; then
+        echo "  [dry-run] would remove $PLUGIN_KEY from settings/installed/known"
+        return 0
+    fi
+
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys,os
+claude_dir=sys.argv[1]
+mkt_name=sys.argv[2]
+plugin_key=sys.argv[3]
+
+for name,path,action in [
+    ('settings.json', os.path.join(claude_dir,'settings.json'), 'settings'),
+    ('installed_plugins.json', os.path.join(claude_dir,'plugins','installed_plugins.json'), 'installed'),
+    ('known_marketplaces.json', os.path.join(claude_dir,'plugins','known_marketplaces.json'), 'known'),
+]:
+    if not os.path.isfile(path): continue
+    with open(path) as f: d=json.load(f)
+    changed=False
+    if action=='settings':
+        ep=d.get('enabledPlugins',{})
+        if plugin_key in ep: del ep[plugin_key]; changed=True
+        if not ep and 'enabledPlugins' in d: del d['enabledPlugins']; changed=True
+        ekm=d.get('extraKnownMarketplaces',{})
+        if mkt_name in ekm: del ekm[mkt_name]; changed=True
+        if not ekm and 'extraKnownMarketplaces' in d: del d['extraKnownMarketplaces']; changed=True
+    elif action=='installed':
+        plugins=d.get('plugins',{})
+        if plugin_key in plugins: del plugins[plugin_key]; changed=True
+    elif action=='known':
+        if mkt_name in d: del d[mkt_name]; changed=True
+    if changed:
+        with open(path,'w') as f: json.dump(d,f,indent=2); f.write('\n')
+        print(f'  [ok] {name}')
+" "$CLAUDE_DIR" "$MARKETPLACE_NAME" "$PLUGIN_KEY"
+    elif command -v jq &>/dev/null; then
+        if [ -f "$settings" ] && grep -q "$MARKETPLACE_NAME" "$settings" 2>/dev/null; then
+            jq --arg pk "$PLUGIN_KEY" --arg mn "$MARKETPLACE_NAME" \
+                'del(.enabledPlugins[$pk]) | if .enabledPlugins == {} then del(.enabledPlugins) else . end
+                 | del(.extraKnownMarketplaces[$mn]) | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end' \
+                "$settings" > "$settings.tmp"
+            mv "$settings.tmp" "$settings"
+            echo "  [ok] settings.json"
+        fi
+        if [ -f "$installed" ]; then
+            jq --arg pk "$PLUGIN_KEY" 'del(.plugins[$pk])' "$installed" > "$installed.tmp"
+            mv "$installed.tmp" "$installed"
+            echo "  [ok] installed_plugins.json"
+        fi
+        if [ -f "$known" ]; then
+            jq --arg mn "$MARKETPLACE_NAME" 'del(.[$mn])' "$known" > "$known.tmp"
+            mv "$known.tmp" "$known"
+            echo "  [ok] known_marketplaces.json"
         fi
     fi
 
-    if [ -d "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" ]; then
-        rm -rf "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin"
-        echo "  [ok] removed cache/hukuhaka-plugin"
-    fi
-
-    if [ -d "$CLAUDE_DIR/plugins/hukuhaka-plugin" ]; then
-        rm -rf "$CLAUDE_DIR/plugins/hukuhaka-plugin"
-        echo "  [ok] removed plugins/hukuhaka-plugin"
+    # Remove cache
+    if [ -d "$CLAUDE_DIR/plugins/cache/$MARKETPLACE_NAME" ]; then
+        rm -rf "$CLAUDE_DIR/plugins/cache/$MARKETPLACE_NAME"
+        echo "  [ok] removed cache/$MARKETPLACE_NAME"
     fi
 }
 
@@ -242,7 +342,7 @@ if $UNINSTALL; then
         fi
     done < <(manifest_files)
 
-    cleanup_marketplace
+    unregister_plugin
 
     if ! $DRY_RUN; then
         find "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/skills" -type d -empty -delete 2>/dev/null || true
@@ -275,8 +375,8 @@ collect() {
     done >> "$NEW_LIST"
 }
 
-# Plugin
-[ -d "$PLUGIN_SRC" ] && collect "$PLUGIN_SRC" "plugins/project-mapper"
+# Plugin — deploy to marketplace path
+[ -d "$PLUGIN_SRC" ] && collect "$PLUGIN_SRC" "plugins/$MARKETPLACE_NAME/$PLUGIN_NAME"
 
 # Standalone skills
 for skill_dir in "$SKILLS_SRC"/*/; do
@@ -295,7 +395,7 @@ if [ -f "$MANIFEST" ]; then
     manifest_files | sort > "$OLD_LIST"
 else
     # First manifest-based deploy: scan existing dirs to detect stale files
-    for scan_dir in "$CLAUDE_DIR/plugins/project-mapper" "$CLAUDE_DIR/plugins/hukuhaka-plugin/project-mapper"; do
+    for scan_dir in "$CLAUDE_DIR/plugins/project-mapper" "$CLAUDE_DIR/plugins/$MARKETPLACE_NAME/$PLUGIN_NAME"; do
         [ -d "$scan_dir" ] || continue
         find "$scan_dir" -type f | while IFS= read -r file; do
             echo "${file#"$CLAUDE_DIR"/}"
@@ -311,8 +411,8 @@ sort -o "$NEW_LIST" "$NEW_LIST"
 resolve_src() {
     local rel="$1"
     case "$rel" in
-        plugins/project-mapper/*)
-            echo "$PLUGIN_SRC/${rel#plugins/project-mapper/}" ;;
+        plugins/$MARKETPLACE_NAME/$PLUGIN_NAME/*)
+            echo "$PLUGIN_SRC/${rel#plugins/$MARKETPLACE_NAME/$PLUGIN_NAME/}" ;;
         skills/*/*)
             echo "$SKILLS_SRC/${rel#skills/}" ;;
         CLAUDE.md)
@@ -339,6 +439,52 @@ while IFS= read -r rel; do
 done < "$NEW_LIST"
 echo "  $count files"
 
+# ── Generate marketplace manifest ────────────────────────────────────
+
+generate_marketplace_manifest() {
+    local mkt_manifest="$CLAUDE_DIR/plugins/$MARKETPLACE_NAME/.claude-plugin/marketplace.json"
+    local version="${VERSION:-unknown}"
+
+    if $DRY_RUN; then
+        echo "  [dry-run] marketplace.json"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$mkt_manifest")"
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys
+d={
+    'name':sys.argv[1],
+    'description':'Codebase analysis and .claude/ documentation generation',
+    'owner':{'name':'hukuhaka'},
+    'plugins':[{
+        'name':sys.argv[2],
+        'description':'Codebase analysis and .claude/ documentation generation',
+        'version':sys.argv[3],
+        'author':{'name':'hukuhaka'},
+        'source':'./'+sys.argv[2]
+    }]
+}
+with open(sys.argv[4],'w') as f: json.dump(d,f,indent=2); f.write('\n')
+" "$MARKETPLACE_NAME" "$PLUGIN_NAME" "$version" "$mkt_manifest"
+    elif command -v jq &>/dev/null; then
+        jq -n --arg mn "$MARKETPLACE_NAME" --arg pn "$PLUGIN_NAME" --arg v "$version" \
+            '{name:$mn,description:"Codebase analysis and .claude/ documentation generation",
+              owner:{name:"hukuhaka"},
+              plugins:[{name:$pn,description:"Codebase analysis and .claude/ documentation generation",
+                        version:$v,author:{name:"hukuhaka"},source:("./"+$pn)}]}' \
+            > "$mkt_manifest"
+    fi
+
+    # Add to file list for manifest tracking
+    echo "plugins/$MARKETPLACE_NAME/.claude-plugin/marketplace.json" >> "$NEW_LIST"
+    sort -o "$NEW_LIST" "$NEW_LIST"
+    echo "  [ok] marketplace.json"
+}
+
+generate_marketplace_manifest
+
 # ── Remove stale files ───────────────────────────────────────────────
 
 comm -23 "$OLD_LIST" "$NEW_LIST" > "$STALE_LIST"
@@ -360,9 +506,18 @@ if [ -s "$STALE_LIST" ]; then
     done < "$STALE_LIST"
 fi
 
-# ── Marketplace migration ────────────────────────────────────────────
+# ── Remove standalone path (migration) ───────────────────────────────
 
-cleanup_marketplace
+if [ -d "$CLAUDE_DIR/plugins/$PLUGIN_NAME" ] && ! $DRY_RUN; then
+    echo ""
+    echo "Removing standalone plugins/$PLUGIN_NAME:"
+    rm -rf "$CLAUDE_DIR/plugins/$PLUGIN_NAME"
+    echo "  [ok] removed"
+fi
+
+# ── Register plugin ──────────────────────────────────────────────────
+
+ensure_plugin_registered "${VERSION:-unknown}"
 
 # ── Clean empty directories ──────────────────────────────────────────
 

@@ -108,7 +108,7 @@ for name,path,keys in [
 " "$CLAUDE_DIR" 2>/dev/null || true
     fi
 
-    for d in "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" "$CLAUDE_DIR/plugins/hukuhaka-plugin"; do
+    for d in "$CLAUDE_DIR/plugins/cache/hukuhaka-plugin" "$CLAUDE_DIR/plugins/hukuhaka-plugin" "$CLAUDE_DIR/plugins/project-mapper"; do
         [ -d "$d" ] && rm -rf "$d"
     done
 
