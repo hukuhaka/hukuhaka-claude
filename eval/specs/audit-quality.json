@@ -1,0 +1,40 @@
+{
+  "spec_id": "audit-quality",
+  "skill": "audit",
+  "description": "Audit findings quality rules — confidence, effort, evidence, suggestion quality",
+  "rules": [
+    {
+      "rule_id": "AUDIT-Q01",
+      "severity": "critical",
+      "type": "must",
+      "description": "Every finding must include a confidence level (high, medium, or low) indicating verification certainty."
+    },
+    {
+      "rule_id": "AUDIT-Q02",
+      "severity": "critical",
+      "type": "must",
+      "description": "Every finding must include an effort estimate (small, medium, or large) with clear sizing rationale."
+    },
+    {
+      "rule_id": "AUDIT-Q03",
+      "severity": "critical",
+      "type": "must",
+      "description": "Every finding's evidence must be backed by at least 1 actual Grep or Read tool call result — not just file names, sizes, or assumptions."
+    },
+    {
+      "rule_id": "AUDIT-Q04",
+      "severity": "critical",
+      "type": "must",
+      "description": "Every suggestion must be actionable with concrete details: target file names, specific refactoring technique, what to extract/remove/merge."
+    },
+    {
+      "rule_id": "AUDIT-Q05",
+      "severity": "critical",
+      "type": "must",
+      "description": "Final output must include a Stats line with confidence distribution (counts of high, medium, low confidence findings)."
+    }
+  ],
+  "scenarios": [
+    "AUDIT-QUAL-S01"
+  ]
+}

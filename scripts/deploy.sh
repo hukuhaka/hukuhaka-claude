@@ -515,6 +515,13 @@ if [ -d "$CLAUDE_DIR/plugins/$PLUGIN_NAME" ] && ! $DRY_RUN; then
     echo "  [ok] removed"
 fi
 
+# ── Invalidate cache ─────────────────────────────────────────────────
+
+if ! $DRY_RUN && [ -d "$CLAUDE_DIR/plugins/cache/$MARKETPLACE_NAME" ]; then
+    rm -rf "$CLAUDE_DIR/plugins/cache/$MARKETPLACE_NAME"
+    echo "  [ok] cache invalidated"
+fi
+
 # ── Register plugin ──────────────────────────────────────────────────
 
 ensure_plugin_registered "${VERSION:-unknown}"

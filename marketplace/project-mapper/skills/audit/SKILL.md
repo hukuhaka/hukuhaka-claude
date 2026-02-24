@@ -8,14 +8,14 @@ description: >
 
 # Audit
 
-Analyze codebase for improvement opportunities and add findings to backlog.
+Analyze codebase for improvement opportunities via 2-agent pipeline, then add findings to backlog.
 
 ## Rules
 
 - All `subagent_type` values MUST use `project-mapper:` prefix (e.g., `project-mapper:auditor`)
-- Do NOT scan code yourself (no Glob, Read, Grep for analysis). Delegate to auditor agent
+- Do NOT scan code yourself (no Glob, Read, Grep for analysis). Delegate to agents
 - On failure: STOP. Do NOT attempt workarounds
-- NEVER use the Write tool. Only use Edit to modify backlog.md (even if file is empty or missing sections)
+- NEVER use the Write tool. Only use Edit to modify backlog.md
 
 ## Options
 
@@ -24,17 +24,37 @@ Analyze codebase for improvement opportunities and add findings to backlog.
 
 ## Flow
 
+Sequential 2-agent pipeline. See [audit-pipeline.md](references/audit-pipeline.md) for detailed steps.
+
 1. Parse options from user input (defaults: focus=all, threshold=300)
-2. Spawn exactly 1 auditor agent with parsed options:
+2. **Step 1** — Spawn exactly 1 `project-mapper:auditor` Task → returns context JSON
+3. **Step 2** — Spawn exactly 1 `project-mapper:analyzer` Task (improve mode + context from Step 1) → returns findings JSON
+4. Format findings grouped by priority (see Output Template)
+5. Ask user which findings to add to backlog (all, by priority, or specific items)
+6. For confirmed findings, Edit `.claude/backlog.md` to append under `## Planned` in the matching priority section
+
+## Output Template
 
 ```
-Task(subagent_type: "project-mapper:auditor", prompt: "Audit codebase. focus: <focus>, threshold: <threshold>")
+## Audit Results
+
+### High Priority (N items)
+- `file:line` title [confidence] effort:small — suggestion
+
+### Medium Priority (N items)
+- `file:line` title [confidence] effort:medium — suggestion
+
+### Low Priority (N items)
+- `file:line` title [confidence] effort:large — suggestion
+
+Stats: N files scanned, N categories checked, N total findings (N high-confidence, N medium, N low)
 ```
 
-3. Display the auditor's formatted results (already grouped by priority: High/Medium/Low with counts and Stats)
-4. Ask user which findings to add to backlog (all, by priority, or specific items)
-5. For confirmed findings, Edit `.claude/backlog.md` to append under `## Planned` in the matching priority section:
-   - High → `### High Priority`
-   - Medium → `### Medium Priority`
-   - Low → `### Low Priority`
-   - Format: `- [ ] \`file\`: title — suggestion`
+Each finding includes confidence (`[high]`/`[medium]`/`[low]`) and effort (`effort:small`/`effort:medium`/`effort:large`). Omit empty priority sections. Always include Stats line.
+
+## Backlog Format
+
+- High → `### High Priority`
+- Medium → `### Medium Priority`
+- Low → `### Low Priority`
+- Format: `- [ ] \`file\`: title [confidence] — suggestion`

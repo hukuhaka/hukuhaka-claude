@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUDIT-QUAL-S01",
+  "scenario_name": "audit quality: findings quality",
+  "skill": "audit",
+  "eval_type": "audit-quality",
+  "spec": "audit-quality",
+  "prompt": "/project-mapper:audit --focus all. Add all findings to backlog.",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions"
+}

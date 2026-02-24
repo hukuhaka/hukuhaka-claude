@@ -22,7 +22,7 @@ CACHE=false
 MODEL="sonnet"
 
 usage() {
-  echo "Usage: $0 --type <logic|quality> --scenario <ID> [--cache] [--model <model>]"
+  echo "Usage: $0 --type <logic|quality|audit-quality> --scenario <ID> [--cache] [--model <model>]"
   echo "       $0 --type logic --spec <spec-id> [--cache]"
   exit 1
 }
@@ -127,10 +127,13 @@ BACKLOG
     [[ -f "$transcript_file" ]] || { echo "  ERROR: No cached transcript found"; return 1; }
   fi
 
-  # Step 2: Extract docs (for quality eval)
+  # Step 2: Extract artifacts (for quality / audit-quality eval)
   if [[ "$eval_type_s" == "quality" ]]; then
     echo "  Extracting docs..."
     python3 "$EVAL_DIR/extract_docs.py" "$transcript_file" --id "$sid"
+  elif [[ "$eval_type_s" == "audit-quality" ]]; then
+    echo "  Extracting findings..."
+    python3 "$EVAL_DIR/extract_findings.py" "$transcript_file" --id "$sid"
   fi
 
   # Step 3: Run judge
@@ -147,6 +150,11 @@ BACKLOG
       ;;
     quality)
       python3 "$EVAL_DIR/eval_quality.py" "$EVAL_DIR/outputs/$sid" \
+        --model "$MODEL" \
+        -o "$result_file"
+      ;;
+    audit-quality)
+      python3 "$EVAL_DIR/eval_audit_quality.py" "$EVAL_DIR/outputs/$sid" \
         --model "$MODEL" \
         -o "$result_file"
       ;;
