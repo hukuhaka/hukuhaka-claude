@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scrip
 Install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash -s -- --version 0.0.1
+curl -fsSL https://raw.githubusercontent.com/hukuhaka/hukuhaka-claude/main/scripts/install.sh | bash -s -- --version 0.0.2
 ```
 
 ### Local Install (Development)
@@ -36,20 +36,35 @@ scripts/deploy.sh
 
 Codebase analysis and `.claude/` documentation generation.
 
+### Commands
+
 | Command | Description |
 |---------|-------------|
 | `/project-mapper:map-init` | Create empty `.claude/` documentation template |
 | `/project-mapper:map-sync .` | Full sync pipeline: analyze, write, scatter, validate |
 | `/project-mapper:map-validate` | Check all `.claude/` documentation links |
-| `/project-mapper:map-compact` | Clean up changelog and implementation docs |
+| `/project-mapper:map-compact` | Clean up changelog and backlog docs |
 | `/project-mapper:map-clean` | Remove scattered CLAUDE.md files |
 | `/project-mapper:map-summary` | Compress `.claude/` docs for LLM context |
+| `/project-mapper:map-status` | Show `.claude/` documentation status |
+
+### Skills
+
+| Skill | Description |
+|-------|-------------|
+| `/project-mapper:audit` | Codebase audit — find bugs, dead code, duplicates, refactoring opportunities |
+| `/project-mapper:query` | Ask questions about project architecture |
+| `/project-mapper:review` | Code review with `.claude/` context |
+| `/project-mapper:elaborate` | Expand analyses via elaborator agent |
+| `/project-mapper:flow-tracer` | Trace code flow and call chains |
 
 ## Standalone Skills
 
 | Skill | Description |
 |-------|-------------|
 | `/codex-coworker` | Collaborative problem-solving with OpenAI Codex |
+| `/skill-creator` | Step-by-step skill creation guide |
+| `/mcp-builder` | MCP server builder and tester |
 
 ## Deploy Options
 
