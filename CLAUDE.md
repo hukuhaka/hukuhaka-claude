@@ -59,6 +59,43 @@ Guidelines:
 - Style/format changes? Check full scope first
 - Ambiguous? Ask
 
+## Eval
+
+Transcript-based LLM-as-judge evaluation. 3 eval types, each with its own pipeline.
+
+### Types
+
+| Type | Extract | Judge | Rubric/Spec |
+|------|---------|-------|-------------|
+| `logic` | (none — raw transcript) | [eval_logic.py](eval/eval_logic.py): truncate transcript → spec rules pass/fail | `eval/specs/*.json`: per-rule pass/fail |
+| `quality` | [extract_docs.py](eval/extract_docs.py): Write tool calls → `.claude/` files | [eval_quality.py](eval/eval_quality.py): 5-dim rubric scoring (1-5) | [quality-rubric.md](eval/quality-rubric.md): completeness, accuracy, depth, format, coherence |
+| `audit-quality` | [extract_findings.py](eval/extract_findings.py): 3 artifacts (findings.json, formatted_output.md, backlog_edit.md) | [eval_audit_quality.py](eval/eval_audit_quality.py): 5-dim rubric scoring (1-5) | [audit-quality-rubric.md](eval/audit-quality-rubric.md): evidence, actionability, calibration, coverage, fidelity |
+
+### Run
+
+```
+eval/run_eval.sh --type <logic|quality|audit-quality> --scenario <ID> [--cache] [--model <model>]
+eval/run_eval.sh --type logic --spec <spec-id>   # all scenarios in spec
+```
+
+`--cache`: reuse captured transcript, re-run judge only
+
+### Structure
+
+- `eval/specs/`: rule definitions (logic) or quality rules (cross-check)
+- `eval/scenarios/`: scenario JSON (prompt, cwd, eval_type, capture_flags)
+- `eval/transcripts/`: captured JSONL (gitignored)
+- `eval/outputs/`: extracted artifacts per scenario (gitignored)
+- `eval/results/`: judge output JSON (gitignored)
+
+### Workflow: Modify → Validate → Deploy → Eval
+
+1. Modify skill/agent files
+2. `scripts/validate.sh` — JSON lint, frontmatter, deploy dry-run
+3. `scripts/deploy.sh` — copy to `~/.claude/plugins/`
+4. `eval/run_eval.sh --type <type> --scenario <ID>` — capture + judge
+5. `eval/run_eval.sh --type <type> --scenario <ID> --cache` — re-judge only
+
 ## Git
 
 Do not include 'Co-authored-by' or any co-worker attributions in commit messages.
