@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUDIT-LOGIC-S01",
+  "scenario_name": "audit logic: full flow",
+  "skill": "audit",
+  "eval_type": "logic",
+  "spec": "audit-logic",
+  "prompt": "/project-mapper:audit --focus all. Add all findings to backlog.",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions"
+}

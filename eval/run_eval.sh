@@ -89,10 +89,26 @@ run_scenario() {
     (cd "$testbed_dir" && git checkout -- . && git clean -fd) 2>/dev/null || true
     mkdir -p "$testbed_dir/.claude"
 
-    # Seed empty .claude/ files
-    for doc in map.md design.md backlog.md changelog.md; do
+    # Seed .claude/ files with minimal content
+    for doc in map.md design.md changelog.md; do
       [[ -f "$testbed_dir/.claude/$doc" ]] || touch "$testbed_dir/.claude/$doc"
     done
+    # Backlog needs section headers so skills can Edit (not Write)
+    [[ -f "$testbed_dir/.claude/backlog.md" ]] || cat > "$testbed_dir/.claude/backlog.md" <<'BACKLOG'
+# Backlog
+
+## Planned
+
+### High Priority
+
+### Medium Priority
+
+### Low Priority
+
+## In Progress
+
+## Done
+BACKLOG
 
     echo "  Capturing transcript..."
     mkdir -p "$EVAL_DIR/transcripts" "$EVAL_DIR/results"

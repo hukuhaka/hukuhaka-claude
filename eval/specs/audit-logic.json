@@ -1,0 +1,40 @@
+{
+  "spec_id": "audit-logic",
+  "skill": "audit",
+  "description": "Audit pipeline compliance rules for audit skill",
+  "rules": [
+    {
+      "rule_id": "AUDIT-G01",
+      "severity": "critical",
+      "type": "must",
+      "description": "All Task calls must use fully qualified subagent_type with 'project-mapper:' prefix (e.g., 'project-mapper:auditor', not 'auditor')"
+    },
+    {
+      "rule_id": "AUDIT-01",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must spawn exactly 1 project-mapper:auditor Task. No additional auditor, analyzer, or other subagent Tasks allowed from the main context."
+    },
+    {
+      "rule_id": "AUDIT-02",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not directly scan code using Glob, Read, or Grep tools for analysis purposes. All code analysis must be delegated to the auditor subagent."
+    },
+    {
+      "rule_id": "AUDIT-03",
+      "severity": "critical",
+      "type": "must",
+      "description": "Findings must be displayed grouped by priority: High Priority, Medium Priority, Low Priority sections with item counts."
+    },
+    {
+      "rule_id": "AUDIT-04",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not use Write tool. Only Edit tool is allowed for appending findings to backlog.md."
+    }
+  ],
+  "scenarios": [
+    "AUDIT-LOGIC-S01"
+  ]
+}
