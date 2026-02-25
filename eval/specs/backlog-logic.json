@@ -1,0 +1,40 @@
+{
+  "spec_id": "backlog-logic",
+  "skill": "backlog",
+  "description": "Backlog capture compliance rules for backlog skill",
+  "rules": [
+    {
+      "rule_id": "BL-01",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not spawn any Task agents. All work must be handled directly by the skill — no subagent_type calls allowed."
+    },
+    {
+      "rule_id": "BL-02",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not use the Write tool. Only Edit tool is allowed for modifying backlog.md."
+    },
+    {
+      "rule_id": "BL-03",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must Read backlog.md before any Edit call (pre-flight check). The Read call for backlog.md must appear in the transcript before the first Edit call."
+    },
+    {
+      "rule_id": "BL-04",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must use AskUserQuestion to confirm priority with the user before editing backlog.md, unless --priority flag was explicitly provided in the prompt."
+    },
+    {
+      "rule_id": "BL-05",
+      "severity": "major",
+      "type": "must",
+      "description": "Must perform at least 1 codebase research call (Grep or Glob) before editing backlog.md."
+    }
+  ],
+  "scenarios": [
+    "BACKLOG-LOGIC-S01"
+  ]
+}
