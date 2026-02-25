@@ -1,0 +1,11 @@
+{
+  "scenario_id": "VERIFY-LOGIC-S01",
+  "scenario_name": "verify logic: check spec.md against codebase",
+  "skill": "map-setup",
+  "eval_type": "logic",
+  "spec": "verify-logic",
+  "prompt": "/project-mapper:map-verify",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions"
+}

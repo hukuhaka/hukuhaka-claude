@@ -1,0 +1,40 @@
+{
+  "spec_id": "verify-logic",
+  "skill": "map-setup",
+  "description": "Verify command compliance rules — spec.md content vs codebase drift check",
+  "rules": [
+    {
+      "rule_id": "VERIFY-01",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must spawn verifier agent via Task tool with subagent_type 'project-mapper:verifier'."
+    },
+    {
+      "rule_id": "VERIFY-02",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must Read .claude/spec.md (either in command pre-flight or within the verifier agent)."
+    },
+    {
+      "rule_id": "VERIFY-03",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must run Analysis Protocol tool calls — at minimum Glob and Grep to explore actual codebase (not just read spec.md)."
+    },
+    {
+      "rule_id": "VERIFY-04",
+      "severity": "critical",
+      "type": "must",
+      "description": "Report must include 'Sections checked', 'Accurate', and 'Drift' counts."
+    },
+    {
+      "rule_id": "VERIFY-05",
+      "severity": "major",
+      "type": "must",
+      "description": "When drift is found, must include section number and specific issue description with classification (INACCURATE, MISSING, or OUTDATED)."
+    }
+  ],
+  "scenarios": [
+    "VERIFY-LOGIC-S01"
+  ]
+}
