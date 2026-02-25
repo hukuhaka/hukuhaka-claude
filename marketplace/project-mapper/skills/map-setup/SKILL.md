@@ -17,17 +17,36 @@ Setup and teardown for `.claude/` project documentation.
 
 ## init
 
-Create empty `.claude/` template. Handle directly — no agents.
+Create `.claude/` with 5 files including spec.md. Handle directly — no agents.
 
-1. Create `.claude/` directory if it does not exist
-2. Write these 4 files using the Write tool:
+### Phase 1: Pre-flight
+
+1. Check `.claude/` existence, check which files exist
+2. Detect project state: `Glob("**/*.{py,ts,js,go,rs,java,rb,sh,c,cpp}", head_limit: 20)`
+   - 0 source files → Case 1 (new project)
+   - 1+ source files → Case 2 (existing project)
+3. If `.claude/spec.md` exists: AskUserQuestion "Overwrite existing spec.md or keep it?"
+   - If keep → skip spec generation, still create other 4 if missing
+
+### Phase 2: Generate spec.md
+
+Follow [spec-guide.md](references/spec-guide.md).
+
+- Case 1: Interview Protocol (3 AskUserQuestion rounds)
+- Case 2: Analysis Protocol (code analysis + 1 confirmation round)
+
+### Phase 3: Write
+
+1. Create `.claude/` if needed
+2. Write 5 files using the Write tool:
    - `.claude/map.md` — empty template with sections: Entry Points, Data Flow, Components, Structure
    - `.claude/design.md` — empty template with sections: Stack, Patterns, Decisions
    - `.claude/backlog.md` — MUST include `## Planned`, `## In Progress`, `## Discovered TODOs`
    - `.claude/changelog.md` — empty template with sections: Recent, Archive
-3. Report: "Init complete — created .claude/ with 4 template files"
+   - `.claude/spec.md` — generated from Phase 2
+3. Report: "Init complete — created .claude/ with 5 files"
 
-If files already exist, overwrite with fresh templates. Zero Task calls.
+If 4 files exist but spec.md is missing, only create spec.md. Zero Task calls.
 
 ## clean
 

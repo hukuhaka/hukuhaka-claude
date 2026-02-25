@@ -1,0 +1,11 @@
+{
+  "scenario_id": "INIT-LOGIC-S01",
+  "scenario_name": "init logic: create 5 template files",
+  "skill": "map-setup",
+  "eval_type": "logic",
+  "spec": "init-logic",
+  "prompt": "/project-mapper:map-init",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions"
+}

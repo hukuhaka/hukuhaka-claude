@@ -15,7 +15,7 @@ from pathlib import Path
 def truncate_transcript(transcript_path: str) -> str:
     """Load and aggressively truncate transcript for judge context.
 
-    Removes thinking blocks, truncates tool inputs to 200 chars,
+    Removes thinking blocks, truncates tool inputs to 2500 chars,
     tool results to 300 chars, text to 500 chars.
     """
     lines = []
@@ -66,7 +66,7 @@ def truncate_transcript(transcript_path: str) -> str:
                     slim_inp = {}
                     for k, v in inp.items():
                         s = str(v)
-                        slim_inp[k] = s[:200] + "..." if len(s) > 200 else v
+                        slim_inp[k] = s[:2500] + "..." if len(s) > 2500 else v
                     slim_block["input"] = slim_inp
                     slim_content.append(slim_block)
                 elif bt == "text":

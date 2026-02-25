@@ -1,16 +1,18 @@
 ---
 name: map-init
-description: "Create empty .claude/ documentation template"
+description: "Create .claude/ documentation with auto-analysis for existing projects"
 ---
 
 # /project-mapper:map-init
 
-Create empty `.claude/` documentation scaffolding. No agents — handle directly.
+Create `.claude/` documentation scaffolding. For existing projects with source files, auto-analyze and populate spec.md. No agents — handle directly.
 
 ## Steps
 
+### Step 1 — Scaffold
+
 1. Create `.claude/` directory if it does not exist
-2. Write 4 template files:
+2. Write 5 template files using the exact templates below:
 
 **map.md**:
 ```
@@ -58,9 +60,69 @@ Create empty `.claude/` documentation scaffolding. No agents — handle directly
 ## Archive
 ```
 
-3. Report: "Init complete — created .claude/ with 4 template files"
+**spec.md**:
+```
+# Project Spec
+> Prescriptive — do not modify without explicit approval
+
+## 1. Overview & Goals
+(To be defined)
+
+## 2. Architecture Decisions
+(To be defined)
+
+## 3. Directory Structure
+(To be defined)
+
+## 4. Interface Contracts
+(To be defined)
+
+## 5. Component Contracts
+(To be defined)
+
+## 6. Naming Contracts
+(To be defined)
+
+## 7. Configuration Rules
+(To be defined)
+
+## 8. Contract Tests
+(To be defined)
+
+## 9. Definition of Done
+(To be defined)
+```
+
+### Step 2 — Project Detection
+
+3. Run `Glob("**/*.{py,ts,js,go,rs,java,rb,sh,c,cpp}", head_limit: 20)` to detect source files
+4. Count results:
+   - **0 source files** → skip to Step 4 (Report)
+   - **1+ source files** → continue to Step 3 (Auto-analysis)
+
+### Step 3 — Auto-analysis (only when 1+ source files)
+
+Run these tool calls to gather project information (no AskUserQuestion — fully automatic):
+
+1. `Glob("*/", head_limit: 15)` → top-level directory names for **Section 3** (Directory Structure)
+2. From the source Glob results in Step 2 → detect primary language(s) by file extension
+3. `Grep("class.*ABC|abstract class|interface |protocol |trait ")` → interface signatures for **Section 4** (Interface Contracts)
+4. `Grep("class |module |export default")` → component names for **Section 5** (Component Contracts)
+5. `Glob("**/*.{yaml,yml,toml,json,ini,env}")` → config file list for **Section 7** (Configuration Rules)
+6. `Read` the project manifest (package.json, pyproject.toml, go.mod, Cargo.toml, etc.) → tech stack and dependencies for **Section 2** (Architecture Decisions)
+7. `Read` top 1-2 interface files from step 3 → extract key signatures for **Section 4**
+
+**Thin project rule**: If fewer than 5 source files, Sections 4, 5, 6 remain `(To be defined)`.
+
+After gathering, **Write** spec.md with detected content replacing `(To be defined)` for populated sections. Sections 1, 6, 8, 9 always stay `(To be defined)`. Keep the `# Project Spec` header, `> Prescriptive` line, and all 9 `## N.` section headings. Line limit: 150 lines max.
+
+### Step 4 — Report
+
+5. Report: "Init complete — created .claude/ with 5 template files" (if 0 source files) or "Init complete — created .claude/ with 5 files, spec.md auto-populated from project analysis" (if auto-analysis ran)
 
 ## Rules
 
 - Do NOT spawn any Task agents
 - If files already exist, overwrite with fresh templates
+- Do NOT use AskUserQuestion — auto-analysis is fully non-interactive
+- spec.md populated sections must contain actual detected content, not placeholders

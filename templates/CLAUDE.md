@@ -6,6 +6,7 @@
 - `.claude/map.md` - codebase structure
 - `.claude/design.md` - architecture decisions
 - `.claude/backlog.md` - current tasks
+- `.claude/spec.md` - interface/naming contracts
 
 If `.claude/` docs don't exist, run `/project-mapper:map-setup init`
 
@@ -15,6 +16,7 @@ If `.claude/` docs don't exist, run `/project-mapper:map-setup init`
 - [design.md](.claude/design.md): tech spec, architecture decisions
 - [backlog.md](.claude/backlog.md): Planned, In Progress, TODOs
 - [changelog.md](.claude/changelog.md): Recent (load) + Archive (on demand)
+- [spec.md](.claude/spec.md): interface contracts, naming rules, definition of done
 
 ## Doc Format
 
@@ -26,6 +28,7 @@ Style: `[name](path): description` (llms.txt)
 | design.md | tech stack, `file:symbol` pointers |
 | backlog.md | Planned, In Progress, TODOs |
 | changelog.md | Recent only (Archive on demand) |
+| spec.md | contracts, naming, done criteria |
 
 Guidelines:
 - Target: map <100, design <100 lines (flexible for large projects)
@@ -34,13 +37,14 @@ Guidelines:
 
 ## Workflow
 
-1. Read → `.claude/map.md`, `design.md`, `backlog.md`
+1. Read → `.claude/map.md`, `design.md`, `backlog.md`, `spec.md`
 2. Locate → find relevant files via `map.md`
 3. Context → understand architecture via `design.md`
-4. Implement → follow `design.md` patterns
-5. Verify → tests (`make test` or project-specific)
-6. Sync → if reality ≠ design, update `design.md`
-7. Archive → completed tasks → `changelog.md`
+4. Check → verify spec.md contracts (changes require explicit approval)
+5. Implement → follow `design.md` patterns + `spec.md` contracts
+6. Verify → tests + contract compliance
+7. Sync → if reality ≠ design, update `design.md`
+8. Archive → completed tasks → `changelog.md`
 
 ## Task (Subagent) Rules
 
@@ -57,6 +61,7 @@ Guidelines:
 - No features outside `design.md`
 - No "done" without verifiable success criteria (tests, manual check)
 - No file deletion without confirmation
+- No spec.md contract changes without explicit sign-off
 - Clean `backlog.md` after task completion
 
 ## Git
