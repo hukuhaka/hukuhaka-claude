@@ -78,12 +78,17 @@ Q: Where do tests live?
 
 ```
 {{ PROJECT_ROOT }}/
-  {{ DIR_1 }}/    # {{ RESPONSIBILITY_1 }}
-  {{ DIR_2 }}/    # {{ RESPONSIBILITY_2 }}
+  {{ DIR_1 }}/    # {{ RESPONSIBILITY_1 }}. Forbidden: {{ FORBIDDEN_1 }}
+  {{ DIR_2 }}/    # {{ RESPONSIBILITY_2 }}. Forbidden: {{ FORBIDDEN_2 }}
   {{ DIR_3 }}/    # {{ RESPONSIBILITY_3 }}
   tests/
     test_contracts.py   # Interface contract enforcement — always present
     {{ TEST_DIR }}/     # {{ WHAT_IS_TESTED }}
+
+# Example:
+#   src/utils/    # Pure helpers. Forbidden: business logic, I/O, DB imports
+#   src/models/   # Domain models. Forbidden: HTTP imports, framework deps
+#   src/api/      # HTTP handlers
 ```
 
 ---
@@ -174,6 +179,18 @@ One table per component.
 
 > **Rule:** {{ KEY_RULE_FOR_THIS_COMPONENT }}
 
+<!-- Example:
+### DataLoader (`src/data/loader.py`)
+
+| Method | Responsibility | Constraint |
+|--------|---------------|------------|
+| `__init__` | Set config | No I/O, no network calls |
+| `load` | Read from source | Must be idempotent |
+| `validate` | Check schema | Must raise ValueError on invalid |
+
+> **Rule:** All I/O happens in `load()` only — never in constructor or validate.
+-->
+
 ### {{ COMPONENT_2 }} (`{{ COMPONENT_2_PATH }}`)
 
 | Method | Responsibility | Constraint |
@@ -229,38 +246,19 @@ Three test categories to always include:
   3. Behavior — does input → output match the contract?
 -->
 
-```python
-import inspect
-import pytest
-from {{ MODULE_PATH }} import {{ BASE_CLASS }}, {{ CONCRETE_CLASS_1 }}
+Test expectations derived from Sections 4 and 5:
 
+**Structural** — class hierarchy intact
+- All implementations extend {{ BASE_CLASS }}
+- {{ STRUCTURAL_EXPECTATION_2 }}
 
-ALL_IMPLEMENTATIONS = [{{ CONCRETE_CLASS_1 }}]  # Register every implementation here
+**Signature** — method signatures unchanged
+- {{ BASE_CLASS }}.{{ CORE_METHOD }} params: {{ EXPECTED_PARAMS }}
+- {{ SIGNATURE_EXPECTATION_2 }}
 
-
-def test_all_implementations_extend_base():
-    """No implementation may bypass the contract."""
-    for cls in ALL_IMPLEMENTATIONS:
-        assert issubclass(cls, {{ BASE_CLASS }}), \
-            f"{cls.__name__} must extend {{ BASE_CLASS }}"
-
-
-def test_core_method_signature_unchanged():
-    """Catch accidental signature drift on the primary method."""
-    sig = inspect.signature({{ BASE_CLASS }}.{{ CORE_METHOD }})
-    params = list(sig.parameters.keys())
-    assert params == {{ EXPECTED_PARAMS }}, \
-        f"Signature changed to: {params}"
-
-
-@pytest.mark.parametrize("cls", ALL_IMPLEMENTATIONS)
-def test_output_contract(cls):
-    """Verify output matches the contract in Section 4-2."""
-    instance = cls()
-    result = instance.{{ CORE_METHOD }}({{ DUMMY_INPUT }})
-    assert isinstance(result, {{ EXPECTED_OUTPUT_TYPE }})
-    # Add shape / schema assertions specific to your contract
-```
+**Behavior** — input/output matches contract
+- {{ CORE_METHOD }}({{ DUMMY_INPUT }}) returns {{ EXPECTED_OUTPUT_TYPE }}
+- {{ BEHAVIOR_EXPECTATION_2 }}
 
 ---
 

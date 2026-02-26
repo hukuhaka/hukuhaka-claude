@@ -46,14 +46,14 @@ When writing spec.md, transform facts into rules:
 - Each hard constraint → `### Why {decision}?` + rationale + `> Rule: {constraint}`
 - Non-selected items → omit (they are not constraints)
 
-### Interfaces (Section 4)
-- IMMUTABLE selections → `> IMMUTABLE` blockquote with signature
-- Non-selected interfaces → listed but not locked
-
 ### Directory Structure (Section 3)
 - Detected dirs → annotated with responsibility descriptions
 - Each dir gets a forbidden-content rule if pattern detected (e.g., "no business logic in utils/")
 - If no obvious constraints, describe responsibility only — do not fabricate rules
+
+### Interfaces (Section 4)
+- IMMUTABLE selections → `> IMMUTABLE` blockquote with signature
+- Non-selected interfaces → listed but not locked
 
 ### Component Contracts (Section 5)
 - Detected components → ownership boundary + key method constraints
@@ -62,6 +62,12 @@ When writing spec.md, transform facts into rules:
 
 ### Configuration (Section 7)
 - Detected config pattern → `Rule:` with scope from user selection
+
+### Contract Tests (Section 8)
+- Section 4 IMMUTABLE interfaces → structural test expectation (subclass check) + signature test expectation (params list)
+- Section 5 components with constraints → behavior test expectation per constraint
+- Both Sections 4 and 5 `(To be defined)` → Section 8 = `(To be defined)`
+- Do NOT generate actual test code. List test expectations as bullet points.
 
 ## Output Format
 
@@ -72,14 +78,6 @@ Sections: `## N. Section Title` — prose with Rule/IMMUTABLE markers.
 Undefined sections: `(To be defined)` on one line. Keep the section heading.
 
 Line limit: 150 lines max.
-
-## Contract Tests (Section 8)
-
-Derive from Sections 4 and 5:
-- Section 4 IMMUTABLE interfaces → structural test expectation (subclass check) + signature test expectation (params list)
-- Section 5 components with constraints → behavior test expectation per constraint
-- Both Sections 4 and 5 `(To be defined)` → Section 8 = `(To be defined)`
-- Do NOT generate actual test code. List test expectations as bullet points.
 
 ## Thin Project Rule
 
