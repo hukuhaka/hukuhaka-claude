@@ -308,7 +308,18 @@ if [ -f "$PLUGIN_JSON" ]; then
     VERSION=$(read_version "$PLUGIN_JSON")
 fi
 
-echo "hukuhaka-claude v${VERSION:-unknown}"
+PREV_VERSION=""
+if [ -f "$MANIFEST" ]; then
+    PREV_VERSION=$(read_version "$MANIFEST")
+fi
+
+if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "${VERSION:-unknown}" ]; then
+    echo "hukuhaka-claude v${PREV_VERSION} → v${VERSION:-unknown}"
+elif [ -n "$PREV_VERSION" ]; then
+    echo "hukuhaka-claude v${VERSION:-unknown} (reinstall)"
+else
+    echo "hukuhaka-claude v${VERSION:-unknown} (fresh install)"
+fi
 echo ""
 
 # ── Uninstall ─────────────────────────────────────────────────────────
@@ -422,6 +433,9 @@ resolve_src() {
 
 echo "Deploying:"
 count=0
+added=0
+updated=0
+unchanged=0
 while IFS= read -r rel; do
     [ -z "$rel" ] && continue
     src=$(resolve_src "$rel")
@@ -431,13 +445,27 @@ while IFS= read -r rel; do
     fi
     if $DRY_RUN; then
         echo "  [dry-run] $rel"
-    else
+    elif [ ! -f "$dst" ]; then
         mkdir -p "$(dirname "$dst")"
         cp "$src" "$dst"
+        added=$((added + 1))
+    elif ! cmp -s "$src" "$dst"; then
+        cp "$src" "$dst"
+        updated=$((updated + 1))
+    else
+        unchanged=$((unchanged + 1))
     fi
     count=$((count + 1))
 done < "$NEW_LIST"
-echo "  $count files"
+if $DRY_RUN; then
+    echo "  $count files"
+else
+    summary=""
+    [ "$added" -gt 0 ] && summary="$added added"
+    [ "$updated" -gt 0 ] && summary="${summary:+$summary, }$updated updated"
+    [ "$unchanged" -gt 0 ] && summary="${summary:+$summary, }$unchanged unchanged"
+    echo "  ${summary:-$count files}"
+fi
 
 # ── Generate marketplace manifest ────────────────────────────────────
 
@@ -542,5 +570,18 @@ echo ""
 if $DRY_RUN; then
     echo "Dry run complete. No files were modified."
 else
-    echo "Deploy complete. v${VERSION:-unknown} ($count files)"
+    # Count stale removals
+    removed=0
+    if [ -s "$STALE_LIST" ]; then
+        removed=$(wc -l < "$STALE_LIST" | tr -d ' ')
+    fi
+    detail=""
+    [ "$added" -gt 0 ] && detail="$added added"
+    [ "$updated" -gt 0 ] && detail="${detail:+$detail, }$updated updated"
+    [ "$removed" -gt 0 ] && detail="${detail:+$detail, }$removed removed"
+    if [ -n "$detail" ]; then
+        echo "Deploy complete. v${VERSION:-unknown} ($detail)"
+    else
+        echo "Deploy complete. v${VERSION:-unknown} (no changes)"
+    fi
 fi

@@ -66,6 +66,11 @@ Guidelines:
 
 ## Git
 
-- Branch → commit → merge to main (fast-forward) → delete branch → push
-- Branch prefix: `feat/`, `fix/`, `eval/`
-- No Co-authored-by or co-worker attributions in commit messages
+**Never commit directly to main.** Always work on a branch:
+
+1. `git checkout -b <prefix>/name` — prefix: `feat/`, `fix/`, `eval/`
+2. Work + commit on branch
+3. `git checkout main && git merge --ff-only <branch>`
+4. `git branch -d <branch> && git push origin main`
+
+No Co-authored-by or co-worker attributions in commit messages.

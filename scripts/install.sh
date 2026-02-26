@@ -129,10 +129,27 @@ fi
 if [ -n "$VERSION" ]; then
     VERSION="${VERSION#v}"
     ARCHIVE_URL="https://github.com/$REPO/archive/refs/tags/v${VERSION}.tar.gz"
-    echo "Installing hukuhaka-claude v${VERSION}..."
 else
     ARCHIVE_URL="https://github.com/$REPO/archive/refs/heads/main.tar.gz"
-    echo "Installing hukuhaka-claude (main)..."
+fi
+
+# Check for existing install
+PREV_VERSION=""
+if [ -f "$MANIFEST" ]; then
+    if command -v python3 &>/dev/null; then
+        PREV_VERSION=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('version',''))" "$MANIFEST" 2>/dev/null || true)
+    elif command -v jq &>/dev/null; then
+        PREV_VERSION=$(jq -r '.version // empty' "$MANIFEST" 2>/dev/null || true)
+    fi
+fi
+
+TARGET="${VERSION:-main}"
+if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$TARGET" ]; then
+    echo "Upgrading hukuhaka-claude v${PREV_VERSION} → v${TARGET}..."
+elif [ -n "$PREV_VERSION" ]; then
+    echo "Reinstalling hukuhaka-claude v${TARGET}..."
+else
+    echo "Installing hukuhaka-claude v${TARGET} (fresh)..."
 fi
 
 # ── Download & extract ────────────────────────────────────────────────
