@@ -16,9 +16,9 @@ spec.md is NOT a mirror of current code. It is a constraint document. Facts dete
 |---|---------|--------|---------|
 | 1 | Overview & Goals | User input (Round 1 Q3) | Goal statement + non-negotiable design goals |
 | 2 | Architecture Decisions | Analyze facts + User selection (Round 1 Q1) | `Rule:` blocks for hard constraints |
-| 3 | Directory Structure | Analyze facts | Detected structure with responsibility annotations |
+| 3 | Directory Structure | Analyze facts | Responsibility annotations + forbidden-content rules |
 | 4 | Interface Contracts | Analyze facts + User selection (Round 1 Q2) | `> IMMUTABLE` for selected interfaces |
-| 5 | Component Contracts | Analyze facts | Key components with ownership boundaries |
+| 5 | Component Contracts | Analyze facts | Ownership boundaries + `> Rule:` per component |
 | 6 | Naming Contracts | User input (Round 2 Q1) | Naming rules or `(To be defined)` |
 | 7 | Configuration Rules | Analyze facts + User input (Round 2 Q2) | `Rule:` blocks for config constraints |
 | 8 | Contract Tests | Derived from 4+5 | Test expectations or `(To be defined)` |
@@ -50,6 +50,16 @@ When writing spec.md, transform facts into rules:
 - IMMUTABLE selections → `> IMMUTABLE` blockquote with signature
 - Non-selected interfaces → listed but not locked
 
+### Directory Structure (Section 3)
+- Detected dirs → annotated with responsibility descriptions
+- Each dir gets a forbidden-content rule if pattern detected (e.g., "no business logic in utils/")
+- If no obvious constraints, describe responsibility only — do not fabricate rules
+
+### Component Contracts (Section 5)
+- Detected components → ownership boundary + key method constraints
+- Format: component name, path, methods with constraints
+- `> Rule:` blockquote for key invariant per component
+
 ### Configuration (Section 7)
 - Detected config pattern → `Rule:` with scope from user selection
 
@@ -62,6 +72,14 @@ Sections: `## N. Section Title` — prose with Rule/IMMUTABLE markers.
 Undefined sections: `(To be defined)` on one line. Keep the section heading.
 
 Line limit: 150 lines max.
+
+## Contract Tests (Section 8)
+
+Derive from Sections 4 and 5:
+- Section 4 IMMUTABLE interfaces → structural test expectation (subclass check) + signature test expectation (params list)
+- Section 5 components with constraints → behavior test expectation per constraint
+- Both Sections 4 and 5 `(To be defined)` → Section 8 = `(To be defined)`
+- Do NOT generate actual test code. List test expectations as bullet points.
 
 ## Thin Project Rule
 

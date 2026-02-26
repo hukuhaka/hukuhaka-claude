@@ -27,7 +27,7 @@ Create `.claude/` with 4 template files. Handle directly — no agents.
 ### Phase 2: Write
 
 1. Create `.claude/` if needed
-2. Write 4 files using the Write tool:
+2. Write 4 files using the Write tool. If files already exist, overwrite with fresh templates:
    - `.claude/map.md` — empty template with sections: Entry Points, Data Flow, Components, Structure
    - `.claude/design.md` — empty template with sections: Stack, Patterns, Decisions
    - `.claude/backlog.md` — MUST include `## Planned`, `## In Progress`, `## Discovered TODOs`
