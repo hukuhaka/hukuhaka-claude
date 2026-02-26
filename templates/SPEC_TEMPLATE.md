@@ -3,12 +3,12 @@
 <!--
 HOW TO USE THIS TEMPLATE
 ─────────────────────────
-1. Copy this file to your project root as SPEC.md
+1. Copy this file to .claude/spec.md
 2. Answer the guiding questions (<!-- Q: ... -->) in each section
 3. Replace all {{ PLACEHOLDERS }} with your decisions
 4. Delete any section that genuinely does not apply
 5. Reference this file in CLAUDE.md:
-     "Read SPEC.md before making any changes. Interface contracts in Section 4 are immutable."
+     "Read .claude/spec.md before making any changes. Interface contracts in Section 4 are immutable."
 
 SECTIONS
   1. Overview & Goals

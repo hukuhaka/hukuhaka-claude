@@ -1,6 +1,6 @@
 {
   "spec_id": "verify-logic",
-  "skill": "map-setup",
+  "skill": "map-spec",
   "description": "Verify command compliance rules — spec.md content vs codebase drift check",
   "rules": [
     {

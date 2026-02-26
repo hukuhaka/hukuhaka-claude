@@ -13,31 +13,19 @@
       "rule_id": "INIT-02",
       "severity": "critical",
       "type": "must",
-      "description": "Must use Write tool to create all 5 .claude/ files: map.md, design.md, backlog.md, changelog.md, spec.md."
+      "description": "Must use Write tool to create all 4 .claude/ files: map.md, design.md, backlog.md, changelog.md. spec.md is NOT created by init."
     },
     {
       "rule_id": "INIT-03",
       "severity": "critical",
       "type": "must",
-      "description": "spec.md must contain 9 numbered sections (## 1. through ## 9.) following the SPEC_TEMPLATE.md convention framework: Overview & Goals, Architecture Decisions, Directory Structure, Interface Contracts, Component Contracts, Naming Contracts, Configuration Rules, Contract Tests, Definition of Done."
-    },
-    {
-      "rule_id": "INIT-04",
-      "severity": "critical",
-      "type": "must",
       "description": "backlog.md must contain section headers: '## Planned', '## In Progress', '## Discovered TODOs'."
     },
     {
-      "rule_id": "INIT-05",
+      "rule_id": "INIT-04",
       "severity": "major",
       "type": "must",
-      "description": "Completion report must mention '5' (five files created, not 4)."
-    },
-    {
-      "rule_id": "INIT-06",
-      "severity": "major",
-      "type": "must",
-      "description": "When the project contains source files, spec.md Section 2 (Architecture Decisions) and Section 3 (Directory Structure) must contain actual detected content, not '(To be defined)' placeholders."
+      "description": "Completion report must mention '4' (four files created, not 5) and suggest running map-spec generate for spec.md."
     }
   ],
   "scenarios": [
