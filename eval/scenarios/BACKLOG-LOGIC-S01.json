@@ -7,5 +7,8 @@
   "prompt": "/project-mapper:backlog 에이전트 모델을 런타임에서 선택할 수 있게 하기",
   "cwd": "eval/testbed",
   "model": "sonnet",
-  "capture_flags": "--verbose --dangerously-skip-permissions"
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/backlog.md": "template:backlog"
+  }
 }

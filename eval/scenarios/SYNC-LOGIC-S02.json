@@ -8,5 +8,10 @@
   "cwd": "eval/testbed",
   "mcp_mode": "off",
   "model": "sonnet",
-  "capture_flags": "--verbose --dangerously-skip-permissions --strict-mcp-config --mcp-config '{}'"
+  "capture_flags": "--verbose --dangerously-skip-permissions --strict-mcp-config --mcp-config '{}'",
+  "seed": {
+    ".claude/map.md": "empty",
+    ".claude/design.md": "empty",
+    ".claude/changelog.md": "empty"
+  }
 }

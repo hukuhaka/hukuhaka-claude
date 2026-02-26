@@ -7,5 +7,6 @@
   "prompt": "/project-mapper:map-init",
   "cwd": "eval/testbed",
   "model": "sonnet",
-  "capture_flags": "--verbose --dangerously-skip-permissions"
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {}
 }
