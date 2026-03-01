@@ -1,0 +1,15 @@
+{
+  "scenario_id": "TRACE-LOGIC-S01",
+  "scenario_name": "trace logic: error diagnosis flow",
+  "skill": "trace",
+  "eval_type": "logic",
+  "spec": "trace-logic",
+  "prompt": "/project-mapper:trace TypeError: predict_depth() returns None when image has alpha channel --type error --depth 3",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/map.md": "empty",
+    ".claude/design.md": "empty"
+  }
+}

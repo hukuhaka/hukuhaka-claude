@@ -46,6 +46,22 @@ Guidelines:
 7. Sync → if reality ≠ design, update `design.md`
 8. Archive → completed tasks → `changelog.md`
 
+## Debug
+
+When Verify fails or behavior is unexpected:
+
+1. Categorize — error (crash/exception), wrong-result (runs but incorrect), regression (was working)
+2. Isolate — reproduce with minimum input. Single test > full suite
+3. Trace — find the actual vs expected divergence point. Use `/project-mapper:trace` for large codebases
+4. Fix — minimum change at the divergence point. Do not fix symptoms upstream
+5. Confirm — re-run the exact failing case. Then run full suite
+
+Principles:
+- Read the error message completely before acting
+- One hypothesis at a time. Verify before moving to next
+- Log intermediate values at suspected divergence points, not everywhere
+- If stuck after 3 attempts: widen scope (check recent changes via `git diff`)
+
 ## Task (Subagent) Rules
 
 - Pass objective context, not just query

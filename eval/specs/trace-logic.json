@@ -1,0 +1,40 @@
+{
+  "spec_id": "trace-logic",
+  "skill": "trace",
+  "description": "Trace skill compliance rules for structured code flow diagnosis",
+  "rules": [
+    {
+      "rule_id": "TR-01",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not spawn any Task agents. All work must be handled directly — no subagent_type calls allowed."
+    },
+    {
+      "rule_id": "TR-02",
+      "severity": "critical",
+      "type": "must_not",
+      "description": "Must not use the Write tool. Trace is read-only analysis. Edit is only allowed for optional backlog integration."
+    },
+    {
+      "rule_id": "TR-03",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must classify the trace into one of the 4 types (error, data-flow, dependency, regression) before starting the trace. Classification must appear in assistant text output before any Grep/Read calls for tracing."
+    },
+    {
+      "rule_id": "TR-04",
+      "severity": "major",
+      "type": "must",
+      "description": "Must read at least one .claude/ file (map.md, design.md, or spec.md) during pre-flight before starting the trace."
+    },
+    {
+      "rule_id": "TR-05",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must produce a structured trace report at the end containing: Type, Target, Rounds count, and a Chain section listing file:line entries."
+    }
+  ],
+  "scenarios": [
+    "TRACE-LOGIC-S01"
+  ]
+}
