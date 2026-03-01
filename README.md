@@ -36,27 +36,17 @@ scripts/deploy.sh
 
 Codebase analysis and `.claude/` documentation generation.
 
-### Commands
-
-| Command | Description |
-|---------|-------------|
-| `/project-mapper:map-init` | Create empty `.claude/` documentation template |
-| `/project-mapper:map-sync .` | Full sync pipeline: analyze, write, scatter, validate |
-| `/project-mapper:map-validate` | Check all `.claude/` documentation links |
-| `/project-mapper:map-compact` | Clean up changelog and backlog docs |
-| `/project-mapper:map-clean` | Remove scattered CLAUDE.md files |
-| `/project-mapper:map-summary` | Compress `.claude/` docs for LLM context |
-| `/project-mapper:map-status` | Show `.claude/` documentation status |
-
 ### Skills
 
 | Skill | Description |
 |-------|-------------|
-| `/project-mapper:audit` | Codebase audit — find bugs, dead code, duplicates, refactoring opportunities |
-| `/project-mapper:query` | Ask questions about project architecture |
-| `/project-mapper:review` | Code review with `.claude/` context |
-| `/project-mapper:elaborate` | Expand analyses via elaborator agent |
-| `/project-mapper:flow-tracer` | Trace code flow and call chains |
+| `/project-mapper:map-setup` | Create/teardown `.claude/` documentation scaffolding |
+| `/project-mapper:map-sync` | Full sync pipeline: analyze, write, scatter, validate |
+| `/project-mapper:map-maintain` | Validate, compact, and summarize `.claude/` docs |
+| `/project-mapper:map-spec` | Generate and verify `.claude/spec.md` conventions |
+| `/project-mapper:audit` | Codebase audit — find dead code, duplicates, anti-patterns → backlog |
+| `/project-mapper:backlog` | Capture ideas and deferred tasks to backlog.md with research |
+| `/project-mapper:trace` | Trace code flow to diagnose bugs, data paths, or error origins |
 
 ## Standalone Skills
 
