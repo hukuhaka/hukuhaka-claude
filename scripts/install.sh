@@ -7,6 +7,7 @@
 # Flags:
 #   --version VERSION  Install specific version (default: latest release or main)
 #   --uninstall        Remove installed files using manifest
+#   --agent-teams      Enable agent teams without prompting
 #   --help             Show usage
 
 set -euo pipefail
@@ -17,13 +18,15 @@ MANIFEST="$CLAUDE_DIR/.hukuhaka-manifest.json"
 
 VERSION=""
 UNINSTALL=false
+AGENT_TEAMS=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --version) VERSION="$2"; shift 2 ;;
         --uninstall) UNINSTALL=true; shift ;;
+        --agent-teams) AGENT_TEAMS=true; shift ;;
         -h|--help)
-            sed -n '3,11p' "$0"
+            sed -n '3,12p' "$0"
             exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
@@ -171,6 +174,47 @@ fi
 # ── Deploy ────────────────────────────────────────────────────────────
 
 bash "$SRC_DIR/scripts/deploy.sh"
+
+# ── Optional: Agent Teams ────────────────────────────────────────────
+
+SETTINGS="$CLAUDE_DIR/settings.json"
+
+enable_agent_teams() {
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json,sys,os
+sf=sys.argv[1]
+if os.path.isfile(sf):
+    with open(sf) as f: s=json.load(f)
+else:
+    s={}
+env=s.setdefault('env',{})
+env['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS']='1'
+with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
+" "$SETTINGS"
+    elif command -v jq &>/dev/null; then
+        local tmp="$SETTINGS.tmp"
+        if [ -f "$SETTINGS" ]; then
+            jq '.env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"' "$SETTINGS" > "$tmp"
+        else
+            jq -n '{env:{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}' > "$tmp"
+        fi
+        mv "$tmp" "$SETTINGS"
+    fi
+}
+
+if $AGENT_TEAMS; then
+    enable_agent_teams
+    echo "Agent teams enabled."
+elif [ -e /dev/tty ]; then
+    echo ""
+    printf "Enable agent teams? (experimental, higher token usage) [y/N] "
+    read -r answer < /dev/tty 2>/dev/null || answer=""
+    if [[ "$answer" =~ ^[Yy] ]]; then
+        enable_agent_teams
+        echo "Agent teams enabled."
+    fi
+fi
 
 echo ""
 echo "Done! Restart Claude Code to load the plugins."

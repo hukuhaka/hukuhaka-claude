@@ -31,6 +31,7 @@ my-plugin/
 │   └── hooks.json           # Event handlers
 ├── .mcp.json                # MCP server configs
 ├── .lsp.json                # LSP server configs
+├── outputStyles/            # Output style files
 ├── settings.json            # Default settings (only `agent` key supported)
 └── scripts/                 # Utility scripts for hooks
 ```
@@ -331,23 +332,24 @@ Shows: plugin loading, manifest errors, command/agent/hook registration, MCP ini
 ```
 marketplace/project-mapper/
 ├── .claude-plugin/
-│   └── plugin.json          # name: "project-mapper", version: "0.0.1"
+│   └── plugin.json          # name: "project-mapper", version: "0.0.6"
 ├── skills/
 │   ├── map-sync/SKILL.md    # Router → agent pipeline
 │   ├── map-setup/SKILL.md   # Direct execution (no agents)
 │   ├── map-maintain/SKILL.md # Delegates to agents
-│   ├── query/SKILL.md
-│   ├── review/SKILL.md
-│   ├── elaborate/SKILL.md
-│   ├── improve/SKILL.md
-│   └── flow-tracer/SKILL.md
+│   ├── map-spec/SKILL.md    # spec.md lifecycle
+│   ├── audit/SKILL.md       # Codebase audit → backlog
+│   ├── backlog/SKILL.md     # Quick backlog capture
+│   └── trace/SKILL.md       # Code flow tracing
 ├── agents/
 │   ├── analyzer.md           # sonnet, read-only, returns JSON
+│   ├── auditor.md            # sonnet, read-only, findings JSON
 │   ├── writer.md             # sonnet, acceptEdits, writes docs
 │   ├── validator.md          # haiku, read-only, checks links
+│   ├── verifier.md           # haiku, read-only, spec verification
 │   └── summarizer.md         # haiku, compresses docs
-├── commands/                  # 12 interactive workflow commands
+├── commands/                  # 6 interactive workflow commands
 └── references/                # Shared reference docs
 ```
 
-8 skills, 5 agents, 12 commands. Deployed to `~/.claude/plugins/hukuhaka-plugin/project-mapper/` via `scripts/deploy.sh`.
+7 skills, 6 agents, 6 commands. Deployed to `~/.claude/plugins/hukuhaka-plugin/project-mapper/` via `scripts/deploy.sh`.

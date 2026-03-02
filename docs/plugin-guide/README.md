@@ -23,6 +23,7 @@ marketplace.json          — catalog of plugins
        ├─ hooks/           — hooks.json event handlers
        ├─ .mcp.json        — MCP server configs
        ├─ .lsp.json        — LSP server configs
+       ├─ outputStyles/    — output style files
        └─ settings.json    — default settings
 ```
 
@@ -62,9 +63,9 @@ Plugin skills use `plugin-name:skill-name` namespace — no conflict with other 
 ## Reference Implementation
 
 [project-mapper](../../marketplace/project-mapper/) demonstrates:
-- 8 skills (3 router + 5 utility), 5 agents, 12 commands
+- 7 skills, 6 agents, 6 commands
 - Agent pipeline: analyzer → writer → validator
-- Model stratification: haiku (validator) / sonnet (analyzer, writer) / opus (elaborator)
+- Model stratification: haiku (validator, summarizer, verifier) / sonnet (analyzer, auditor, writer)
 - Dual entry points: skill path (headless) + command path (interactive)
 - Manifest-based deploy with [deploy.sh](../../scripts/deploy.sh)
 

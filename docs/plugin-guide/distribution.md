@@ -143,8 +143,6 @@ Fields: `package` (required), `version` (optional), `registry` (optional).
 
 Fields: `package` (required), `version` (optional), `registry` (optional).
 
-**Note**: npm and pip sources are not yet fully implemented. Prefer GitHub or relative path.
-
 ### Marketplace Source vs Plugin Source
 
 - **Marketplace source**: where to fetch `marketplace.json` itself. Set via `/plugin marketplace add` or `extraKnownMarketplaces`. Supports `ref` but not `sha`.

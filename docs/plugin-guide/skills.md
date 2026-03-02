@@ -225,7 +225,7 @@ description: >
 ---
 ```
 
-Body: handles `init` and `clean` subcommands directly. Explicitly states "Do NOT spawn any Task agents."
+Body: handles `init` and `clean` subcommands directly. Explicitly states "Do NOT spawn any agents."
 
 ### Standalone skill: skill-creator
 

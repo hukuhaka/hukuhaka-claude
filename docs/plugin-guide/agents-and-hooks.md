@@ -74,7 +74,7 @@ Same name → higher priority wins.
 | `opus` | Pin to Opus |
 | `haiku` | Pin to Haiku (fast, cheap) |
 
-project-mapper stratification: haiku (validator, summarizer) / sonnet (analyzer, writer) / opus (elaborator).
+project-mapper stratification: haiku (validator, summarizer, verifier) / sonnet (analyzer, auditor, writer).
 
 ### Tool Control
 
@@ -195,7 +195,7 @@ Subagent transcripts persist independently of main conversation compaction.
 
 Hooks are shell commands, LLM prompts, or agents that execute at specific lifecycle points.
 
-### Hook Events (15)
+### Hook Events (17)
 
 | Event | When | Can Block? | Matcher |
 |-------|------|:----------:|---------|
@@ -213,15 +213,18 @@ Hooks are shell commands, LLM prompts, or agents that execute at specific lifecy
 | `TaskCompleted` | Task marked complete | Yes | (none) |
 | `PreCompact` | Before compaction | No | `manual`, `auto` |
 | `ConfigChange` | Config file changes | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
+| `WorktreeCreate` | Worktree created via /worktree or isolation | Yes | (none) |
+| `WorktreeRemove` | Worktree removed at session exit | No | (none) |
 | `SessionEnd` | Session terminates | No | `clear`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` |
 
-### Handler Types (3)
+### Handler Types (4)
 
 | Type | Description | Key Fields |
 |------|-------------|------------|
 | `command` | Execute shell command. Receives JSON on stdin | `command`, `async`, `timeout` (default 600s) |
 | `prompt` | Single-turn LLM evaluation | `prompt`, `model`, `timeout` (default 30s) |
 | `agent` | Multi-turn subagent with tools (Read, Grep, Glob) | `prompt`, `model`, `timeout` (default 60s) |
+| `http` | POST to URL endpoint. Request body = hook input JSON | `url`, `headers`, `timeout` |
 
 Common fields: `type` (required), `timeout`, `statusMessage`, `once` (skills only).
 
@@ -427,6 +430,25 @@ Like prompt hooks but multi-turn with tool access (Read, Grep, Glob). Up to 50 t
 
 Same `{ "ok": true/false }` response. Useful when verification requires inspecting files or test output.
 
+### HTTP Hooks
+
+POST to remote endpoint. Request body = hook input JSON. Response body = JSON output (same format as command hooks).
+
+```json
+{"type": "http", "url": "https://...", "headers": {"Authorization": "Bearer $TOKEN"}, "timeout": 30}
+```
+
+HTTP status mapping: 2xx = success (exit 0), 4xx = block (exit 2), 5xx = error (non-blocking).
+Environment variables in `url` and `headers` values are interpolated.
+
+### WorktreeCreate / WorktreeRemove
+
+WorktreeCreate replaces default git worktree behavior for VCS-agnostic isolation. Only `type: "command"` supported.
+- Command must print absolute worktree path to stdout
+- Non-zero exit blocks creation
+
+WorktreeRemove fires at session exit or subagent finish. Input includes `worktree_path`.
+
 ### SessionStart Special Features
 
 **Additional context**: stdout text or `additionalContext` field added to Claude's context.
@@ -475,6 +497,13 @@ skills:
   - project-mapper:map-sync
 ```
 
+**auditor.md** — read-only, findings JSON:
+```yaml
+tools: Read, Grep, Glob
+model: sonnet
+permissionMode: plan
+```
+
 **writer.md** — edit permissions, writes docs:
 ```yaml
 tools: Read, Write, Edit
@@ -489,6 +518,19 @@ skills:
 tools: Read, Grep, Glob
 model: haiku
 permissionMode: plan
+```
+
+**verifier.md** — spec verification:
+```yaml
+tools: Read, Grep, Glob
+model: haiku
+permissionMode: plan
+```
+
+**summarizer.md** — doc compression:
+```yaml
+tools: Read, Glob
+model: haiku
 ```
 
 Pattern: read-only stages use `plan`, write stage uses `acceptEdits`. Skills inject shared format knowledge. Model cost scales with task complexity.
