@@ -108,6 +108,15 @@ for name,path,keys in [
                 del d[k]; changed=True
     if changed:
         with open(path,'w') as f: json.dump(d,f,indent=2); f.write('\n')
+# Remove agent teams env var from settings.json
+sf=os.path.join(claude,'settings.json')
+if os.path.isfile(sf):
+    with open(sf) as f: s=json.load(f)
+    env=s.get('env',{})
+    if 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' in env:
+        del env['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS']
+        if not env: s.pop('env',None)
+        with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
 " "$CLAUDE_DIR" 2>/dev/null || true
     fi
 

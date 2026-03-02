@@ -272,12 +272,23 @@ for name,path,action in [
     if changed:
         with open(path,'w') as f: json.dump(d,f,indent=2); f.write('\n')
         print(f'  [ok] {name}')
+# Remove agent teams env var
+sf=os.path.join(claude_dir,'settings.json')
+if os.path.isfile(sf):
+    with open(sf) as f: s=json.load(f)
+    env=s.get('env',{})
+    if 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' in env:
+        del env['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS']
+        if not env: s.pop('env',None)
+        with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
+        print('  [ok] removed agent teams env')
 " "$CLAUDE_DIR" "$MARKETPLACE_NAME" "$PLUGIN_KEY"
     elif command -v jq &>/dev/null; then
         if [ -f "$settings" ] && grep -q "$MARKETPLACE_NAME" "$settings" 2>/dev/null; then
             jq --arg pk "$PLUGIN_KEY" --arg mn "$MARKETPLACE_NAME" \
                 'del(.enabledPlugins[$pk]) | if .enabledPlugins == {} then del(.enabledPlugins) else . end
-                 | del(.extraKnownMarketplaces[$mn]) | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end' \
+                 | del(.extraKnownMarketplaces[$mn]) | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end
+                 | del(.env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"]) | if .env == {} then del(.env) else . end' \
                 "$settings" > "$settings.tmp"
             mv "$settings.tmp" "$settings"
             echo "  [ok] settings.json"
