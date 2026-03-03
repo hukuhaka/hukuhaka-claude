@@ -31,7 +31,7 @@ PLUGIN_KEY="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 DRY_RUN=false
 UNINSTALL=false
 FORCE=false
-SKIP_SKILLS="mcp-builder skill-creator"
+SKIP_SKILLS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
