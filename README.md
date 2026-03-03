@@ -55,6 +55,7 @@ Codebase analysis and `.claude/` documentation generation.
 | `/codex-coworker` | Collaborative problem-solving with OpenAI Codex |
 | `/skill-creator` | Step-by-step skill creation guide |
 | `/mcp-builder` | MCP server builder and tester |
+| `/team` | Quick-spawn agent teams for collaborative problem-solving |
 
 ## Deploy Options
 
