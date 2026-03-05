@@ -62,7 +62,23 @@ Principles:
 - Log intermediate values at suspected divergence points, not everywhere
 - If stuck after 3 attempts: widen scope (check recent changes via `git diff`)
 
-## Task (Subagent) Rules
+## Team vs Subagent
+
+Use the right tool for the job:
+- **Subagent** (Agent tool): focused tasks where only the result matters. Reports back to caller. No inter-agent communication. Lower token cost
+- **Team** (TeamCreate): parallel work requiring discussion and collaboration. Teammates share a task list, claim work, and message each other directly. Each teammate is an independent session
+
+**When asked to create a "team", always use TeamCreate.** Spawning multiple agents with the Agent tool alone is subagents, not a team.
+
+### Team Rules
+
+- 3-5 teammates, 5-6 tasks per teammate
+- Each teammate must own a distinct set of files — never have two teammates edit the same file
+- For complex or risky tasks, require plan approval: teammate works in plan mode until lead approves
+- Do NOT clean up the team until all teammate tasks are completed
+- Lead must NOT implement tasks directly — delegate to teammates and wait for results
+
+### Subagent Rules
 
 - Pass objective context, not just query
 - Evaluate returns with follow-up questions (max 3 cycles)
