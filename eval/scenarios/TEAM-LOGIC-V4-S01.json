@@ -1,0 +1,15 @@
+{
+  "scenario_id": "TEAM-LOGIC-V4-S01",
+  "scenario_name": "team logic v4: objective only — auto-derive roles with rich context",
+  "skill": "team",
+  "eval_type": "logic",
+  "spec": "team-logic-v4",
+  "prompt": "/team implement user authentication for the paper manager app",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/map.md": "template:paper-map",
+    ".claude/design.md": "template:paper-design"
+  }
+}
