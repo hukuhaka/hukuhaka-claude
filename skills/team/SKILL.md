@@ -35,6 +35,17 @@ After spawning, your only job is coordination:
 - If user defined a workflow, follow its sequence
 - If not, use default: teammates investigate and report → you review → signal teammates to plan and implement
 
+### Teammate Prompt Structure
+
+When spawning each teammate, include these elements in the prompt:
+
+1. Role identity — "You are the [role] specialist for this team"
+2. Objective — what this teammate must achieve (outcome, not activity)
+3. Owned files — explicit list of files/directories this teammate is responsible for
+4. Context — relevant architecture decisions, patterns from .claude/design.md
+5. Acceptance criteria — how to know the work is done
+6. Boundaries — what NOT to touch (other teammates' files, shared config without coordination)
+
 ### Plan Review
 
 Do NOT spawn teammates with `mode: "plan"` — it auto-approves without lead review (known bug). Instead use SendMessage-based review:
