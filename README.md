@@ -53,7 +53,7 @@ Codebase analysis and `.claude/` documentation generation.
 | Skill | Description |
 |-------|-------------|
 | `/codex-coworker` | Collaborative problem-solving with OpenAI Codex |
-| `/team` | Quick-spawn agent teams for collaborative problem-solving |
+| `/team` | Team lead orchestrator — coordinates agent teams without implementing |
 
 ## Deploy Options
 
