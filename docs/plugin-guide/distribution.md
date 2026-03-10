@@ -143,6 +143,23 @@ Fields: `package` (required), `version` (optional), `registry` (optional).
 
 Fields: `package` (required), `version` (optional), `registry` (optional).
 
+### Git Subdirectory
+
+Sparse clone of a subdirectory within a git repo. Minimizes bandwidth for monorepos.
+
+```json
+{
+  "name": "monorepo-plugin",
+  "source": {
+    "source": "git-subdir",
+    "url": "https://github.com/acme-corp/monorepo.git",
+    "path": "tools/claude-plugin"
+  }
+}
+```
+
+Fields: `url` (required, also accepts `owner/repo` shorthand or SSH), `path` (required, subdirectory path), `ref` (optional), `sha` (optional).
+
 ### Marketplace Source vs Plugin Source
 
 - **Marketplace source**: where to fetch `marketplace.json` itself. Set via `/plugin marketplace add` or `extraKnownMarketplaces`. Supports `ref` but not `sha`.
@@ -223,18 +240,34 @@ Team members prompted to install when trusting project folder.
 | `[]` | Complete lockdown — no new marketplaces |
 | List of sources | Only matching marketplaces allowed |
 
-Supports exact matching and `hostPattern` regex:
+Supports exact matching, `hostPattern` regex, and `pathPattern` regex:
 
 ```json
 {
   "strictKnownMarketplaces": [
     { "source": "github", "repo": "acme-corp/approved-plugins" },
-    { "source": "hostPattern", "hostPattern": "^github\\.example\\.com$" }
+    { "source": "hostPattern", "hostPattern": "^github\\.example\\.com$" },
+    { "source": "pathPattern", "pathPattern": "^/opt/approved/" }
   ]
 }
 ```
 
+`pathPattern` allows filesystem-based marketplaces from specific directories. Use `".*"` to allow any path while controlling network sources with `hostPattern`.
+
 Cannot be overridden by user/project settings.
+
+## Auto-Updates
+
+Toggle auto-update per marketplace via `/plugin` > Marketplaces > select > Enable/Disable auto-update.
+
+Official Anthropic marketplaces: auto-update on by default. Third-party/local: off by default.
+
+Environment variables:
+- `DISABLE_AUTOUPDATER` — disable all auto-updates (Claude Code + plugins)
+- `FORCE_AUTOUPDATE_PLUGINS=true` — keep plugin auto-updates on even with `DISABLE_AUTOUPDATER`
+- `CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS` — git operation timeout in ms (default 120000)
+
+After installing/enabling/disabling plugins, run `/reload-plugins` to apply changes without restart (LSP servers still need restart).
 
 ## Version Management
 

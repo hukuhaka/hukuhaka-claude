@@ -52,7 +52,7 @@ actionable feedback on quality, security, and best practices.
 | `hooks` | No | object | Lifecycle hooks scoped to this agent |
 | `memory` | No | string | Persistent memory scope: `user`, `project`, or `local` |
 | `background` | No | boolean | `true` = always run as background task |
-| `isolation` | No | string | `worktree` = run in temporary git worktree |
+| `isolation` | No | string | `worktree` = run in temporary git worktree. Worktree auto-cleaned if no changes |
 
 ### Agent Scope & Priority
 
@@ -82,9 +82,11 @@ project-mapper stratification: haiku (validator, summarizer, verifier) / sonnet 
 
 **Denylist**: `disallowedTools: Write, Edit` — removed from inherited tools.
 
-**Restrict subagent spawning** (main thread agents only): `tools: Task(worker, researcher), Read` — only these subagent types allowed.
+**Restrict subagent spawning** (main thread agents only): `tools: Agent(worker, researcher), Read` — only these subagent types allowed. Omit `Agent` entirely to block all subagent spawning.
 
-**No Task in tools** = agent cannot spawn subagents. Subagents cannot spawn other subagents.
+Note: In v2.1.63, the Task tool was renamed to Agent. Existing `Task(...)` references still work as aliases.
+
+Subagents cannot spawn other subagents — `Agent(type)` has no effect in subagent definitions.
 
 ### Permission Modes
 
@@ -169,10 +171,15 @@ Same fields as frontmatter. `prompt` = markdown body equivalent.
 In settings.json `permissions.deny`:
 
 ```json
-{ "permissions": { "deny": ["Task(Explore)", "Task(my-agent)"] } }
+{ "permissions": { "deny": ["Agent(Explore)", "Agent(my-agent)"] } }
 ```
 
-Or: `claude --disallowedTools "Task(Explore)"`
+Or: `claude --disallowedTools "Agent(Explore)"`
+
+### Managing Agents
+
+- `/agents` — interactive UI to view, create, edit, delete subagents
+- `claude agents` — CLI command to list all configured subagents (grouped by source)
 
 ### Foreground vs Background
 
@@ -187,7 +194,11 @@ Disable: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
 
 Each invocation creates fresh context. Ask Claude to "continue that work" to resume with full history. Agent IDs in transcripts at `~/.claude/projects/{project}/{sessionId}/subagents/agent-{agentId}.jsonl`.
 
-Subagent transcripts persist independently of main conversation compaction.
+Subagent transcripts persist independently of main conversation compaction. Transcripts cleaned up based on `cleanupPeriodDays` setting (default: 30 days).
+
+### Auto-Compaction
+
+Subagents support automatic compaction at ~95% capacity. Override threshold: set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` env variable (e.g. `50` for 50%).
 
 ---
 

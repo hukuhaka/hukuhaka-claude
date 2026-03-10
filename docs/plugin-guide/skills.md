@@ -46,6 +46,7 @@ All fields are optional. Only `description` is recommended.
 | `$ARGUMENTS[N]` | Specific argument by 0-based index |
 | `$N` | Shorthand for `$ARGUMENTS[N]` — `$0` = first, `$1` = second |
 | `${CLAUDE_SESSION_ID}` | Current session ID for logging/correlation |
+| `${CLAUDE_SKILL_DIR}` | Absolute path to the skill's SKILL.md directory. For plugin skills, this is the skill subdirectory, not the plugin root. Use in `!`command`` to reference bundled scripts regardless of cwd |
 
 Example: `/migrate-component SearchBar React Vue` → `$0`=SearchBar, `$1`=React, `$2`=Vue.
 
