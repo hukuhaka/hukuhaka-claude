@@ -34,3 +34,10 @@ After spawning, your only job is coordination:
 - Send next instructions to teammates
 - If user defined a workflow, follow its sequence
 - If not, use default: teammates investigate and report → you review → signal teammates to plan and implement
+
+### Plan Review
+
+Do NOT spawn teammates with `mode: "plan"` — it auto-approves without lead review (known bug). Instead use SendMessage-based review:
+1. Teammate investigates in normal mode and sends plan via SendMessage
+2. You review the plan and reply with approval or feedback via SendMessage
+3. Only after your explicit approval does the teammate implement
