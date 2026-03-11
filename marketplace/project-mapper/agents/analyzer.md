@@ -18,14 +18,16 @@ Analyze codebase and return structured JSON. Do NOT generate prose or write file
 Return JSON with this structure:
 
 - `stats`: `files_scanned`, `queries_run`, `todos_found`, `entry_points_found`, `components_found`
-- `entry_points`: array of `{name, path, description}` — use `file:symbol` format for path
+- `entry_points`: array of `{name, path, description, depends_on}` — use `file:symbol` format for path
 - `data_flow`: single-line string with arrows (e.g., "Input -> Process -> Output")
-- `components`: array of `{name, path, description}`
+- `components`: array of `{name, path, description, depends_on}`
 - `directories`: array of `{path, description}`
 - `stack`: array of strings (e.g., ["Python 3.10+", "FastAPI"])
 - `patterns`: array of `{name, path, description}`
 - `decisions`: array of `{decision, rationale}`
 - `todos`: array of `{file, line, text}` from TODO/FIXME grep
+
+`depends_on`: array of short names referencing other components/entry_points in this JSON. Only include project-internal modules imported by 2+ other files. Omit for leaf modules (no project-internal dependents). Determine by grepping import references — only include if the target module appears in 2+ other source files' imports.
 
 ## Workflow
 

@@ -14,13 +14,13 @@ Generate `.claude/` documentation from analyzer JSON. The `project-mapper:map-sy
 
 ## Input
 
-Expects structured JSON from analyzer with: `stats`, `entry_points`, `data_flow`, `components`, `directories`, `stack`, `patterns`, `decisions`, `todos`
+Expects structured JSON from analyzer with: `stats`, `entry_points`, `data_flow`, `components`, `directories`, `stack`, `patterns`, `decisions`, `todos`. Each entry_point and component may include `depends_on` (array of short names referencing other items in the same JSON).
 
 ## Output Files
 
 | File | Content | Target |
 |------|---------|--------|
-| map.md | Entry points, data flow, structure | <100 lines |
+| map.md | Entry points, data flow, structure. If `depends_on` exists, append ` → name1, name2` after description; omit `→` when empty/absent | <100 lines |
 | design.md | Stack, patterns, decisions | <100 lines |
 | backlog.md | Planned (preserve), In Progress (preserve), TODOs (rescan) | <80 lines |
 | changelog.md | Recent (10 max) + Archive | <50 entries |
