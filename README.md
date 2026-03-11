@@ -41,7 +41,7 @@ Codebase analysis and `.claude/` documentation generation.
 | Skill | Description |
 |-------|-------------|
 | `/project-mapper:map-setup` | Create/teardown `.claude/` documentation scaffolding |
-| `/project-mapper:map-sync` | Full sync pipeline: analyze, write, scatter, validate |
+| `/project-mapper:map-sync` | Full sync pipeline: analyze, write, scatter, validate. Inline dependency notation (`-> dep1, dep2`) for shared modules |
 | `/project-mapper:map-maintain` | Validate, compact, and summarize `.claude/` docs |
 | `/project-mapper:map-spec` | Generate and verify `.claude/spec.md` conventions |
 | `/project-mapper:audit` | Codebase audit — find dead code, duplicates, anti-patterns → backlog |
