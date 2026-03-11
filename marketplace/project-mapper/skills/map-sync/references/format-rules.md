@@ -14,7 +14,7 @@ These rules apply when generating or updating .claude/ project documentation. Th
 
 Every item MUST use this format: `[name](path): description`
 
-One line per item. Use `file:symbol` for specific symbols (e.g., `src/model.py:Model`). Descriptions MUST be 1 sentence max. If a component has project-internal dependencies, append ` → dep1, dep2` after the description. Only list dependencies that are themselves documented in the same section.
+One line per item. Use `file:symbol` for specific symbols (e.g., `src/model.py:Model`). Descriptions MUST be 1 sentence max. If a component has project-internal dependencies, append ` -> dep1, dep2` after the description. Only list dependencies that are themselves documented in the same section.
 
 ## Line Limits
 
