@@ -603,6 +603,10 @@ configure_optional_features() {
         return 0
     fi
 
+    # Use /dev/tty for prompts (supports curl|bash pipe context)
+    local tty_read="true"
+    if ! [ -e /dev/tty ]; then tty_read="false"; fi
+
     # --- Agent Teams ---
     local teams_enabled=false
     if [ -f "$settings" ]; then
@@ -619,9 +623,9 @@ print('true' if s.get('env',{}).get('CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS') else
 
     if [ "$teams_enabled" = "true" ]; then
         echo "  [ok] agent teams (already enabled)"
-    else
+    elif [ "$tty_read" = "true" ]; then
         printf "  Enable agent teams? [y/N] "
-        read -r answer
+        read -r answer < /dev/tty 2>/dev/null || answer=""
         if [[ "$answer" =~ ^[Yy] ]]; then
             if command -v python3 &>/dev/null; then
                 python3 -c "
@@ -668,9 +672,9 @@ print('true' if 'statusLine' in s else 'false')
         else
             echo "  [ok] statusline (already enabled)"
         fi
-    elif [ -f "$STATUSLINE_SRC" ]; then
+    elif [ -f "$STATUSLINE_SRC" ] && [ "$tty_read" = "true" ]; then
         printf "  Install statusline? [y/N] "
-        read -r answer
+        read -r answer < /dev/tty 2>/dev/null || answer=""
         if [[ "$answer" =~ ^[Yy] ]]; then
             cp "$STATUSLINE_SRC" "$statusline_dst"
             chmod +x "$statusline_dst"
