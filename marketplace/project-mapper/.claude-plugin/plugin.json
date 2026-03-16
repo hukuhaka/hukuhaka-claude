@@ -1,6 +1,6 @@
 {
   "name": "project-mapper",
-  "version": "0.0.7",
+  "version": "0.0.7a",
   "description": "Codebase analysis and .claude/ documentation generation",
   "author": {
     "name": "hukuhaka"
