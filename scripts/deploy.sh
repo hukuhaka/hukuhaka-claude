@@ -19,6 +19,7 @@ REPO_DIR="$(dirname "$SCRIPT_DIR")"
 PLUGIN_SRC="$REPO_DIR/marketplace/project-mapper"
 SKILLS_SRC="$REPO_DIR/skills"
 TEMPLATE_SRC="$REPO_DIR/templates/CLAUDE.md"
+STATUSLINE_SRC="$REPO_DIR/templates/statusline.sh"
 PLUGIN_JSON="$PLUGIN_SRC/.claude-plugin/plugin.json"
 
 CLAUDE_DIR="$HOME/.claude"
@@ -272,23 +273,36 @@ for name,path,action in [
     if changed:
         with open(path,'w') as f: json.dump(d,f,indent=2); f.write('\n')
         print(f'  [ok] {name}')
-# Remove agent teams env var
+# Remove optional features
 sf=os.path.join(claude_dir,'settings.json')
 if os.path.isfile(sf):
     with open(sf) as f: s=json.load(f)
+    changed=False
     env=s.get('env',{})
     if 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' in env:
         del env['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS']
         if not env: s.pop('env',None)
+        changed=True
+        print('  [ok] removed agent teams')
+    if 'statusLine' in s:
+        del s['statusLine']
+        changed=True
+        print('  [ok] removed statusline config')
+    if changed:
         with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
-        print('  [ok] removed agent teams env')
+# Remove statusline script
+sl=os.path.join(claude_dir,'statusline.sh')
+if os.path.isfile(sl):
+    os.remove(sl)
+    print('  [ok] removed statusline.sh')
 " "$CLAUDE_DIR" "$MARKETPLACE_NAME" "$PLUGIN_KEY"
     elif command -v jq &>/dev/null; then
         if [ -f "$settings" ] && grep -q "$MARKETPLACE_NAME" "$settings" 2>/dev/null; then
             jq --arg pk "$PLUGIN_KEY" --arg mn "$MARKETPLACE_NAME" \
                 'del(.enabledPlugins[$pk]) | if .enabledPlugins == {} then del(.enabledPlugins) else . end
                  | del(.extraKnownMarketplaces[$mn]) | if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end
-                 | del(.env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"]) | if .env == {} then del(.env) else . end' \
+                 | del(.env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"]) | if .env == {} then del(.env) else . end
+                 | del(.statusLine)' \
                 "$settings" > "$settings.tmp"
             mv "$settings.tmp" "$settings"
             echo "  [ok] settings.json"
@@ -302,6 +316,16 @@ if os.path.isfile(sf):
             jq --arg mn "$MARKETPLACE_NAME" 'del(.[$mn])' "$known" > "$known.tmp"
             mv "$known.tmp" "$known"
             echo "  [ok] known_marketplaces.json"
+        fi
+    fi
+
+    # Remove statusline script
+    if [ -f "$CLAUDE_DIR/statusline.sh" ]; then
+        if ! $DRY_RUN; then
+            rm -f "$CLAUDE_DIR/statusline.sh"
+            echo "  [ok] removed statusline.sh"
+        else
+            echo "  [dry-run] rm statusline.sh"
         fi
     fi
 
@@ -564,6 +588,113 @@ fi
 # ── Register plugin ──────────────────────────────────────────────────
 
 ensure_plugin_registered "${VERSION:-unknown}"
+
+# ── Optional features ────────────────────────────────────────────────
+
+configure_optional_features() {
+    local settings="$CLAUDE_DIR/settings.json"
+    local statusline_dst="$CLAUDE_DIR/statusline.sh"
+
+    echo ""
+    echo "Optional features:"
+
+    if $DRY_RUN; then
+        echo "  [dry-run] would prompt for optional features"
+        return 0
+    fi
+
+    # --- Agent Teams ---
+    local teams_enabled=false
+    if [ -f "$settings" ]; then
+        if command -v python3 &>/dev/null; then
+            teams_enabled=$(python3 -c "
+import json,sys
+with open(sys.argv[1]) as f: s=json.load(f)
+print('true' if s.get('env',{}).get('CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS') else 'false')
+" "$settings")
+        elif command -v jq &>/dev/null; then
+            teams_enabled=$(jq -r 'if .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS then "true" else "false" end' "$settings")
+        fi
+    fi
+
+    if [ "$teams_enabled" = "true" ]; then
+        echo "  [ok] agent teams (already enabled)"
+    else
+        printf "  Enable agent teams? [y/N] "
+        read -r answer
+        if [[ "$answer" =~ ^[Yy] ]]; then
+            if command -v python3 &>/dev/null; then
+                python3 -c "
+import json,sys
+sf=sys.argv[1]
+with open(sf) as f: s=json.load(f)
+s.setdefault('env',{})['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS']='1'
+with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
+" "$settings"
+            elif command -v jq &>/dev/null; then
+                jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"' "$settings" > "$settings.tmp"
+                mv "$settings.tmp" "$settings"
+            fi
+            echo "  [ok] agent teams enabled"
+        else
+            echo "  [skip] agent teams"
+        fi
+    fi
+
+    # --- Statusline ---
+    local statusline_enabled=false
+    if [ -f "$settings" ]; then
+        if command -v python3 &>/dev/null; then
+            statusline_enabled=$(python3 -c "
+import json,sys
+with open(sys.argv[1]) as f: s=json.load(f)
+print('true' if 'statusLine' in s else 'false')
+" "$settings")
+        elif command -v jq &>/dev/null; then
+            statusline_enabled=$(jq -r 'if .statusLine then "true" else "false" end' "$settings")
+        fi
+    fi
+
+    if [ "$statusline_enabled" = "true" ]; then
+        # Update script if source changed
+        if [ -f "$STATUSLINE_SRC" ] && [ -f "$statusline_dst" ]; then
+            if ! cmp -s "$STATUSLINE_SRC" "$statusline_dst"; then
+                cp "$STATUSLINE_SRC" "$statusline_dst"
+                chmod +x "$statusline_dst"
+                echo "  [ok] statusline (updated script)"
+            else
+                echo "  [ok] statusline (already enabled)"
+            fi
+        else
+            echo "  [ok] statusline (already enabled)"
+        fi
+    elif [ -f "$STATUSLINE_SRC" ]; then
+        printf "  Install statusline? [y/N] "
+        read -r answer
+        if [[ "$answer" =~ ^[Yy] ]]; then
+            cp "$STATUSLINE_SRC" "$statusline_dst"
+            chmod +x "$statusline_dst"
+            if command -v python3 &>/dev/null; then
+                python3 -c "
+import json,sys
+sf=sys.argv[1]
+with open(sf) as f: s=json.load(f)
+if 'statusLine' not in s:
+    s['statusLine']={'type':'command','command':'~/.claude/statusline.sh'}
+    with open(sf,'w') as f: json.dump(s,f,indent=2); f.write('\n')
+" "$settings"
+            elif command -v jq &>/dev/null; then
+                jq '. + {"statusLine":{"type":"command","command":"~/.claude/statusline.sh"}}' "$settings" > "$settings.tmp"
+                mv "$settings.tmp" "$settings"
+            fi
+            echo "  [ok] statusline installed"
+        else
+            echo "  [skip] statusline"
+        fi
+    fi
+}
+
+configure_optional_features
 
 # ── Clean empty directories ──────────────────────────────────────────
 
