@@ -1,11 +1,18 @@
 #!/bin/bash
-# Claude Code statusline — context, cost, model
+# Claude Code statusline — context, cost, model, git branch
+# Uses python3 (no jq dependency)
 
 read -r DATA
 
-MODEL=$(echo "$DATA" | jq -r '.model.display_name // "?"')
-CTX_PCT=$(echo "$DATA" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
-COST=$(echo "$DATA" | jq -r '.cost.total_cost_usd // 0')
+eval "$(echo "$DATA" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+m=d.get('model',{}).get('display_name','?')
+p=int(float(d.get('context_window',{}).get('used_percentage',0)))
+c=d.get('cost',{}).get('total_cost_usd',0)
+print(f'MODEL={m!r} CTX_PCT={p} COST={c}')
+")"
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
 # Colors
@@ -39,7 +46,6 @@ for ((i=0; i<EMPTY; i++)); do BAR+="░"; done
 # Format cost
 COST_FMT=$(printf "%.2f" "$COST")
 
-# Output
 # Git branch segment
 GIT_SEG=""
 if [ -n "$BRANCH" ]; then
