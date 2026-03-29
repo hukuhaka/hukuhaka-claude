@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUTHOR-SKILL-S03",
+  "scenario_name": "author skill: multi-agent CI pipeline skill (tests prompt design + model selection)",
+  "skill": "authoring",
+  "eval_type": "skill-quality",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md and docs/plugin-guide/agents-and-hooks.md for reference, then create a CI pipeline skill with 3 agents: a lint checker (lightweight mechanical task), a test runner (standard analysis), and an architecture reviewer (complex multi-file reasoning). Create each agent as a separate .md file in .claude/agents/ with its own YAML frontmatter (name, description, model, tools). Put the skill in .claude/skills/ci-pipeline/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}

@@ -46,5 +46,5 @@
       "description": "When creating a discipline-enforcing skill, the SKILL.md body must contain at least 2 distinct enforcement signal types from: imperative commands (MUST, NEVER, MANDATORY, NON-NEGOTIABLE), sequential gates (Cannot proceed, Do NOT proceed until, BLOCKED until), or explicit negation lists (Do NOT: with prohibited items)"
     }
   ],
-  "scenarios": ["AUTHOR-LOGIC-S01"]
+  "scenarios": ["AUTHOR-LOGIC-S01", "AUTHOR-LOGIC-S02", "AUTHOR-LOGIC-S03"]
 }

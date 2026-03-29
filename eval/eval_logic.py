@@ -122,16 +122,23 @@ def load_spec(spec_path: str) -> dict:
         return json.load(f)
 
 
-def build_judge_prompt(spec: dict, transcript: str, mcp_mode: str) -> str:
+def build_judge_prompt(
+    spec: dict, transcript: str, mcp_mode: str, scenario_skip_rules: list = None
+) -> str:
     """Build the prompt for Claude judge."""
     rules_text = []
     skip_rules = []
+    scenario_skip_rules = scenario_skip_rules or []
     for rule in spec["rules"]:
+        rid = rule["rule_id"]
         if rule.get("mcp_required") and mcp_mode == "off":
-            skip_rules.append(rule["rule_id"])
+            skip_rules.append(rid)
+            continue
+        if rid in scenario_skip_rules:
+            skip_rules.append(rid)
             continue
         rules_text.append(
-            f"- {rule['rule_id']} ({rule['severity']}, {rule['type']}): {rule['description']}"
+            f"- {rid} ({rule['severity']}, {rule['type']}): {rule['description']}"
         )
 
     prompt = f"""You are evaluating a Claude Code transcript for compliance with the map-sync pipeline rules.
@@ -140,12 +147,13 @@ def build_judge_prompt(spec: dict, transcript: str, mcp_mode: str) -> str:
 
 {chr(10).join(rules_text)}
 
-{f"## Skipped rules (MCP off)" if skip_rules else ""}
-{chr(10).join(f"- {r}: auto-skipped (mcp_required, MCP is off)" for r in skip_rules) if skip_rules else ""}
+{f"## Skipped rules (not applicable)" if skip_rules else ""}
+{chr(10).join(f"- {r}: auto-skipped (not applicable to this scenario)" for r in skip_rules) if skip_rules else ""}
 
 ## Instructions
 
-For each rule, determine: pass, fail, or unclear.
+For each rule, determine: pass, fail, skip, or unclear.
+Use skip only for rules listed in the "Skipped rules" section above.
 Provide specific evidence (tool_use IDs, message ordering, file paths).
 
 Respond with ONLY valid JSON in this exact format:
@@ -196,7 +204,8 @@ def eval_logic(
     mcp_mode = scenario.get("mcp_mode", "on")
 
     transcript = truncate_transcript(transcript_path)
-    prompt = build_judge_prompt(spec, transcript, mcp_mode)
+    scenario_skip_rules = scenario.get("skip_rules", [])
+    prompt = build_judge_prompt(spec, transcript, mcp_mode, scenario_skip_rules)
     result = run_judge(prompt, model)
 
     # Add scenario metadata

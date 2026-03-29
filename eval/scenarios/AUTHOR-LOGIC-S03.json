@@ -1,0 +1,13 @@
+{
+  "scenario_id": "AUTHOR-LOGIC-S03",
+  "scenario_name": "author logic: reference-type skill (tests AUTH-05/06/07 non-applicability)",
+  "skill": "authoring",
+  "eval_type": "logic",
+  "spec": "author-skill-logic",
+  "prompt": "Read docs/plugin-guide/skills.md for reference, then create a naming conventions skill that documents our project's file and variable naming rules. This is a reference-type skill, not a discipline-enforcing one. Put it in .claude/skills/naming/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {},
+  "skip_rules": ["AUTH-05", "AUTH-06", "AUTH-07"]
+}

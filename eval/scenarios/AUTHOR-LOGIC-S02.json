@@ -1,0 +1,14 @@
+{
+  "scenario_id": "AUTHOR-LOGIC-S02",
+  "scenario_name": "author logic: discipline skill without explicit read instruction (tests AUTH-06 autonomy)",
+  "skill": "authoring",
+  "eval_type": "logic",
+  "spec": "author-skill-logic",
+  "prompt": "Create a code quality gate skill that blocks merges without passing all quality checks. This is a discipline-enforcing skill. Put it in .claude/skills/quality-gate/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {
+    "CLAUDE.md": "template:claude-authoring"
+  }
+}

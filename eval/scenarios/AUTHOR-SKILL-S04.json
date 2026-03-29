@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUTHOR-SKILL-S04",
+  "scenario_name": "author skill: frequently-triggered pre-commit skill (tests <50 line budget)",
+  "skill": "authoring",
+  "eval_type": "skill-quality",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md for reference, then create a pre-commit check skill that runs before every commit. It should check for secrets, lint errors, and test coverage. This is a frequently-triggered skill so keep it lean — offload heavy logic to scripts/ or references/ as appropriate. Put it in .claude/skills/pre-commit/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}

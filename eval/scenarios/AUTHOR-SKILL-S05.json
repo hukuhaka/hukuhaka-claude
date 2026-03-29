@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUTHOR-SKILL-S05",
+  "scenario_name": "author skill: router skill with references (tests <100 line body + unlimited refs)",
+  "skill": "authoring",
+  "eval_type": "skill-quality",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md for reference, then create a code-assist router skill that dispatches to 3 sub-behaviors: generate (new code), refactor (existing code), and document (add docs). The SKILL.md body should be a lean dispatch table under 100 lines. Put detailed instructions for each sub-behavior in .claude/skills/code-assist/references/ files. Put the skill in .claude/skills/code-assist/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}

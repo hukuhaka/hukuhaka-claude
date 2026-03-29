@@ -1,0 +1,13 @@
+{
+  "scenario_id": "AUDIT-ORCH-S01",
+  "scenario_name": "audit orchestration: two-stage pipeline pattern",
+  "skill": "audit",
+  "eval_type": "orchestration-quality",
+  "prompt": "/project-mapper:audit --focus all. Add all findings to backlog.",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/backlog.md": "template:backlog"
+  }
+}

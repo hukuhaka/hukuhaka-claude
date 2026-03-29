@@ -1,0 +1,14 @@
+{
+  "scenario_id": "TEAM-ORCH-S02",
+  "scenario_name": "team orchestration: parallel dispatch with verification teammate",
+  "skill": "team",
+  "eval_type": "orchestration-quality",
+  "prompt": "/team refactor the model loading in app.py to support multiple encoder variants. After implementation, have a separate teammate verify the changes work by running tests.",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/map.md": "template:paper-map",
+    ".claude/design.md": "template:paper-design"
+  }
+}
