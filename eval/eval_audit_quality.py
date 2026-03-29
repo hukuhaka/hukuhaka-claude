@@ -5,12 +5,12 @@ Scores audit findings quality across 5 dimensions using LLM-as-judge.
 """
 import argparse
 import json
-import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, Optional
+
+from judge_utils import extract_json, run_judge, wrap_result
 
 DIMENSIONS = [
     {"name": "evidence_quality", "weight": 0.30},
@@ -21,68 +21,9 @@ DIMENSIONS = [
 ]
 
 
-def _extract_json(text: str) -> dict:
-    """Extract JSON from text (shared with eval_quality.py)."""
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
 
-    match = re.search(r"```(?:json)?\s*\n(.*?)\n```", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group(1))
-        except json.JSONDecodeError:
-            pass
-
-    start = text.find("{")
-    if start >= 0:
-        depth = 0
-        for i, c in enumerate(text[start:], start):
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    try:
-                        return json.loads(text[start : i + 1])
-                    except json.JSONDecodeError:
-                        break
-
-    print(f"Failed to parse judge response:\n{text[:500]}", file=sys.stderr)
-    sys.exit(1)
-
-
-def run_judge(prompt: str, model: str = "sonnet") -> dict:
-    """Call Claude CLI as judge (600s timeout for large audit prompts)."""
-    model_id = {
-        "sonnet": "claude-sonnet-4-6",
-        "opus": "claude-opus-4-6",
-        "haiku": "claude-haiku-4-5-20251001",
-    }.get(model, model)
-
-    env = os.environ.copy()
-    env.pop("CLAUDECODE", None)
-
-    result = subprocess.run(
-        ["claude", "-p", prompt, "--model", model_id, "--output-format", "json"],
-        capture_output=True,
-        text=True,
-        timeout=600,
-        env=env,
-    )
-
-    if result.returncode != 0:
-        print(f"Claude CLI error: {result.stderr}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        cli_output = json.loads(result.stdout)
-        response_text = cli_output.get("result", result.stdout)
-    except json.JSONDecodeError:
-        response_text = result.stdout
-
-    return _extract_json(response_text)
+# run_judge and extract_json imported from judge_utils
+# Note: audit uses timeout=600 for large prompts — pass to run_judge(timeout=600)
 
 
 def load_findings(outputs_dir: str) -> Dict[str, Optional[str]]:
@@ -182,7 +123,7 @@ def eval_audit_quality(outputs_dir: str, model: str = "sonnet") -> dict:
     rubric = load_rubric()
     analysis_guide = load_analysis_guide()
     prompt = build_prompt(artifacts, rubric, analysis_guide)
-    result = run_judge(prompt, model)
+    result = run_judge(prompt, model, timeout=600)
 
     # Ensure weighted_total using our audit-specific dimensions
     if "weighted_total" not in result and "scores" in result:
@@ -197,7 +138,7 @@ def eval_audit_quality(outputs_dir: str, model: str = "sonnet") -> dict:
 
     result["outputs_dir"] = outputs_dir
     result["artifacts_loaded"] = [k for k, v in artifacts.items() if v is not None]
-    return result
+    return wrap_result(result, "audit-quality", model)
 
 
 def main():

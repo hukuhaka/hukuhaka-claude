@@ -1,6 +1,6 @@
 # Agents and Hooks
 
-> Subagent configuration, pipeline patterns, hook events, matchers, and decision control.
+> Subagent configuration, pipeline patterns, orchestration, hook events, matchers, and decision control.
 
 Official source: [sub-agents.md](../officials/build_with_claude_code/sub-agents.md), [hooks.md](../officials/reference/hooks.md), [hooks-guide.md](../officials/build_with_claude_code/hooks-guide.md)
 
@@ -202,7 +202,79 @@ Subagents support automatic compaction at ~95% capacity. Override threshold: set
 
 ---
 
-## Part 2: Hooks
+## Part 2: Orchestration Patterns
+
+Beyond simple pipelines, agents can be orchestrated in sophisticated patterns for complex workflows.
+
+### Multi-Agent Execution (Subagent-Driven Development)
+
+For plans with multiple independent tasks, dispatch a fresh subagent per task with two-stage review:
+
+```
+Per task:
+  1. Dispatch implementer subagent (full task text provided upfront)
+  2. Implementer asks questions → provide context
+  3. Implementer implements + tests + commits
+  4. Stage 1: Spec compliance review (does code match requirements?)
+  5. Stage 2: Code quality review (is implementation well-built?)
+  6. If issues → implementer fixes → reviewers re-review
+  7. Mark task complete
+After all tasks:
+  Final code review → finish
+```
+
+**Why fresh subagent per task**: prevents context pollution between tasks. Each implementer starts clean, focused on one deliverable.
+
+**Why two-stage review**: reviewing quality before spec compliance misses requirements. Spec compliance first ensures correctness, then quality review ensures craftsmanship.
+
+### Parallel Dispatch
+
+When facing 2+ independent tasks (no shared state, no ordering dependency), dispatch agents in parallel:
+
+1. **Identify independent domains** — tasks that don't touch the same files or state
+2. **Create focused agent prompts** — each self-contained with full context needed
+3. **Dispatch simultaneously** — use multiple Agent tool calls in a single message
+4. **Review and integrate** — check for conflicts, run full test suite
+
+**Agent prompt structure for parallel work:**
+
+| Element | Purpose |
+|---------|---------|
+| Specific scope | "Fix tests in `src/auth/`" not "fix failing tests" |
+| Full context | Include error messages, relevant code paths |
+| Clear output expectation | "Commit when done" or "Report findings" |
+| Boundary constraints | "Do NOT modify files outside `src/auth/`" |
+
+**When NOT to parallelize:**
+- Failures are related (same root cause)
+- Tasks need full codebase context (exploratory debugging)
+- Tasks share state or files
+- Order matters (task B depends on task A's output)
+
+### Model Selection Strategy
+
+Use the least powerful model that reliably completes the task:
+
+| Task Complexity | Model | Examples |
+|----------------|-------|---------|
+| Mechanical, well-specified | haiku | Link validation, file formatting, simple extraction |
+| Standard implementation | sonnet | Code generation, analysis, review |
+| Architecture, multi-file reasoning | opus/inherit | Complex refactoring, cross-cutting changes |
+
+**Cost rule**: haiku for validation/checking, sonnet for creation/analysis, opus for architecture. Upgrade only when the cheaper model demonstrably fails.
+
+### Verification Pattern
+
+Agents will claim completion without verification. Counter with explicit verification requirements:
+
+- **Never trust agent self-reports** — check independently
+- **Run verification commands** yourself after agent reports success
+- **Require evidence** in agent output (test output, command results, not just "done")
+- Red flags: agent says "should work", "probably passes", "seems correct"
+
+---
+
+## Part 3: Hooks
 
 Hooks are shell commands, LLM prompts, or agents that execute at specific lifecycle points.
 
@@ -466,6 +538,45 @@ WorktreeRemove fires at session exit or subagent finish. Input includes `worktre
 
 **Environment persistence**: write `export VAR=value` to `$CLAUDE_ENV_FILE` — persists for all session Bash commands. Only available in SessionStart.
 
+#### SessionStart Practical Patterns
+
+**Auto-inject context at session start** — load project conventions, skill reminders, or environment state:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "startup",
+      "hooks": [{
+        "type": "command",
+        "command": "cat ${CLAUDE_PLUGIN_ROOT}/context/session-context.md"
+      }]
+    }]
+  }
+}
+```
+
+Stdout becomes part of Claude's initial context. Use for:
+- Project conventions that aren't in CLAUDE.md
+- Dynamic state (current sprint, deploy status, feature flags)
+- Platform-specific instructions (detect OS, set environment)
+
+**Platform detection example:**
+
+```bash
+#!/bin/bash
+# session-start.sh — inject platform-specific context
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+  echo "Platform: Windows. Use PowerShell syntax for commands."
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  echo "Platform: macOS."
+fi
+# Write environment for Bash tool
+echo "export PROJECT_ENV=development" >> "$CLAUDE_ENV_FILE"
+```
+
+**Cross-platform hooks**: maintain separate hook configs per platform when behavior differs (e.g., `hooks.json` for Claude Code, `hooks-cursor.json` for Cursor).
+
 ### Stop Hook Safety
 
 `stop_hook_active` field is `true` when already continuing from a stop hook. Check this to prevent infinite loops.
@@ -545,3 +656,30 @@ model: haiku
 ```
 
 Pattern: read-only stages use `plan`, write stage uses `acceptEdits`. Skills inject shared format knowledge. Model cost scales with task complexity.
+
+### Orchestration: Parallel test fixes
+
+6 test failures across 3 domains → dispatch 3 agents in parallel:
+
+```
+Agent 1: "Fix auth tests in src/auth/ — TypeError on line 42, missing null check"
+Agent 2: "Fix API tests in src/api/ — timeout errors, endpoint URL changed"
+Agent 3: "Fix DB tests in src/db/ — migration schema mismatch"
+```
+
+Each agent has: specific scope, error context, file boundaries. After all complete: review for conflicts, run full suite.
+
+### Orchestration: Two-stage review
+
+```
+Implementer (sonnet):
+  → implements task, commits
+Spec reviewer (sonnet):
+  → "Does this implementation match the spec? Check: [requirements list]"
+  → Returns: PASS or list of spec violations
+Quality reviewer (sonnet):
+  → "Review code quality: naming, error handling, test coverage"
+  → Returns: Critical/Important/Minor issues
+Implementer fixes:
+  → Addresses spec violations first, then quality issues
+```

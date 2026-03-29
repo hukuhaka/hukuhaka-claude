@@ -2,15 +2,16 @@
 
 > Claude Code plugin/skill comprehensive reference for this project.
 
-Source: [official docs](../officials/build_with_claude_code/) + [project-mapper](../../marketplace/project-mapper/) reference implementation.
+Source: [official docs](../officials/build_with_claude_code/) + [project-mapper](../../marketplace/project-mapper/) reference implementation + [superpowers](https://github.com/superpowers-ai/superpowers) design patterns.
 
 ## Quick Navigation
 
 | Goal | File |
 |------|------|
-| Create a skill (SKILL.md) | [skills.md](skills.md) |
+| Create a skill (SKILL.md format) | [skills.md](skills.md) |
+| Design effective skills (CSO, testing, bulletproofing) | [skill-design.md](skill-design.md) |
 | Build a plugin (plugin.json) | [plugins.md](plugins.md) |
-| Add agents or hooks | [agents-and-hooks.md](agents-and-hooks.md) |
+| Add agents, orchestration, or hooks | [agents-and-hooks.md](agents-and-hooks.md) |
 | Distribute via marketplace | [distribution.md](distribution.md) |
 
 ## Component Hierarchy

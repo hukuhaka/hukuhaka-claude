@@ -2,7 +2,7 @@
 
 > SKILL.md format, frontmatter fields, patterns, bundled resources.
 
-Official source: [skills.md](../officials/build_with_claude_code/skills.md)
+Official source: [skills.md](../officials/build_with_claude_code/skills.md). See also [skill-design.md](skill-design.md) for design principles, testing, and bulletproofing.
 
 ## SKILL.md Format
 
@@ -244,9 +244,11 @@ Body: 6-step creation process with scripts (`init_skill.py`, `package_skill.py`)
 ## Best Practices
 
 - **Target <500 lines** for SKILL.md body; split into references when approaching limit
-- **Description is the trigger** — include what + when; be comprehensive
+- **Description is the trigger** — describe **when** to use, NOT how it works. See [CSO rules](skill-design.md#claude-search-optimization-cso)
 - **Imperative/infinitive form** for instructions
-- **Match freedom to fragility**: high (guidelines), medium (pseudocode), low (scripts with exact sequences)
+- **Match freedom to fragility**: high (guidelines), medium (pseudocode), low (scripts with exact sequences). See [degrees of freedom](skill-design.md#degrees-of-freedom)
 - **Challenge each token**: "Does Claude really need this?" Default assumption: Claude is smart
 - **No extra docs**: no README.md, INSTALLATION_GUIDE.md, CHANGELOG.md in skill directory
 - **One source of truth**: info lives in SKILL.md OR reference files, not both
+- **Bulletproof discipline skills** — agents rationalize skipping steps. See [bulletproofing](skill-design.md#bulletproofing-skills)
+- **Test before shipping** — use pressure scenarios to verify skill compliance. See [testing skills](skill-design.md#testing-skills)

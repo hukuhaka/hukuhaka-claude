@@ -1,0 +1,12 @@
+{
+  "scenario_id": "AUTHOR-LOGIC-S01",
+  "scenario_name": "author logic: process compliance during skill creation",
+  "skill": "authoring",
+  "eval_type": "logic",
+  "spec": "author-skill-logic",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md for reference on how to write good skills, then create a deployment gate skill that prevents deploying without passing all checks. This is a discipline-enforcing skill. Put it in .claude/skills/deploy-gate/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}

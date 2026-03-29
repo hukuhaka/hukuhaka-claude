@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUTHOR-SKILL-S01",
+  "scenario_name": "author skill: discipline-enforcing TDD skill",
+  "skill": "authoring",
+  "eval_type": "skill-quality",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md for reference on how to write good skills, then create a TDD skill that enforces test-driven development for this project. Put it in .claude/skills/tdd/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}

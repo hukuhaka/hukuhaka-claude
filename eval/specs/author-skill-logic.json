@@ -1,0 +1,50 @@
+{
+  "spec_id": "author-skill-logic",
+  "skill": "authoring",
+  "description": "Process compliance rules for skill/agent authoring",
+  "rules": [
+    {
+      "rule_id": "AUTH-01",
+      "severity": "critical",
+      "type": "must",
+      "description": "Must read plugin-guide or an existing skill SKILL.md for reference before writing a new SKILL.md (evidence: Read tool call targeting docs/plugin-guide/ or any existing SKILL.md file)"
+    },
+    {
+      "rule_id": "AUTH-02",
+      "severity": "major",
+      "type": "must",
+      "description": "Authored SKILL.md must contain YAML frontmatter (--- delimiters with at least name and description fields)"
+    },
+    {
+      "rule_id": "AUTH-03",
+      "severity": "major",
+      "type": "must",
+      "description": "The description field in frontmatter must be non-empty and follow trigger-condition format (contains 'Use when' or 'when' indicating trigger context)"
+    },
+    {
+      "rule_id": "AUTH-04",
+      "severity": "major",
+      "type": "must",
+      "description": "Skill must be created as a directory structure (skill-name/SKILL.md), not as a standalone file"
+    },
+    {
+      "rule_id": "AUTH-05",
+      "severity": "critical",
+      "type": "must",
+      "description": "When creating a discipline-enforcing skill (TDD, debugging, review, deployment gate), the SKILL.md body must contain at least one bulletproofing element: iron law (capitalized non-negotiable rule), rationalization table, red flags list, or hard gate block"
+    },
+    {
+      "rule_id": "AUTH-06",
+      "severity": "major",
+      "type": "must",
+      "description": "Must read docs/plugin-guide/skill-design.md before writing a discipline-enforcing skill (evidence: Read tool call targeting skill-design.md). This ensures exposure to bulletproofing techniques, archetypes, and degrees of freedom"
+    },
+    {
+      "rule_id": "AUTH-07",
+      "severity": "major",
+      "type": "must",
+      "description": "When creating a discipline-enforcing skill, the SKILL.md body must contain at least 2 distinct enforcement signal types from: imperative commands (MUST, NEVER, MANDATORY, NON-NEGOTIABLE), sequential gates (Cannot proceed, Do NOT proceed until, BLOCKED until), or explicit negation lists (Do NOT: with prohibited items)"
+    }
+  ],
+  "scenarios": ["AUTHOR-LOGIC-S01"]
+}

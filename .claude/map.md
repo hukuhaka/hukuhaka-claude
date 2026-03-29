@@ -45,5 +45,5 @@ Dual entry: skill path (`/project-mapper:map-sync sync .`) for headless/eval, co
 - `skills/`: Standalone — codex-coworker, team
 - `eval/`: Transcript-based eval (specs, scenarios, 5 Python scripts, run_eval.sh)
 - `scripts/`: deploy.sh, validate.sh, install.sh
-- `docs/plugin-guide/`: Internal plugin/skill design reference (5 files)
+- `docs/plugin-guide/`: Internal plugin/skill design reference (6 files: skills, skill-design, plugins, agents-and-hooks, distribution, README)
 - `.github/workflows/`: CI/CD — validate.yml (PR), release.yml (tag push)

@@ -4,6 +4,7 @@ eval/transcripts/
 eval/testbed/
 eval/outputs/
 eval/.testbed-worker-*
+eval/archive/
 
 # claude project docs
 .claude/

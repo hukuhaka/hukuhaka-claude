@@ -6,10 +6,10 @@ spec rules for pass/fail judgment per rule.
 """
 import argparse
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
+
+from judge_utils import extract_json, run_judge, wrap_result
 
 
 def truncate_transcript(transcript_path: str) -> str:
@@ -178,74 +178,8 @@ Respond with ONLY valid JSON in this exact format:
     return prompt
 
 
-def run_judge(prompt: str, model: str = "sonnet") -> dict:
-    """Call Claude CLI as judge and parse JSON response."""
-    model_id = {
-        "sonnet": "claude-sonnet-4-6",
-        "opus": "claude-opus-4-6",
-        "haiku": "claude-haiku-4-5-20251001",
-    }.get(model, model)
 
-    env = os.environ.copy()
-    env.pop("CLAUDECODE", None)
-
-    result = subprocess.run(
-        ["claude", "-p", prompt, "--model", model_id, "--output-format", "json"],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        env=env,
-    )
-
-    if result.returncode != 0:
-        print(f"Claude CLI error: {result.stderr}", file=sys.stderr)
-        sys.exit(1)
-
-    # Parse CLI output (JSON with "result" field)
-    try:
-        cli_output = json.loads(result.stdout)
-        response_text = cli_output.get("result", result.stdout)
-    except json.JSONDecodeError:
-        response_text = result.stdout
-
-    # Extract JSON from response
-    return _extract_json(response_text)
-
-
-def _extract_json(text: str) -> dict:
-    """Extract JSON object from text, handling markdown code blocks."""
-    # Try direct parse
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-
-    # Try extracting from code block
-    import re
-    match = re.search(r"```(?:json)?\s*\n(.*?)\n```", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group(1))
-        except json.JSONDecodeError:
-            pass
-
-    # Try finding JSON object boundaries
-    start = text.find("{")
-    if start >= 0:
-        depth = 0
-        for i, c in enumerate(text[start:], start):
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    try:
-                        return json.loads(text[start:i + 1])
-                    except json.JSONDecodeError:
-                        break
-
-    print(f"Failed to parse judge response:\n{text[:500]}", file=sys.stderr)
-    sys.exit(1)
+# run_judge and extract_json imported from judge_utils
 
 
 def eval_logic(
@@ -274,7 +208,7 @@ def eval_logic(
     if "score" in result:
         result["weighted_score"] = result["score"]
 
-    return result
+    return wrap_result(result, "logic", model)
 
 
 def main():

@@ -6,12 +6,11 @@ Supports single-set scoring and side-by-side comparison mode.
 """
 import argparse
 import json
-import os
-import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import Dict
+
+from judge_utils import extract_json, run_judge, wrap_result
 
 DIMENSIONS = [
     {"name": "completeness", "weight": 0.30},
@@ -162,68 +161,8 @@ Respond with ONLY valid JSON:
 }}"""
 
 
-def run_judge(prompt: str, model: str = "sonnet") -> dict:
-    """Call Claude CLI as judge."""
-    model_id = {
-        "sonnet": "claude-sonnet-4-6",
-        "opus": "claude-opus-4-6",
-        "haiku": "claude-haiku-4-5-20251001",
-    }.get(model, model)
 
-    env = os.environ.copy()
-    env.pop("CLAUDECODE", None)
-
-    result = subprocess.run(
-        ["claude", "-p", prompt, "--model", model_id, "--output-format", "json"],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        env=env,
-    )
-
-    if result.returncode != 0:
-        print(f"Claude CLI error: {result.stderr}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        cli_output = json.loads(result.stdout)
-        response_text = cli_output.get("result", result.stdout)
-    except json.JSONDecodeError:
-        response_text = result.stdout
-
-    return _extract_json(response_text)
-
-
-def _extract_json(text: str) -> dict:
-    """Extract JSON from text."""
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-
-    match = re.search(r"```(?:json)?\s*\n(.*?)\n```", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group(1))
-        except json.JSONDecodeError:
-            pass
-
-    start = text.find("{")
-    if start >= 0:
-        depth = 0
-        for i, c in enumerate(text[start:], start):
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    try:
-                        return json.loads(text[start:i + 1])
-                    except json.JSONDecodeError:
-                        break
-
-    print(f"Failed to parse judge response:\n{text[:500]}", file=sys.stderr)
-    sys.exit(1)
+# run_judge and extract_json imported from judge_utils
 
 
 def compute_weighted_total(scores: dict) -> float:
@@ -252,7 +191,7 @@ def eval_quality_single(docs_dir: str, model: str = "sonnet") -> dict:
 
     result["docs_dir"] = docs_dir
     result["files_evaluated"] = list(docs.keys())
-    return result
+    return wrap_result(result, "quality", model)
 
 
 def eval_quality_compare(
@@ -280,7 +219,7 @@ def eval_quality_compare(
     result["docs_dir_b"] = docs_dir_b
     result["label_a"] = label_a
     result["label_b"] = label_b
-    return result
+    return wrap_result(result, "quality-compare", model)
 
 
 def main():

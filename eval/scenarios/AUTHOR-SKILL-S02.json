@@ -1,0 +1,11 @@
+{
+  "scenario_id": "AUTHOR-SKILL-S02",
+  "scenario_name": "author skill: reference-type code review skill",
+  "skill": "authoring",
+  "eval_type": "skill-quality",
+  "prompt": "Read docs/plugin-guide/skills.md and docs/plugin-guide/skill-design.md for reference on how to write good skills, then create a code review skill that defines our team's review standards and conventions. This is a reference-type skill, not a discipline-enforcing one. Put it in .claude/skills/code-review/SKILL.md",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions --add-dir ../../docs/plugin-guide",
+  "seed": {}
+}
