@@ -22,7 +22,7 @@ CACHE=false
 MODEL="sonnet"
 
 usage() {
-  echo "Usage: $0 --type <logic|quality|audit-quality|skill-quality> --scenario <ID> [--cache] [--model <model>]"
+  echo "Usage: $0 --type <logic|quality|audit-quality|skill-quality|orchestration-quality> --scenario <ID> [--cache] [--model <model>]"
   echo "       $0 --type logic --spec <spec-id> [--cache]"
   exit 1
 }
@@ -163,6 +163,11 @@ run_scenario() {
       ;;
     skill-quality)
       python3 "$EVAL_DIR/eval_skill_quality.py" "$EVAL_DIR/outputs/$sid" \
+        --model "$MODEL" \
+        -o "$result_file"
+      ;;
+    orchestration-quality)
+      python3 "$EVAL_DIR/eval_orchestration_quality.py" "$transcript_file" \
         --model "$MODEL" \
         -o "$result_file"
       ;;

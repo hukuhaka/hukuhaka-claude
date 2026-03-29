@@ -1,0 +1,16 @@
+{
+  "scenario_id": "SYNC-ORCH-S01",
+  "scenario_name": "sync orchestration: pipeline quality evaluation",
+  "skill": "map-sync",
+  "eval_type": "orchestration-quality",
+  "prompt": "/project-mapper:map-sync sync .",
+  "cwd": "eval/testbed",
+  "mcp_mode": "on",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/map.md": "empty",
+    ".claude/design.md": "empty",
+    ".claude/changelog.md": "empty"
+  }
+}

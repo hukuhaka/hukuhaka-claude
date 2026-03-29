@@ -1,0 +1,14 @@
+{
+  "scenario_id": "TEAM-ORCH-S01",
+  "scenario_name": "team orchestration: parallel dispatch quality evaluation",
+  "skill": "team",
+  "eval_type": "orchestration-quality",
+  "prompt": "/team implement user authentication for the paper manager app",
+  "cwd": "eval/testbed",
+  "model": "sonnet",
+  "capture_flags": "--verbose --dangerously-skip-permissions",
+  "seed": {
+    ".claude/map.md": "template:paper-map",
+    ".claude/design.md": "template:paper-design"
+  }
+}
