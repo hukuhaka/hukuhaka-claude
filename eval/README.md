@@ -10,6 +10,7 @@ Transcript-based LLM-as-judge evaluation for Claude Code skills.
 | `quality` | Extracted `.claude/` docs | `eval_quality.py` | 5-dim rubric (1-5) |
 | `audit-quality` | Extracted audit artifacts | `eval_audit_quality.py` | 5-dim rubric (1-5) |
 | `skill-quality` | Extracted skill/agent files | `eval_skill_quality.py` | 5-dim rubric (1-5) |
+| `orchestration-quality` | Raw transcript | `eval_orchestration_quality.py` | 5-dim rubric (1-5) |
 
 ## Running Evals
 
@@ -47,7 +48,7 @@ capture transcript (claude --print) → extract artifacts → LLM judge → scor
   "scenario_id": "MY-SCENARIO-S01",
   "scenario_name": "descriptive name",
   "skill": "skill-being-tested",
-  "eval_type": "logic|quality|audit-quality|skill-quality",
+  "eval_type": "logic|quality|audit-quality|skill-quality|orchestration-quality",
   "spec": "spec-id (logic only)",
   "prompt": "what the user says",
   "cwd": "eval/testbed",
@@ -89,9 +90,15 @@ Save to `eval/specs/{id}.json`.
 - `score`: 0.0-1.0 (fraction of rules passed)
 - `results[]`: per-rule status (pass/fail/skip/unclear) with evidence
 
-### Quality/audit/skill-quality eval
+### Quality/audit/skill/orchestration-quality eval
 - `weighted_total`: 1.0-5.0 (weighted dimension scores)
 - `scores`: per-dimension score (1-5) with reasoning
+
+### Common envelope (all types)
+- `eval_type`: type identifier
+- `score`: normalized 0.0-1.0 (logic as-is, quality types = weighted_total / 5.0)
+- `model` / `model_id`: judge model shortname and full ID
+- `timestamp`: UTC ISO-8601
 
 ## Directory Structure
 
@@ -103,6 +110,7 @@ eval/
 ├── eval_quality.py          # Documentation quality judge
 ├── eval_audit_quality.py    # Audit findings quality judge
 ├── eval_skill_quality.py    # Skill authoring quality judge
+├── eval_orchestration_quality.py  # Multi-agent orchestration quality judge
 ├── extract_docs.py          # Extract .claude/ files from transcript
 ├── extract_findings.py      # Extract audit artifacts from transcript
 ├── extract_skill_files.py   # Extract skill/agent files from transcript
@@ -111,6 +119,7 @@ eval/
 ├── quality-rubric.md        # Documentation quality rubric
 ├── audit-quality-rubric.md  # Audit findings quality rubric
 ├── skill-quality-rubric.md  # Skill authoring quality rubric
+├── orchestration-quality-rubric.md  # Orchestration quality rubric
 ├── specs/                   # Logic spec definitions
 ├── scenarios/               # Test scenario definitions
 ├── fixtures/                # Seed templates for testbed

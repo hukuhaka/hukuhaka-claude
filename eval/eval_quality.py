@@ -215,6 +215,11 @@ def eval_quality_compare(
     if "weighted_total_b" not in result and "scores_b" in result:
         result["weighted_total_b"] = compute_weighted_total(result["scores_b"])
 
+    # Set weighted_total as average of A and B for wrap_result normalization
+    wt_a = result.get("weighted_total_a", 0.0)
+    wt_b = result.get("weighted_total_b", 0.0)
+    result["weighted_total"] = round((wt_a + wt_b) / 2, 2)
+
     result["docs_dir_a"] = docs_dir_a
     result["docs_dir_b"] = docs_dir_b
     result["label_a"] = label_a
