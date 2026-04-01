@@ -22,7 +22,7 @@ Create `.claude/spec.md` via prescriptive question-based flow. Follow [spec-guid
 ### Phase 1: Pre-flight
 
 1. Check `.claude/` exists. If not → "Run `/project-mapper:map-init` first" and STOP
-2. If `.claude/spec.md` exists → AskUserQuestion "spec.md already exists. Overwrite or keep?"
+2. If `.claude/spec.md` exists → use AskUserQuestion: "spec.md already exists. Overwrite or keep?"
    - Keep → STOP with message "Keeping existing spec.md"
 
 ### Phase 2: Analyze codebase
@@ -33,7 +33,7 @@ Spawn verifier agent in analyze mode:
 Task(subagent_type: "project-mapper:verifier", prompt: "analyze: Scan the codebase at {cwd} and return structured facts about tech stack, directories, interfaces, components, and config files.")
 ```
 
-Wait for verifier to return structured facts JSON. Do NOT proceed until you have the JSON.
+Wait for Agent tool to return structured facts JSON. Do NOT proceed until complete.
 
 Expected output: `{tech_stack, directories, interfaces, components, config_files}` — see verifier.md analyze mode for full schema.
 

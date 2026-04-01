@@ -40,7 +40,7 @@ Read these files (STOP if backlog.md missing):
 
 ### 3. Duplicate Check
 
-Compare description against existing backlog items. Check keyword and `file:symbol` overlap. If a similar item exists, inform user and ask whether to proceed or merge.
+Compare description against existing backlog items. Check keyword and `file:symbol` overlap. If a similar item exists, use AskUserQuestion to ask whether to proceed or merge.
 
 ### 4. Research
 

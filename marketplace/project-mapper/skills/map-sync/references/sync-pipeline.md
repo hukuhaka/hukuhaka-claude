@@ -20,7 +20,7 @@ After analyzer returns JSON, spawn exactly 1 writer agent with that JSON:
 Task(subagent_type: "project-mapper:writer", prompt: "Generate .claude/ docs from: {analyzer JSON result}")
 ```
 
-Do NOT write .claude/ files yourself. Only the writer agent writes files.
+Do NOT use Write or Edit tools. Only the writer agent modifies files via its own tool access.
 
 ## Step 3: Scatter
 

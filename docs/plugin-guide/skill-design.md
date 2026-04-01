@@ -149,6 +149,84 @@ Research-backed techniques for increasing agent compliance (Meincke et al. 2025,
 | Investigation (debugging, analysis) | Commitment + Scarcity | Authority |
 | Quality (verification, standards) | Authority + Social Proof | Unity |
 
+## Enforcement Layers
+
+Three layers for ensuring agents follow skill instructions, from lightest to heaviest. Use all three together — each catches failures the others miss.
+
+### Layer 1: Tool Name References (all skills)
+
+Replace natural language with explicit tool names. Reduces model thinking tokens and eliminates interpretation ambiguity.
+
+| Natural Language (weak) | Tool Reference (strong) |
+|------------------------|------------------------|
+| "Never write code or edit files yourself" | "Do NOT use Edit, Write, or NotebookEdit" |
+| "Ask the user before proceeding" | "Use AskUserQuestion before proceeding" |
+| "Spawn an analyzer agent" | "Use Agent(subagent_type: 'project-mapper:analyzer')" |
+| "Tell teammates to talk directly" | "Instruct teammates to use SendMessage(to: 'peer-name')" |
+| "Don't shut down the team" | "Do NOT call TeamDelete or send shutdown messages via SendMessage" |
+| "Check if .claude/ exists" | "Use Glob('.claude/') to check existence" |
+
+**Positive references** ("Use X tool") map intent directly to action — model doesn't need to search the tool space. **Negative references** ("Do NOT use Y tool") close specific bypass routes.
+
+Apply to every skill. Cost: zero (prompt edits only).
+
+### Layer 2: Skill Hooks (high-risk skills)
+
+Mechanical enforcement via `hooks` in skill frontmatter. When the model ignores Layer 1 instructions, Layer 2 physically blocks the tool call.
+
+```yaml
+---
+name: my-skill
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          command: "printf 'Only agents modify files — delegate via Agent tool' >&2; exit 2"
+---
+```
+
+Exit code 2 = blocking. The tool call fails with the stderr message. Model cannot proceed regardless of rationalization.
+
+**Key property**: skill hooks are scoped to the main session only. Spawned agents (via Agent tool) run in separate sessions and are unaffected. This makes hooks ideal for "orchestrator must not implement" patterns — the lead is blocked from Edit/Write, but delegated agents can use them freely.
+
+Common hook patterns:
+
+| Pattern | Matcher | Skills |
+|---------|---------|--------|
+| No agents (direct execution) | `"Agent"` | map-setup, trace, backlog |
+| No Write (Edit-only or read-only) | `"Write"` | audit, trace, backlog |
+| Orchestrator must not implement | `"Edit\|Write"` | map-sync, map-maintain, team |
+
+Use `type: "prompt"` hooks for conditional blocking (e.g., allow TeamDelete only when user explicitly requests cleanup). Use `type: "command"` for unconditional blocking.
+
+### Layer 3: Agent Frontmatter (subagents)
+
+For spawned agents, use `tools` (allowlist) or `disallowedTools` (denylist) in agent frontmatter. This is physical tool restriction at the agent level.
+
+```yaml
+---
+name: analyzer
+tools: Read, Grep, Glob
+model: sonnet
+permissionMode: plan
+---
+```
+
+This agent can only use Read, Grep, Glob — no Write, Edit, Agent, or Bash.
+
+Layer 3 is already standard practice for agents. The gap is typically in Layers 1 and 2 — skill-level enforcement for the orchestrating session.
+
+### Layer Summary
+
+| Layer | Scope | Enforcement | Cost | Catches |
+|-------|-------|-------------|------|---------|
+| 1. Tool references | All skills | Soft (prompt) | Zero | Ambiguity, wasted thinking |
+| 2. Skill hooks | High-risk skills | Hard (mechanical) | Minimal | Rationalization, prompt ignoring |
+| 3. Agent frontmatter | Subagents | Hard (mechanical) | Zero | Unauthorized tool access |
+
+**Design rule**: if a skill says "Do NOT use X" (Layer 1), also add a hook blocking X (Layer 2). The prompt tells the model *why*; the hook ensures compliance.
+
 ## Testing Skills
 
 Skills are documentation — but documentation that must reliably control agent behavior. Testing skills follows TDD methodology applied to the skill itself.

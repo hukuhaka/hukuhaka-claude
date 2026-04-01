@@ -30,7 +30,7 @@ Sequential 2-agent pipeline. See [audit-pipeline.md](references/audit-pipeline.m
 2. **Step 1** — Spawn exactly 1 `project-mapper:auditor` Task → returns context JSON
 3. **Step 2** — Spawn exactly 1 `project-mapper:analyzer` Task (improve mode + context from Step 1) → returns findings JSON
 4. Format findings grouped by priority (see Output Template)
-5. Ask user which findings to add to backlog (all, by priority, or specific items)
+5. Use AskUserQuestion to ask which findings to add to backlog (all, by priority, or specific items)
 6. For confirmed findings, Edit `.claude/backlog.md` to append under `## Planned` in the matching priority section
 
 ## Output Template

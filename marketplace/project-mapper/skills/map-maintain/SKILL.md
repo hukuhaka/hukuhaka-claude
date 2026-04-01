@@ -36,7 +36,7 @@ Spawn exactly 1 writer agent. The writer MUST process both files.
 Task(subagent_type: "project-mapper:writer", prompt: "Compact .claude/ docs: consolidate changelog.md (keep recent 10, archive older by month) and clean backlog.md (move completed items to changelog, remove empty sections). Process both files.")
 ```
 
-Do NOT read the files and decide they are "already clean" yourself. The writer agent makes that decision.
+Do NOT use Read to decide files are clean yourself — delegate to writer Agent. The writer agent makes that decision.
 For format rules, see [format-rules.md](references/format-rules.md).
 
 ## summary
@@ -48,4 +48,4 @@ Spawn exactly 1 summarizer agent. Nothing else.
 Task(subagent_type: "project-mapper:summarizer", prompt: "Compress .claude/ documentation into a single summary")
 ```
 
-Display the summarizer's result. Do NOT summarize docs yourself.
+Display the summarizer's result. Do NOT use Read to summarize docs yourself — Agent handles it.
