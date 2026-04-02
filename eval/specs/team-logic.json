@@ -1,59 +1,53 @@
 {
-  "spec_id": "team-logic-v4",
+  "spec_id": "team-logic",
   "skill": "team",
   "description": "Team lead orchestrator compliance rules",
   "rules": [
     {
-      "rule_id": "TMV4-01",
+      "rule_id": "TM-01",
       "severity": "critical",
       "type": "must",
       "description": "Must call TeamCreate (not just Agent tool) to create the team. The team_name must be derived from the objective."
     },
     {
-      "rule_id": "TMV4-02",
+      "rule_id": "TM-02",
       "severity": "critical",
       "type": "must",
       "description": "Must call TaskCreate with outcome-focused subjects. Subjects like 'standby', 'waiting', or 'ready' are forbidden."
     },
-    {
-      "rule_id": "TMV4-03",
-      "severity": "critical",
-      "type": "must",
-      "description": "All Agent tool calls must be emitted in a single assistant message (parallel spawn). Must NOT spawn one agent, wait for result, then spawn another."
-    },
-    {
-      "rule_id": "TMV4-04",
+{
+      "rule_id": "TM-04",
       "severity": "major",
       "type": "must_not",
       "description": "The lead must NOT use Write, Edit, or code-modifying tools directly. The lead's role is coordination only — all implementation must be delegated to teammates."
     },
     {
-      "rule_id": "TMV4-05",
+      "rule_id": "TM-05",
       "severity": "major",
       "type": "must",
       "description": "Must read .claude/map.md and .claude/design.md (via Read tool) BEFORE spawning agents. If files exist, their content must appear in the agent spawn prompts."
     },
     {
-      "rule_id": "TMV4-06",
+      "rule_id": "TM-06",
       "severity": "major",
       "type": "must",
       "description": "Agent spawn prompts must instruct teammates to include file:line references for all changes and findings."
     },
     {
-      "rule_id": "TMV4-07",
+      "rule_id": "TM-07",
       "severity": "major",
       "type": "must_not",
       "description": "The lead must NOT call TeamDelete or clean up the team after spawning. The team must remain active."
     },
     {
-      "rule_id": "TMV4-08",
+      "rule_id": "TM-08",
       "severity": "major",
       "type": "must",
       "description": "The report to the user must include: team name, roles with task counts, and a note that the team will stay active."
     }
   ],
   "scenarios": [
-    "TEAM-LOGIC-V4-S01",
-    "TEAM-LOGIC-V4-S02"
+    "TEAM-LOGIC-S01",
+    "TEAM-LOGIC-S02"
   ]
 }

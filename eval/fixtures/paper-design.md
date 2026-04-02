@@ -1,32 +1,31 @@
 # Design
-> paper-manager v0.3.0
+> Depth Anything V2
 
 ## Tech Stack
 
-- **Python 3.11**: Backend (FastAPI, SQLAlchemy, PyMuPDF, BeautifulSoup4)
-- **TypeScript/React**: Frontend SPA
-- **SQLite**: Primary storage (papers, authors, collections)
-- **Whoosh**: Full-text search index
-- **sentence-transformers**: Vector embeddings for semantic search
+- **Python 3.11**: Backend (PyTorch, Gradio, OpenCV)
+- **TypeScript/React**: Frontend auth UI (src/ui/)
+- **PyTorch**: Deep learning framework for depth estimation
+- **Gradio**: Web demo interface
+- **DINOv2**: Vision transformer backbone (self-supervised)
 
 ## Architecture
 
-- Monolith with 4 layers: parser → indexer → api → ui
-- Parser: stateless pipeline, each format (PDF/HTML/BibTeX) is a separate handler
-- Indexer: dual-mode search (keyword via Whoosh + semantic via embeddings), hybrid ranking
-- API: FastAPI with async endpoints, Pydantic validation
-- UI: React SPA consuming REST API
+- Encoder-decoder: DINOv2 backbone → DPT decoder head → depth map
+- Model variants: Small (24.8M), Base (97.5M), Large (335.3M), Giant (1.3B)
+- Metric depth: optional absolute depth estimation in meters (metric_depth/)
+- Frontend: React SPA for auth (login/register), separate from Gradio demo
 
 ## Patterns
 
-- Pipeline pattern: ingestion stages are composable (extract → transform → load)
-- Repository pattern: `src/models/repo.py` abstracts SQLAlchemy queries
-- Hybrid search: weighted combination of BM25 (Whoosh) and cosine similarity (embeddings)
-- Bulk import: background task via FastAPI BackgroundTasks
+- Feature pyramid: multi-scale features from DINOv2 intermediate layers
+- Reassemble blocks: project + resize transformer features to spatial maps
+- Fusion blocks: progressively upsample and merge multi-scale features
+- Head: final convolution layers for depth prediction
 
 ## Key Decisions
 
-- SQLite over PostgreSQL: single-user desktop app, no concurrent write pressure
-- Whoosh over Elasticsearch: lightweight, no external service dependency
-- Hybrid search: BM25 alone misses semantic matches, embeddings alone miss exact phrases
-- PyMuPDF over pdfplumber: faster extraction, better table handling
+- DINOv2 over ImageNet pretrained: stronger monocular depth priors from self-supervised training
+- DPT over simple decoder: better fine-grained detail via multi-scale fusion
+- Gradio over custom web: fast prototyping, built-in image slider widget
+- Synthetic data training: MiDaS + large-scale pseudo-labeled data for robustness
