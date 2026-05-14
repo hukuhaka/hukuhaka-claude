@@ -1,0 +1,16 @@
+{
+  "name": "hukuhaka-ltm",
+  "version": "0.1.0",
+  "description": "Long-term memory harness — passive scaffolding for project-declared accumulated knowledge. Self-hosting RULES, on-demand skill activation, history-preserving append.",
+  "author": {
+    "name": "hukuhaka"
+  },
+  "keywords": [
+    "ltm",
+    "memory",
+    "knowledge-base",
+    "harness",
+    "narrative",
+    "hukuhaka-ltm"
+  ]
+}

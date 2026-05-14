@@ -1,0 +1,114 @@
+**BEFORE ANY ACTION**: Read `.claude/` docs if present.
+
+- [map.md](.claude/map.md): codebase structure, entry points
+- [design.md](.claude/design.md): tech spec, architecture decisions
+- [backlog.md](.claude/backlog.md): Planned, In Progress, TODOs
+- [changelog.md](.claude/changelog.md): Recent (load) + Archive (on demand)
+- [spec.md](.claude/spec.md): interface contracts, naming rules, definition of done
+
+Bootstrap suggestion if missing: `/project-mapper:map-init`.
+
+Doc format rules (file:symbol style, llms.txt, line limits, NEVER ASCII): see `project-mapper:map-sync` skill.
+
+---
+
+# Approach
+
+## Think Before Coding
+
+- State assumptions explicitly — if uncertain, ask
+- Present multiple interpretations as choices — do not pick silently
+- Name a simpler path if one exists. Push back when warranted
+- Stop on confusion. Name what's unclear. Ask
+
+## Proposing Changes
+
+When proposing a change that requires a decision, include:
+
+- **Why** — the current problem or opportunity motivating the change
+- **Options** — possible approaches (only when ≥2 are viable)
+- **Tradeoffs** — pros and cons per option
+- **Impact** — scope: files affected, migration cost, reversibility
+- **Priority** — P1 / P2 / P3 with your recommendation
+
+Skip fields that don't apply. Routine edits don't need this.
+
+## Goal-Driven Execution
+
+Convert each task into a verifiable goal. No "done" without a check that proves it.
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Tests pass before and after"
+
+For multi-step work, state the plan as step → verify pairs before starting. Strong criteria enable independent looping. Weak criteria ("make it work") force constant re-clarification.
+
+## Debug
+
+When Verify fails or behavior is unexpected:
+
+1. Categorize — error (crash/exception), wrong-result (runs but incorrect), regression (was working)
+2. Isolate — reproduce with minimum input. Single test > full suite
+3. Trace — find the actual vs expected divergence point. Use `/project-mapper:trace` for large codebases
+4. Fix — minimum change at the divergence point. Do not fix symptoms upstream
+5. Confirm — re-run the exact failing case. Then run full suite
+
+Principles:
+- Read the error message completely before acting
+- One hypothesis at a time. Verify before moving to next
+- Log intermediate values at suspected divergence points, not everywhere
+- If stuck after 3 attempts: widen scope (check recent changes via `git diff`)
+
+## Team vs Subagent
+
+Use the right tool for the job:
+- **Subagent** (Agent tool): focused tasks where only the result matters. Reports back to caller. No inter-agent communication. Lower token cost
+- **Team** (TeamCreate): parallel work requiring discussion and collaboration. Teammates share a task list, claim work, and message each other directly. Each teammate is an independent session
+
+**When asked to create a "team", always use TeamCreate.** Spawning multiple agents with the Agent tool alone is subagents, not a team.
+
+### Team Rules
+
+- 3-5 teammates, 5-6 tasks per teammate
+- Each teammate must own a distinct set of files — never have two teammates edit the same file
+- For complex or risky tasks, require plan approval: teammate works in plan mode until lead approves
+- Do NOT clean up the team until all teammate tasks are completed
+- Lead must NOT implement tasks directly — delegate to teammates and wait for results
+
+### Subagent Rules
+
+- Pass objective context, not just query
+- Evaluate returns with follow-up questions (max 3 cycles)
+
+---
+
+# Rules
+
+- Sync `design.md` and archive to `changelog.md` for major changes only.
+- When the user asks a question, answer only. Do not take additional actions (git operations, file edits, command execution, etc.) unless the question explicitly requests them. Answering a question is not authorization to execute on the same topic.
+- Minimum code that solves the problem. No speculative features or abstractions
+- Surgical changes: touch only what the task requires. Match existing style
+- No features outside `design.md`
+- No "done" without verifiable success criteria (see Goal-Driven Execution)
+- No file deletion without confirmation
+- No spec.md contract changes without explicit sign-off
+- Clean `backlog.md` after task completion
+
+---
+
+# Reference
+
+## Suggestions
+
+For reusable patterns, gotchas, or project conventions that emerge during work and don't fit in code or current `.claude/` docs: consider capturing as an LTM rule via `/hukuhaka-ltm:ltm-declare-rule` (requires `hukuhaka-ltm` plugin; bootstrap with `/hukuhaka-ltm:ltm-init` if `.claude/ltm/` is empty).
+
+## Git
+
+**Never commit directly to main.** Always work on a branch:
+
+1. `git checkout -b <prefix>/name` — prefix: `feat/`, `fix/`, `eval/`
+2. Work + commit on branch
+3. `git checkout main && git merge --ff-only <branch>`
+4. `git branch -d <branch> && git push origin main`
+
+No Co-authored-by or co-worker attributions in commit messages.
