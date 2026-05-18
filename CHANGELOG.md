@@ -6,6 +6,15 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.1] — 2026-05-19
+
+### Changed
+
+- `skills/report/`: hero display token bumped 54px → 60px. One step
+  above Carbon `display-04`, calibrated for the 1200 max-width report
+  hero container so it carries more typographic weight without
+  inheriting the marketing-hero scale of `fluid-display-05` (76px).
+
 ## [1.0.0] — 2026-05-14
 
 Fresh start. The pre-1.0 git history was discarded as part of a repository

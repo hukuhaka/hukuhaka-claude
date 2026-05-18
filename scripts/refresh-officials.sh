@@ -60,14 +60,15 @@ route_subdir() {
   if [ -n "$prev" ]; then echo "$prev"; return; fi
   case "$b" in
     quickstart|overview|changelog|desktop-quickstart|web-quickstart) echo "getting_started" ;;
-    agent-teams|best-practices|common-workflows|features-overview|how-claude-code-works|computer-use) echo "core_concepts" ;;
-    cli-reference|hooks|plugins-reference|interactive-mode|checkpointing|scheduled-tasks|fast-mode|tools-reference|env-vars|errors|commands) echo "reference" ;;
-    amazon-bedrock|google-vertex-ai|microsoft-foundry|llm-gateway|devcontainer|sandboxing|network-config|third-party-integrations|github-enterprise-server|plugin-dependencies|platforms) echo "deployment" ;;
+    agent-teams|agent-view|agents|best-practices|common-workflows|features-overview|how-claude-code-works|computer-use|worktrees) echo "core_concepts" ;;
+    cli-reference|hooks|plugins-reference|interactive-mode|checkpointing|scheduled-tasks|fast-mode|tools-reference|env-vars|errors|commands|goal) echo "reference" ;;
+    amazon-bedrock|google-vertex-ai|microsoft-foundry|llm-gateway|devcontainer|sandboxing|network-config|third-party-integrations|github-enterprise-server|plugin-dependencies|platforms|claude-platform-on-aws) echo "deployment" ;;
     keybindings|model-config|permissions|settings|statusline|terminal-config|memory|permission-modes|auto-mode-config|fullscreen|claude-directory|debug-your-config|context-window) echo "configuration" ;;
-    chrome|claude-code-on-the-web|desktop|github-actions|gitlab-ci-cd|jetbrains|remote-control|slack|vs-code|voice-dictation|ultraplan|ultrareview|channels|channels-reference|routines|desktop-scheduled-tasks) echo "outside_the_terminal" ;;
+    chrome|claude-code-on-the-web|desktop|github-actions|gitlab-ci-cd|jetbrains|remote-control|slack|vs-code|voice-dictation|ultraplan|ultrareview|channels|channels-reference|routines|desktop-scheduled-tasks|deep-links) echo "outside_the_terminal" ;;
     analytics|authentication|costs|data-usage|monitoring-usage|plugin-marketplaces|security|server-managed-settings|setup|admin-setup) echo "administration" ;;
     code-review|discover-plugins|headless|hooks-guide|mcp|output-styles|plugins|skills|sub-agents|troubleshooting) echo "build_with_claude_code" ;;
-    legal-and-compliance|zero-data-retention) echo "resources" ;;
+    legal-and-compliance|zero-data-retention|champion-kit|communications-kit|glossary) echo "resources" ;;
+    troubleshoot-install) echo "getting_started" ;;
     *) echo "_unsorted" ;;
   esac
 }
