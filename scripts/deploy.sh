@@ -155,7 +155,7 @@ for c in m.get('components',[]):
 
 # ── Plugin registration ──────────────────────────────────────────────
 #
-# Ensures project-mapper is registered as a plugin in Claude Code's
+# Ensures hukuhaka-project-mapper is registered as a plugin in Claude Code's
 # marketplace system (settings.json, installed_plugins.json, known_marketplaces.json).
 
 ensure_plugin_registered() {
@@ -536,7 +536,7 @@ if [ -f "$MANIFEST" ]; then
 else
     # First manifest-based deploy: scan existing dirs to detect stale files
     {
-        for scan_dir in "$CLAUDE_DIR/plugins/project-mapper"; do
+        for scan_dir in "$CLAUDE_DIR/plugins/hukuhaka-project-mapper"; do
             [ -d "$scan_dir" ] || continue
             find "$scan_dir" -type f | while IFS= read -r file; do
                 echo "${file#"$CLAUDE_DIR"/}"
@@ -694,9 +694,9 @@ fi
 
 # ── Remove standalone path (migration) ───────────────────────────────
 
-# Old install layouts had plugins/project-mapper/ at the top level.
+# Old install layouts had plugins/hukuhaka-project-mapper/ at the top level.
 # Clean up if present.
-for legacy in "$CLAUDE_DIR/plugins/project-mapper"; do
+for legacy in "$CLAUDE_DIR/plugins/hukuhaka-project-mapper"; do
     if [ -d "$legacy" ] && ! $DRY_RUN; then
         echo ""
         echo "Removing legacy $(basename "$legacy"):"

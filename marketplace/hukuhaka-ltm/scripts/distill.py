@@ -1,25 +1,51 @@
 #!/usr/bin/env python3
-"""LTM distillation helper — promote raw L3 log entries into L2 knowledge cards.
+"""LTM distillation utility — deterministic post-step + pinned.md helpers.
+
+v0.4.0 split-of-responsibility:
+
+  - L2 card authoring (`create` / `edit` / `create-merging`) is owned by
+    the `writer` subagent which uses Write/Edit directly. The previous
+    `apply` / `merge` / `retire` subcommands were removed — the new
+    writer authors body content (not just frontmatter fields), so a
+    mechanical assembler script no longer fits.
+  - L1 pinned.md edits are owned by the `l1-update` subagent which also
+    uses Edit/Write directly. `pin scan` / `pin apply` remain available
+    here as deterministic helpers if any agent prefers schema-validated
+    mutations, but the v0.4.0 default flow uses tool calls.
+  - The `reproject` subcommand stays here — it is deterministic file IO
+    that should not live in an LLM-driven agent.
 
 Operations:
 
-  scan
-      Walk .claude/ltm/log/, find entries with `distilled: false` in
-      frontmatter, cluster them by slug-token-prefix (1-2 leading tokens
-      after stripping common stopwords), and print JSON to stdout. Claude
-      reads this and presents proposals to the user.
+  reproject
+      Walk all L2 cards in .claude/ltm/index/; build the truth map of
+      {L3 id -> [card filenames]} from each card's `evidence:` list; sync
+      every L3 entry's `distilled-into` field:
+        - absent  : entry has never been through reproject (newly captured)
+        - []      : scanned, currently no card cites it (intentional
+                    keep-in-L3 OR cited-then-card-retired)
+        - [paths] : currently cited; e.g. [index/foo.md, index/bar.md]
+      Also drops legacy `distilled: true|false` boolean field (one-shot
+      migration for entries written by v0.1.x). Idempotent.
+      Reports orphan citations to stderr (L2 evidence id with no matching
+      L3 file).
 
-  apply --topic <name> [--supersedes <card-id>] --evidence <id1,id2,...>
-      Read card body from stdin. Either create .claude/ltm/index/<name>.md
-      or merge into the existing card (appending to evidence, refreshing
-      last-updated). Then mark each evidence log entry's frontmatter
-      distilled: true and add a "→ index/<name>.md" pointer.
+  pin scan
+      Dump current pinned.md state as JSON:
+        {lines: [{text}], bytes: int, cap: 2048}
+      `text` is the line content after the leading `- ` (unique within
+      Core section). Helper for any agent wanting structured pinned state.
 
-  undo --topic <name>
-      Delete the index card and revert distilled: true → false for every
-      log entry currently cited as evidence.
+  pin apply --action add --text "<≤140>" [--evidence <l2-slug1,...>]
+      Append `- <text>` under `## Core` in pinned.md. Refuses if
+      resulting bytes > 2048 (caller must pair with retire). `--evidence`
+      is recorded in stdout output for audit; not persisted in file.
 
-Card schema (frontmatter):
+  pin apply --action retire --match-text "<exact line content>"
+      Remove the unique `- <match-text>` line from Core section. Refuses
+      if 0 or ≥2 lines match.
+
+Card frontmatter schema (unchanged):
 
     topic: <name>
     summary: <one-line>
@@ -27,33 +53,27 @@ Card schema (frontmatter):
     evidence: [<log-id1>, <log-id2>, ...]
     supersedes: [<older-card-id>, ...]
     last-updated: <ISO date>
+    # plus body — authored by the `writer` subagent, NOT auto-rendered
 
-Design intent: distill is a Claude-orchestrated batch operation, not a
-silent automation. This script does the file IO; the slash command
-markdown decides what to surface and confirm with the user.
+L3 frontmatter schema (v0.2.0+):
+
+    id, timestamp, kind, tier: l3, [autonomous: true], [supersedes: [...]],
+    [distilled-into: [index/foo.md, ...]]    # absent / [] / [paths]
 """
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import json
 import re
 import sys
+from collections import defaultdict
 from pathlib import Path
-
-
-SLUG_STOPWORDS = {
-    "why", "what", "how", "the", "a", "an", "is", "are", "was", "were",
-    "to", "of", "in", "on", "for", "with", "from",
-}
-
-SLUG_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
     """Return (frontmatter_dict, body). Naive — handles flat YAML only.
 
-    Recognised value shapes: scalar, `[a, b, c]` list.
+    Recognised value shapes: scalar, `[a, b, c]` list (empty -> []).
     """
     if not text.startswith("---\n"):
         return {}, text
@@ -89,22 +109,6 @@ def write_with_frontmatter(path: Path, fm: dict, body: str) -> None:
     path.write_text("\n".join(lines) + "\n\n" + body.lstrip("\n"), encoding="utf-8")
 
 
-def slug_tokens(slug: str) -> list[str]:
-    """Lowercase alphanumeric tokens, stopwords removed, length ≥3 chars."""
-    tokens = SLUG_TOKEN_RE.findall(slug.lower())
-    return [t for t in tokens if t not in SLUG_STOPWORDS and len(t) >= 3]
-
-
-def cluster_key(slug: str) -> str:
-    """Take first 1-2 meaningful tokens as the topic-cluster key."""
-    tokens = slug_tokens(slug)
-    if not tokens:
-        return "misc"
-    if len(tokens) == 1:
-        return tokens[0]
-    return f"{tokens[0]}-{tokens[1]}"
-
-
 def find_log_dir(target_dir: Path) -> Path:
     return target_dir / "log"
 
@@ -122,230 +126,275 @@ def iter_log_entries(log_dir: Path):
         yield path, fm
 
 
-def cmd_scan(target_dir: Path) -> int:
+# ---------------------------------------------------------------------------
+# reproject
+# ---------------------------------------------------------------------------
+
+def _reproject_internal(target_dir: Path) -> dict:
+    """Reproject L3 distilled-into from L2 evidence. Return result dict.
+
+    Idempotent. Migrates legacy `distilled: true|false` boolean by dropping
+    it whenever the entry is rewritten. Overwrites scalar `distilled-into`
+    values (v0.1.x shape) with lists.
+    """
+    index_dir = find_index_dir(target_dir)
     log_dir = find_log_dir(target_dir)
-    clusters: dict[str, dict] = {}
-    undistilled_total = 0
-    for path, fm in iter_log_entries(log_dir):
-        if fm.get("distilled", "false").lower() == "true":
-            continue
-        undistilled_total += 1
-        slug = path.stem  # e.g. 2026-05-04-foo-bar
-        # Strip leading date YYYY-MM-DD-
-        slug_only = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", slug)
-        key = cluster_key(slug_only)
-        bucket = clusters.setdefault(
-            key, {"topic_suggestion": key, "entries": [], "kinds": set()}
-        )
-        bucket["entries"].append(
-            {
-                "id": fm.get("id", slug),
-                "path": str(path),
-                "kind": fm.get("kind", "unknown"),
-                "title": _extract_title(path),
-                "timestamp": fm.get("timestamp", ""),
-                "autonomous": fm.get("autonomous", "false").lower() == "true",
-                "supersedes": fm.get("supersedes", []) if isinstance(fm.get("supersedes"), list) else [],
-            }
-        )
-        bucket["kinds"].add(fm.get("kind", "unknown"))
 
-    # Convert sets to sorted lists for JSON
-    out_clusters = []
-    for key, bucket in sorted(clusters.items(), key=lambda kv: -len(kv[1]["entries"])):
-        out_clusters.append(
-            {
-                "topic_suggestion": bucket["topic_suggestion"],
-                "kinds": sorted(bucket["kinds"]),
-                "entry_count": len(bucket["entries"]),
-                "entries": bucket["entries"],
-            }
-        )
+    # 1. Build the truth table: L3 id -> [card filenames] (with index/ prefix)
+    citations: dict[str, list[str]] = defaultdict(list)
+    cards_scanned = 0
+    if index_dir.is_dir():
+        for card_path in sorted(index_dir.glob("*.md")):
+            if card_path.name == ".gitkeep":
+                continue
+            cards_scanned += 1
+            fm, _ = parse_frontmatter(card_path.read_text(encoding="utf-8"))
+            for eid in (fm.get("evidence") or []):
+                citations[eid].append(f"index/{card_path.name}")
 
-    print(
-        json.dumps(
-            {
-                "undistilled_count": undistilled_total,
-                "clusters": out_clusters,
-            },
-            indent=2,
+    # 2. Sync each L3 entry's distilled-into; collect existing ids for orphan check.
+    existing_l3_ids: set[str] = set()
+    touched = 0
+    entries_scanned = 0
+    if log_dir.is_dir():
+        for path, fm in iter_log_entries(log_dir):
+            entries_scanned += 1
+            entry_id = fm.get("id") or re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
+            existing_l3_ids.add(entry_id)
+            new_val = sorted(citations.get(entry_id, []))
+            current = fm.get("distilled-into")
+            had_legacy_bool = "distilled" in fm
+
+            # Rewrite when: value changed, current isn't a list, or legacy
+            # boolean field is present (migration). The isinstance guard
+            # catches the v0.1.x scalar -> v0.2.x list schema shift.
+            needs_rewrite = (
+                current != new_val
+                or not isinstance(current, list)
+                or had_legacy_bool
+            )
+            if needs_rewrite:
+                # Re-read body for round-trip (iter_log_entries gave fm only).
+                _, body = parse_frontmatter(path.read_text(encoding="utf-8", errors="ignore"))
+                new_fm = {k: v for k, v in fm.items() if k != "distilled"}
+                # Also drop legacy distilled-into scalar pointer to ensure list shape
+                if not isinstance(new_fm.get("distilled-into"), list):
+                    new_fm.pop("distilled-into", None)
+                new_fm["distilled-into"] = new_val
+                write_with_frontmatter(path, new_fm, body)
+                touched += 1
+
+    # 3. Orphan detection: card cites an L3 id that no longer exists.
+    orphans: list[dict] = []
+    for cited_id, cards in citations.items():
+        if cited_id not in existing_l3_ids:
+            for c in cards:
+                orphans.append({"card": c, "missing_id": cited_id})
+
+    result = {
+        "reprojected": touched,
+        "cards_scanned": cards_scanned,
+        "entries_scanned": entries_scanned,
+    }
+    if orphans:
+        result["orphans"] = orphans
+    return result
+
+
+def cmd_reproject(target_dir: Path) -> int:
+    result = _reproject_internal(target_dir)
+    for o in result.get("orphans", []):
+        print(
+            f"reproject: orphan — card {o['card']} cites missing L3 id {o['missing_id']}",
+            file=sys.stderr,
         )
-    )
+    print(json.dumps(result))
     return 0
 
 
-def _extract_title(path: Path) -> str:
+# ---------------------------------------------------------------------------
+# L1 pin operations (pinned.md) — deterministic helpers
+# ---------------------------------------------------------------------------
+
+PIN_CAP_BYTES = 2048
+_PIN_CORE_HEADING_RE = re.compile(r"^##\s+Core\b.*$", re.MULTILINE)
+_PIN_SECTION_HEADING_RE = re.compile(r"^##\s+\S", re.MULTILINE)
+
+
+def _find_pinned(target_dir: Path) -> Path:
+    return target_dir / "pinned.md"
+
+
+def _split_pinned(text: str) -> tuple[str, str, str]:
+    """Return (preamble, core_body, trailing).
+
+    preamble: from start through the `## Core` heading line + newline.
+    core_body: content between the Core heading and the next `## ` heading or EOF.
+    trailing: from the next `## ` heading onward (empty if none).
+
+    Raises if no `## Core` heading found.
+    """
+    m = _PIN_CORE_HEADING_RE.search(text)
+    if not m:
+        raise ValueError("pinned.md missing `## Core` heading")
+    nl = text.find("\n", m.end())
+    if nl == -1:
+        return text, "", ""
+    preamble = text[: nl + 1]
+    rest = text[nl + 1:]
+    m2 = _PIN_SECTION_HEADING_RE.search(rest)
+    if m2 is None:
+        return preamble, rest, ""
+    return preamble, rest[: m2.start()], rest[m2.start():]
+
+
+def _core_items(core_body: str) -> list[str]:
+    """Return list of item text (without leading `- ` prefix) from core body."""
+    return [ln[2:] for ln in core_body.splitlines() if ln.startswith("- ")]
+
+
+def cmd_pin_scan(target_dir: Path) -> int:
+    pinned = _find_pinned(target_dir)
+    if not pinned.exists():
+        print(json.dumps({"error": "no-pinned-file", "path": str(pinned)}))
+        return 1
+    text = pinned.read_text()
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return path.stem
-    _, body = parse_frontmatter(text)
-    for line in body.splitlines():
-        line = line.strip()
-        if line.startswith("# "):
-            return line[2:].strip()
-        if line:
-            return line[:80]
-    return path.stem
-
-
-def cmd_apply(args, target_dir: Path) -> int:
-    topic = args.topic.strip()
-    if not topic:
-        print("distill: --topic is required", file=sys.stderr)
+        _, core_body, _ = _split_pinned(text)
+    except ValueError as e:
+        print(json.dumps({"error": str(e)}))
         return 1
-    if not re.match(r"^[a-z0-9][a-z0-9-]*$", topic):
-        print(f"distill: --topic must be kebab-case slug, got {topic!r}", file=sys.stderr)
-        return 1
-    evidence = [e.strip() for e in args.evidence.split(",") if e.strip()]
-    if not evidence:
-        print("distill: --evidence (comma-separated log ids) required", file=sys.stderr)
-        return 1
-    supersedes = [s.strip() for s in (args.supersedes or "").split(",") if s.strip()]
-
-    body_stdin = ""
-    if not sys.stdin.isatty():
-        body_stdin = sys.stdin.read()
-    body = body_stdin.strip()
-    if not body:
-        print("distill: body required on stdin (summary line + optional context)", file=sys.stderr)
-        return 1
-
-    # Split body: first non-empty line = summary, rest = context
-    lines = [ln for ln in body.splitlines() if ln.strip() or True]
-    nonempty = [i for i, ln in enumerate(lines) if ln.strip()]
-    if not nonempty:
-        print("distill: body has no non-empty lines", file=sys.stderr)
-        return 1
-    summary_idx = nonempty[0]
-    summary = lines[summary_idx].strip()
-    context_lines = lines[summary_idx + 1 :]
-    context = "\n".join(context_lines).strip()
-
-    index_dir = find_index_dir(target_dir)
-    index_dir.mkdir(parents=True, exist_ok=True)
-    card_path = index_dir / f"{topic}.md"
-    today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
-
-    if card_path.exists():
-        existing_fm, existing_body = parse_frontmatter(card_path.read_text(encoding="utf-8"))
-        merged_evidence = list(dict.fromkeys((existing_fm.get("evidence") or []) + evidence))
-        merged_super = list(dict.fromkeys((existing_fm.get("supersedes") or []) + supersedes))
-        prev_summary = existing_fm.get("summary", "") if isinstance(existing_fm.get("summary"), str) else ""
-        prev_context = existing_fm.get("context", "") if isinstance(existing_fm.get("context"), str) else ""
-        existing_fm["topic"] = topic
-        existing_fm["summary"] = summary
-        if context:
-            existing_fm["context"] = context
-        existing_fm["evidence"] = merged_evidence
-        if merged_super:
-            existing_fm["supersedes"] = merged_super
-        existing_fm["last-updated"] = today
-        # Preserve user-edited body verbatim. If the existing body still
-        # matches the auto-rendered form for the prior summary/context,
-        # it was never touched — safe to regenerate. Otherwise the user
-        # added prose we must not silently clobber.
-        prev_auto = _render_card_body(prev_summary, prev_context)
-        if existing_body.strip() == prev_auto.strip():
-            body_to_write = _render_card_body(summary, context)
-        else:
-            body_to_write = existing_body
-        write_with_frontmatter(card_path, existing_fm, body_to_write)
-    else:
-        fm = {
-            "topic": topic,
-            "summary": summary,
-            "evidence": evidence,
-            "last-updated": today,
-        }
-        if context:
-            fm["context"] = context
-        if supersedes:
-            fm["supersedes"] = supersedes
-        write_with_frontmatter(card_path, fm, _render_card_body(summary, context))
-
-    # Mark each evidence log entry as distilled. Match on frontmatter id
-    # first; fall back to filename-stem (date-prefix stripped) so manually
-    # created entries lacking an `id:` field still resolve.
-    log_dir = find_log_dir(target_dir)
-    marked = 0
-    for path, fm in iter_log_entries(log_dir):
-        entry_id = fm.get("id")
-        if not entry_id:
-            entry_id = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
-        if entry_id in evidence:
-            updated_fm = dict(fm)
-            updated_fm["distilled"] = "true"
-            updated_fm["distilled-into"] = f"index/{topic}.md"
-            _, body_text = parse_frontmatter(path.read_text(encoding="utf-8", errors="ignore"))
-            write_with_frontmatter(path, updated_fm, body_text)
-            marked += 1
-
-    print(json.dumps({"card": str(card_path), "marked": marked}))
+    print(json.dumps({
+        "lines": [{"text": t} for t in _core_items(core_body)],
+        "bytes": len(text.encode("utf-8")),
+        "cap": PIN_CAP_BYTES,
+    }))
     return 0
 
 
-def _render_card_body(summary: str, context: str) -> str:
-    parts = [f"# {summary}"]
-    if context:
-        parts.append(context)
-    return "\n\n".join(parts) + "\n"
-
-
-def cmd_undo(args, target_dir: Path) -> int:
-    topic = args.topic.strip()
-    if not topic:
-        print("distill: --topic is required", file=sys.stderr)
+def cmd_pin_apply(args, target_dir: Path) -> int:
+    pinned = _find_pinned(target_dir)
+    if not pinned.exists():
+        print(json.dumps({"error": "no-pinned-file", "path": str(pinned)}))
         return 1
-    index_dir = find_index_dir(target_dir)
-    card_path = index_dir / f"{topic}.md"
-    if not card_path.exists():
-        print(f"distill: no card at {card_path}", file=sys.stderr)
+    text = pinned.read_text()
+    try:
+        preamble, core_body, trailing = _split_pinned(text)
+    except ValueError as e:
+        print(json.dumps({"error": str(e)}))
         return 1
-    fm, _ = parse_frontmatter(card_path.read_text(encoding="utf-8"))
-    evidence = fm.get("evidence") or []
-    log_dir = find_log_dir(target_dir)
-    reverted = 0
-    for path, lfm in iter_log_entries(log_dir):
-        entry_id = lfm.get("id")
-        if not entry_id:
-            entry_id = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
-        if entry_id in evidence:
-            updated = dict(lfm)
-            updated["distilled"] = "false"
-            updated.pop("distilled-into", None)
-            _, body_text = parse_frontmatter(path.read_text(encoding="utf-8", errors="ignore"))
-            write_with_frontmatter(path, updated, body_text)
-            reverted += 1
-    card_path.unlink()
-    print(json.dumps({"reverted": reverted, "card_removed": str(card_path)}))
-    return 0
 
+    if args.action == "add":
+        new_text = (args.text or "").strip()
+        if not new_text:
+            print(json.dumps({"error": "empty-text"}))
+            return 1
+        if len(new_text) > 140:
+            print(json.dumps({"error": "text-over-140-chars", "length": len(new_text)}))
+            return 1
+        existing_lines = core_body.splitlines()
+        while existing_lines and not existing_lines[-1].strip():
+            existing_lines.pop()
+        existing_lines.append(f"- {new_text}")
+        new_core = "\n".join(existing_lines) + "\n"
+        if trailing:
+            new_core += "\n"
+        new_pinned = preamble + new_core + trailing
+        new_bytes = len(new_pinned.encode("utf-8"))
+        if new_bytes > PIN_CAP_BYTES:
+            print(json.dumps({
+                "error": "over-cap",
+                "current_bytes": len(text.encode("utf-8")),
+                "would_be": new_bytes,
+                "cap": PIN_CAP_BYTES,
+            }))
+            return 1
+        pinned.write_text(new_pinned)
+        evidence_list = [e.strip() for e in (args.evidence or "").split(",") if e.strip()]
+        print(json.dumps({
+            "line_added": new_text,
+            "evidence": evidence_list,
+            "bytes_after": new_bytes,
+            "cap": PIN_CAP_BYTES,
+        }))
+        return 0
+
+    if args.action == "retire":
+        match = (args.match_text or "").strip()
+        if not match:
+            print(json.dumps({"error": "empty-match-text"}))
+            return 1
+        target_line = f"- {match}"
+        body_lines = core_body.splitlines()
+        match_count = sum(1 for ln in body_lines if ln == target_line)
+        if match_count != 1:
+            print(json.dumps({
+                "error": "match-ambiguous" if match_count > 1 else "no-match",
+                "matches": match_count,
+                "target": target_line,
+            }))
+            return 1
+        new_lines = [ln for ln in body_lines if ln != target_line]
+        new_core = "\n".join(new_lines)
+        if core_body.endswith("\n") and not new_core.endswith("\n"):
+            new_core += "\n"
+        new_pinned = preamble + new_core + trailing
+        new_bytes = len(new_pinned.encode("utf-8"))
+        pinned.write_text(new_pinned)
+        print(json.dumps({
+            "line_removed": match,
+            "bytes_after": new_bytes,
+        }))
+        return 0
+
+    print(json.dumps({"error": "unknown-action", "action": args.action}))
+    return 1
+
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
 
 def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument("--target-dir", default=".claude/ltm", help="LTM root directory")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("scan", help="list undistilled L3 entries grouped into proposed topics")
+    sub.add_parser(
+        "reproject",
+        help="sync L3 distilled-into from L2 evidence (idempotent, migration-safe)",
+    )
 
-    ap = sub.add_parser("apply", help="write/merge an L2 card and mark log entries distilled")
-    ap.add_argument("--topic", required=True)
-    ap.add_argument("--evidence", required=True, help="comma-separated log entry ids")
-    ap.add_argument("--supersedes", default="", help="comma-separated older card ids")
-
-    ud = sub.add_parser("undo", help="delete an L2 card and revert distilled flags")
-    ud.add_argument("--topic", required=True)
+    pin_p = sub.add_parser("pin", help="L1 pinned.md operations")
+    pin_sub = pin_p.add_subparsers(dest="pin_cmd", required=True)
+    pin_sub.add_parser("scan", help="dump current pinned.md state as JSON")
+    pin_apply_p = pin_sub.add_parser("apply", help="add or retire a pinned line")
+    pin_apply_p.add_argument("--action", required=True, choices=["add", "retire"])
+    pin_apply_p.add_argument("--text", default="", help="line text (for add; ≤140 chars)")
+    pin_apply_p.add_argument(
+        "--evidence",
+        default="",
+        help="comma-separated L2 topic slugs (audit-only, not persisted)",
+    )
+    pin_apply_p.add_argument(
+        "--match-text",
+        default="",
+        dest="match_text",
+        help="exact line text (without leading '- ') to retire",
+    )
 
     args = p.parse_args()
     target = Path(args.target_dir)
 
-    if args.cmd == "scan":
-        return cmd_scan(target)
-    if args.cmd == "apply":
-        return cmd_apply(args, target)
-    if args.cmd == "undo":
-        return cmd_undo(args, target)
+    if args.cmd == "reproject":
+        return cmd_reproject(target)
+    if args.cmd == "pin":
+        if args.pin_cmd == "scan":
+            return cmd_pin_scan(target)
+        if args.pin_cmd == "apply":
+            return cmd_pin_apply(args, target)
     return 1
 
 

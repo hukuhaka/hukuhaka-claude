@@ -57,6 +57,33 @@ description: >
 
 ## Prompt Templates
 
+Prompts sent to Codex are assembled in this order, all inside the same heredoc:
+
+1. **Persona** (always)
+2. **Per-command framing** (always, varies by command)
+3. **Context Prefix** (only when `--context` used)
+4. **User question** (verbatim)
+
+### Persona (always prepended for `ask` / `compare`)
+```
+You are providing a second opinion to Claude Code, which is working in
+this repo and has the full conversation context. You do not. Focus on
+what a fresh reader catches: risks, alternative approaches, missed
+edge cases. Claude will synthesize your response with its own — so be
+direct, take a position, and skip restating things Claude likely
+already knows. You are read-only; do not edit files.
+```
+
+Not injected on the `review` path — `codex review` is a native subcommand with its own internal system prompt. The user-provided `custom_instructions` arg remains the user's surface and is passed through unchanged.
+
+### Per-command framing (prepended after Persona)
+
+| Command | Framing line |
+|---|---|
+| `ask` | `Answer the question below. Give your strongest single answer; surface tradeoffs only when they materially change the choice.` |
+| `compare` | `Answer independently. Claude is forming a parallel answer; do not hedge to be safe — your distinct angle is the value.` |
+| `review` | n/a (handled by `codex review` native subcommand) |
+
 ### Context Prefix (when --context used)
 ```
 Project context:
@@ -92,10 +119,18 @@ Run Codex with the appropriate command:
 **For ask/compare:**
 ```bash
 codex exec --json "$(cat <<'CODEX_PROMPT'
-<prompt content here>
+{Persona block}
+
+{Per-command framing line}
+
+{Context Prefix block — only if --context was used}
+
+{user question, verbatim}
 CODEX_PROMPT
 )" 2>&1
 ```
+
+The Persona and Per-command framing come from the templates above and are always prepended on this path. The Context Prefix is opt-in via `--context`.
 
 **For review (v0.93+ native command):**
 ```bash

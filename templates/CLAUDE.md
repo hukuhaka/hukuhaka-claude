@@ -6,9 +6,9 @@
 - [changelog.md](.claude/changelog.md): Recent (load) + Archive (on demand)
 - [spec.md](.claude/spec.md): interface contracts, naming rules, definition of done
 
-Bootstrap suggestion if missing: `/project-mapper:map-init`.
+Bootstrap suggestion if missing: `/hukuhaka-project-mapper:map-init`.
 
-Doc format rules (file:symbol style, llms.txt, line limits, NEVER ASCII): see `project-mapper:map-sync` skill.
+Doc format rules (file:symbol style, llms.txt, line limits, NEVER ASCII): see `hukuhaka-project-mapper:map-sync` skill.
 
 ---
 
@@ -20,6 +20,24 @@ Doc format rules (file:symbol style, llms.txt, line limits, NEVER ASCII): see `p
 - Present multiple interpretations as choices — do not pick silently
 - Name a simpler path if one exists. Push back when warranted
 - Stop on confusion. Name what's unclear. Ask
+
+## Reporting
+
+Before acting on a non-trivial change, surface three layers in order:
+
+1. **As-is** — show the actual current state, not a paraphrase. The form depends on what the change touches:
+   - code/config → quote the current code, schema, or file structure
+   - prose/docs → quote the current text
+   - workflow/process → list the current steps
+   - decision/behavior → state the current rule and what it produces
+2. **Problem** — prove the issue exists with evidence: a quote that shows the gap, a count, a reproducer, a contradiction with another source. "X is broken" without evidence is a claim, not a diagnosis.
+3. **To-be** — line up the proposed state against the As-is in the same shape, so the delta is visible. Include how the Problem's evidence would change once To-be lands.
+
+End with a one-line compression and a gated next step. Do not auto-execute.
+
+The point is that the user can intervene at any layer — challenge the cited state, reject the evidence, or steer the proposal. Skipping to To-be hides the first two and forces the user to reverse-engineer them.
+
+Skip for truly routine edits (typo, rename, single-line). For everything else, show your work even briefly.
 
 ## Proposing Changes
 
@@ -49,7 +67,7 @@ When Verify fails or behavior is unexpected:
 
 1. Categorize — error (crash/exception), wrong-result (runs but incorrect), regression (was working)
 2. Isolate — reproduce with minimum input. Single test > full suite
-3. Trace — find the actual vs expected divergence point. Use `/project-mapper:trace` for large codebases
+3. Trace — find the actual vs expected divergence point. Use `/hukuhaka-project-mapper:trace` for large codebases
 4. Fix — minimum change at the divergence point. Do not fix symptoms upstream
 5. Confirm — re-run the exact failing case. Then run full suite
 

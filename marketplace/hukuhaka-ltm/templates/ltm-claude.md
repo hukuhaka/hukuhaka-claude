@@ -27,14 +27,11 @@ operational contract; this section is the rule reference.
 
 | Tier | Path | Loaded | Schema | Write policy |
 |---|---|---|---|---|
-| **L1** | `.claude/ltm/pinned.md` | Always (SessionStart inject) | freeform markdown, ≤2KB | **Explicit user assent.** Promote from L2 via `/ltm:distill --promote <log-id>`. |
-| **L2** | `.claude/ltm/index/<topic>.md` | On-demand by `ltm-recall` | frontmatter card: `topic`, `summary`, `context`, `evidence: [<id>...]`, `supersedes`, `last-updated` | **Autonomous draft, batch review** via `/ltm:distill`. |
-| **L3** | `.claude/ltm/log/<date>-<slug>.md` | As evidence drill-down | frontmatter: `id`, `timestamp`, `kind`, `tier: l3`, `distilled: <bool>`, optional `autonomous: true` | **Fully autonomous** via `<ltm-record>` marker (Stop hook) OR **manual user-assent** via `ltm-append`. |
+| **L1** | `.claude/ltm/pinned.md` | Always (SessionStart inject) | `## Core` list of `- <≤140-char principle>` lines, ≤2KB total | **l1-update** subagent (reads new L2 corpus + current pinned.md + policy, edits pinned.md directly) via `/ltm:distill` Step 5. Do not hand-edit — overwritten next cycle. |
+| **L2** | `.claude/ltm/index/<topic>.md` | On-demand by `ltm-recall` | frontmatter card: `topic`, `summary`, `context`, `evidence: [<id>...]` (source of truth), `supersedes`, `last-updated`, plus body authored as reference | **Cluster** (L3 → axes) → **main-context file mapping** (Step 2: assigns each axis to `edit / create / create-merging / retire / noop` against existing L2; user gates the assignment plan) → **N parallel writers** (one per assignment; authors frontmatter + body) → **validate** (per-card cold-read) → **reproject** via `/ltm:distill` Steps 1-4. |
+| **L3** | `.claude/ltm/log/<date>-<slug>.md` | As evidence drill-down | frontmatter: `id`, `timestamp`, `kind`, `tier: l3`, optional `autonomous: true`, optional `distilled-into: [index/foo.md, ...]` (3-state: absent / `[]` / `[paths]`) | **Fully autonomous** via `<ltm-record>` marker (Stop hook) OR **manual user-assent** via `ltm-append`. |
 
-Promotion flow: L3 raw → L2 distilled card (via `/ltm:distill`) → L1
-pinned (via `/ltm:distill --promote`). Demotion is implicit: remove a
-line from `pinned.md` (L1 → L2), or call `/ltm:distill --undo` (L2 → L3
-raw evidence again).
+**Tier semantics.** L1 and L2 are the same distillation operation at different scopes. L2 = within-axis distillation from L3 atoms. L1 = cross-axis distillation from L2 corpus (or single-card-deep when one L2 card's evidence reach is project-wide). Not an importance ranking. Both tiers are auto-distilled by `/ltm:distill`; the Step 2g assignment gate is the user trust boundary for L2, and Step 6 final-review surfaces any cross-tier anomalies.
 
 ## Universal guardrails (managed by hukuhaka-ltm)
 
@@ -65,7 +62,9 @@ These are enforced or nudged by the plugin. Do not edit lightly.
 8. **SessionEnd digest.** Auto-recorded entries accumulate in
    `.claude/ltm/.session-digest` during the session; SessionEnd rotates
    it to `.session-digest.pending`, which the *next* SessionStart inject
-   surfaces. The user reviews via `/ltm:distill --review-recent`.
+   surfaces. Errors or wrong entries are corrected by running
+   `/ltm:distill` (which sees them as ordinary L3) — or via direct
+   `Edit` on the L3 file if the user wants to fix mid-cycle.
 
 ## Project conventions (project-declared)
 
@@ -133,16 +132,16 @@ frontmatter `kind` matches the topic Claude inferred from the user
 question. Rewrite this rule if your LTM grows large enough that
 recency-only retrieval misses things.
 
-## Boundary with project-mapper
+## Boundary with hukuhaka-project-mapper
 
-If this project also uses `project-mapper`:
+If this project also uses `hukuhaka-project-mapper`:
 
 - `.claude/{map,design,backlog,changelog,spec}.md` = current-state mirror
-  of the codebase (managed by project-mapper)
+  of the codebase (managed by hukuhaka-project-mapper)
 - `.claude/ltm/` = time-axis narrative (managed by hukuhaka-ltm)
 
 Both are valid. They split on whether the content has a *time axis*
-(LTM) or describes *current state* (project-mapper).
+(LTM) or describes *current state* (hukuhaka-project-mapper).
 
 ## Slash commands
 
@@ -150,4 +149,4 @@ Both are valid. They split on whether the content has a *time axis*
 |---|---|
 | `/ltm:init` | (Re)bootstrap this file via interactive Q&A |
 | `/ltm:declare-rule` | Propose change to this file; recorded as `rule-evolution` entry |
-| `/ltm:distill` | (No arg or `--retroactive`) cluster undistilled L3 entries into L2 cards; `--review-recent` review auto-recorded entries from the previous session; `--promote <log-id>` add a line to L1 `pinned.md` with explicit assent; `--undo <topic>` revert an L2 card |
+| `/ltm:distill` | Single mode — 6-step skeleton: cluster (subagent) → file mapping (main context) → N parallel card writers → validate (per-card cold-read) → l1-update → final-review → reproject. User gate at Step 2g (assignment plan) + Step 4 (validate issues, if any). No arguments. |

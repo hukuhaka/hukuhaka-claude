@@ -4,8 +4,9 @@
 Universal guardrails enforced here:
   1. Every entry is timestamped (ISO 8601 UTC + local-day filename).
   2. Every entry has a stable id (filename slug + short hash).
-  3. Every entry carries tier: l3 and distilled: false until /ltm:distill
-     promotes it into an L2 index card.
+  3. Every entry carries tier: l3. The `distilled-into` field is absent at
+     creation (3-state pointer semantics — see distill.py cmd_reproject:
+     absent = never scanned, [] = scanned/uncited, [cards] = currently cited).
 
 Project-declared shape (handled via flags, not hard-coded):
   - --kind     freeform string (e.g., decision, anti-pattern, finding,
@@ -58,7 +59,6 @@ def build_frontmatter(
     if kind:
         lines.append(f"kind: {kind}")
     lines.append("tier: l3")
-    lines.append("distilled: false")
     if autonomous:
         lines.append("autonomous: true")
     if supersedes:

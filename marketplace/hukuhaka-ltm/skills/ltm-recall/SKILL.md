@@ -50,7 +50,7 @@ Glob `.claude/ltm/index/*.md`. Read titles + frontmatter `summary` / `context` f
 
 If matching cards exist:
 
-- Synthesize an answer from card summaries, citing the card path (e.g. `.claude/ltm/index/skill-project-mapper.md`).
+- Synthesize an answer from card summaries, citing the card path (e.g. `.claude/ltm/index/skill-hukuhaka-project-mapper.md`).
 - If the user asks "what's the source" / "why" / "show me the evidence", read the cited L3 entries from the card's `evidence` list and quote them.
 - Filter out superseded cards (cards whose id appears in another card's `supersedes:` field) unless the user explicitly asked for history.
 
@@ -60,7 +60,13 @@ If no L2 card matches *or* the user asked about a recent decision that may not b
 
 Run `!${CLAUDE_PLUGIN_ROOT}/skills/ltm-recall/scripts/scan_recent.sh 30` for the 30 newest entries (optionally with kind filter as the second arg, e.g. `scan_recent.sh 50 philosophy`). Read returned files in batch.
 
-Skip entries whose frontmatter has `distilled: true` *unless* their L2 card was already surfaced or insufficient — those entries' L2 card is the canonical surface.
+Filter by `distilled-into` (3-state pointer, see plugin docstring):
+
+- `distilled-into` field **absent** — entry never been through distill scan. Always surface in fallback.
+- `distilled-into: []` — entry was scanned, currently no L2 card cites it (intentional keep-in-L3 narrative OR cited card was retired). Surface it — this IS its canonical home.
+- `distilled-into: [index/foo.md, ...]` — entry is cited by these L2 cards. Skip in this fallback unless the surfaced cards were insufficient — the cards are the canonical surface for it.
+
+(v0.1.x legacy `distilled: true|false` boolean: the next `/ltm:distill` run's reproject step removes it. If you encounter it in the wild, treat `distilled: true` like a non-empty `distilled-into` and `distilled: false` like absent.)
 
 If `.claude/ltm/CLAUDE.md` declares a project-specific "Read pattern" override, follow that instead.
 
