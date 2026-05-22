@@ -6,6 +6,26 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.3] — 2026-05-22
+
+### Changed
+
+- `hukuhaka-ltm` plugin bumped 0.4.0 → 0.5.0. Distill agent prompts
+  rewritten — numeric thresholds replaced with qualitative tone
+  guidance, eliminating an echo-stub failure mode where writers
+  copied frontmatter into the body. Body authoring now adapts to
+  topic shape instead of length targets.
+
+## hukuhaka-ltm plugin 0.5.0 — 2026-05-22
+
+### Changed
+
+- Distill agent prompts (writer, validate, cluster, l1-update,
+  final-review) switched from numeric floors/caps to qualitative
+  tone guidance.
+- `scripts/distill.py`: removed an internal per-line cap on
+  `pinned.md` additions; the 2KB total file cap remains.
+
 ## [1.0.2] — 2026-05-21
 
 ### Added

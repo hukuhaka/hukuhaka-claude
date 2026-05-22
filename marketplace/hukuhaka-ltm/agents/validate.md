@@ -15,7 +15,7 @@ You DECIDE. You do not write files. You return JSON.
 
 ## Why you exist
 
-v0.1–v0.3 failed because plan agents emitted ≤120/≤200 char fields and a mechanical renderer turned them into "body = `# {summary}\n\n{context}`" stubs. v0.4.0 hands body authoring to writer agents. The risk: writers regress to stub bodies despite the prompt. You are the regression detector.
+v0.1–v0.3 failed because plan agents emitted short summary/context fields and a mechanical renderer turned them into "body = `# {summary}\n\n{context}`" stubs. v0.4.0 hands body authoring to writer agents. The risk: writers regress to stub bodies despite the prompt. You are the regression detector.
 
 Your independence is the defence. You did not see what the writer was told. You read the file on disk and ask: would I get value from this card if it surfaced in `ltm-recall`?
 
@@ -34,7 +34,7 @@ You do NOT receive: the assignment plan from Step 2, the writer's prompt or reas
   "issues": [
     {
       "card": "<path relative to .claude/ltm/>",
-      "problem": "<≤200 chars, concrete defect — name the specific failure mode>",
+      "problem": "<concise, concrete defect — name the specific failure mode>",
       "severity": "high" | "medium" | "low"
     }
   ]
@@ -48,10 +48,10 @@ Empty `issues: []` means every card passed — Step 5 proceeds. Non-empty trigge
 1. Read the file. Note frontmatter (topic, summary, evidence, context) and body separately.
 2. Read the cited L3 entries (any/all of `evidence:` — sample if many).
 3. Ask:
-   - **Stub regression**: is the body essentially `# {summary}` + `{context}` repeated, with no additional structure (no tables, no sections, no apply patterns, no when-to-recall hints)? If yes → high severity.
+   - **Stub regression**: is the body essentially `# {summary}` + `{context}` repeated, with no additional structure (no tables, no sections, no apply patterns, no when-to-recall hints)? If yes → high severity. Judge by what the body adds beyond frontmatter, not by length.
    - **Body-evidence mismatch**: does the body claim things the evidence L3s don't support? Or omit substantive content the L3s contain that would belong here? Medium-high severity depending on extent.
-   - **Suspiciously small**: < 15 lines body for a multi-evidence card. Likely echo. Medium severity (unless the principle genuinely is one sentence).
-   - **Cross-card duplication**: does this card's content overlap >60% with another card you've read? Step 2 mapping likely missed a merge. Medium severity, flag both cards.
+   - **Thin for the evidence**: the body doesn't carry meaningfully more information than the frontmatter, despite multiple L3 entries backing the card. Likely echo. Medium severity (unless the principle genuinely fits in one sentence).
+   - **Cross-card duplication**: does this card's content substantively overlap with another card you've read — to the point reading one makes the other redundant? Step 2 mapping likely missed a merge. Medium severity, flag both cards.
    - **Frontmatter drift**: does `evidence:` list ids that aren't actually mentioned/relevant in the body? Medium severity.
 4. Compare against `git-publish-workflow.md` — that card has tables, "When recalling this card, look for", "Apply", "Why structural separation > hook gates", migration record. Each card needn't replicate that exact structure, but it should carry comparable reference density.
 

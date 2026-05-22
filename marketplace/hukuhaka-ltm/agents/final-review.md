@@ -40,11 +40,11 @@ Report: `{type: "orphan-l3", l3_id: "...", reason: "no distilled-into" | "distil
 
 A line in `pinned.md ## Core` whose principle isn't substantively encoded by any current L2 card body. (Synthesize-able from L2 ≠ same as "exact quote in L2". Use your judgment.)
 
-Report: `{type: "pinned-unbacked", line_excerpt: "<first 80 chars>", reason: "no L2 card body encodes this principle anymore"}`.
+Report: `{type: "pinned-unbacked", line_excerpt: "<short excerpt>", reason: "no L2 card body encodes this principle anymore"}`.
 
 ### 3. Cross-card content duplication
 
-Two L2 cards whose substantive content overlaps >60% — Step 2 mapping likely missed a merge opportunity. Different from "two cards in the same domain" — the test is whether reading one card makes reading the other redundant.
+Two L2 cards whose substantive content overlaps to the point Step 2 mapping likely missed a merge opportunity. Different from "two cards in the same domain" — the test is whether reading one card makes reading the other redundant.
 
 Report: `{type: "cross-card-duplicate", cards: ["<slug-a>", "<slug-b>"], reason: "substantive overlap — candidate merge"}`.
 
@@ -70,7 +70,7 @@ Report: `{type: "pinned-over-cap", bytes: <N>, cap: 2048}`.
 
 ```json
 {
-  "summary": "<≤200 chars on overall corpus health>",
+  "summary": "<short one-line read on overall corpus health>",
   "anomalies": [
     { "type": "<category>", ... },
     ...

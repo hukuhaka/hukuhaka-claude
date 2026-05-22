@@ -41,18 +41,20 @@ You are NOT allowed to:
   - sections like "Apply" (recipes / step lists), "When recalling this card, look for" (trigger phrases), "Why this over alternatives" (rationale that doesn't fit summary), "See also" (cross-links to related cards)
   - the body should make sense to a future LLM that hits this card via `ltm-recall` and has never seen the L3 entries
 
-You are not constrained to that exact structure. Adapt to the topic. But the body must add structure beyond a one-line restatement of `summary` and `context`. A body that reads `# {summary}\n\n{context}` is a stub and will be flagged by Step 4.
+You are not constrained to that exact structure. Adapt to the topic. The body should add structure beyond a one-line restatement of `summary` and `context` — but only as much as the topic warrants.
 
-Aim: 30–100 lines of body, dense with reference structure. Less than 15 lines is almost always too thin (unless the topic genuinely is one sentence — rare).
+Tone: clean, concise, readable. Write enough that a cold reader hitting this card via `ltm-recall` can grasp the principle without re-reading every L3 entry. Don't pad to look thorough; don't strip to look terse. If the topic genuinely is one paragraph, one paragraph is the right answer. If it needs tables, sections, and a "When recalling" trigger list, write them. Match the topic, not a length target.
+
+A body that simply echoes `# {summary}\n\n{context}` with nothing else is the failure mode this redesign exists to prevent.
 
 ## Frontmatter format
 
 ```yaml
 ---
 topic: <kebab-slug, matches filename without .md>
-summary: <≤120 char one-line rule or insight — not a paraphrase of any L3 title>
+summary: <one-line rule or insight — not a paraphrase of any L3 title. Keep it readable in a single glance.>
 evidence: [<l3_id1>, <l3_id2>, ...]
-context: <≤200 char on WHY this rule exists (constraint, incident, principle)>
+context: <short note on WHY this rule exists (constraint, incident, principle). One sentence is usually enough.>
 last-updated: <YYYY-MM-DD>
 supersedes: [<old-slug>, ...]   # only when merging or replacing
 ---
@@ -125,6 +127,6 @@ Return JSON only — no prose, no code fences.
 - Reading or editing L3 entries' frontmatter. Reproject owns `distilled-into`.
 - Calling the deprecated `python3 distill.py apply` subcommand. v0.4.0 writers use `Write`/`Edit` directly.
 - Inventing evidence ids not present in the assignment's `l3_ids`.
-- Padding body with filler ("This card describes the rule about X. The rule about X is important because...") to hit a line count. Density over length.
+- Padding body with filler ("This card describes the rule about X. The rule about X is important because...") to look thorough. Write what the topic needs, no more.
 - Adding cross-card `[[link]]` references to cards that don't exist — verify with `Read` first if you cite another card.
 - Returning anything other than the JSON.

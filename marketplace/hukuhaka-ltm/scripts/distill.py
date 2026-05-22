@@ -289,9 +289,6 @@ def cmd_pin_apply(args, target_dir: Path) -> int:
         if not new_text:
             print(json.dumps({"error": "empty-text"}))
             return 1
-        if len(new_text) > 140:
-            print(json.dumps({"error": "text-over-140-chars", "length": len(new_text)}))
-            return 1
         existing_lines = core_body.splitlines()
         while existing_lines and not existing_lines[-1].strip():
             existing_lines.pop()

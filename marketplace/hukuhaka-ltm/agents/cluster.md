@@ -26,8 +26,8 @@ You receive **no L2 information**. Topics you propose are derived from L3 conten
   "axes": [
     {
       "axis_id": "a1",
-      "name": "<≤80 chars, kebab-case slug suggestion>",
-      "description": "<≤200 chars, what binds these L3s together — the pattern across entries, not a paraphrase of any single entry>",
+      "name": "<short kebab-case slug suggestion>",
+      "description": "<what binds these L3s together — the pattern across entries, not a paraphrase of any single entry. One sentence.>",
       "l3_ids": ["entry-id-1", "entry-id-2", ...]
     }
   ]

@@ -53,7 +53,7 @@ The file has a static header (do not edit), a `## Core` section (one line per pr
 
 Each `## Core` line:
 - Starts with `- ` then **the text** (no bold, no formatting prefix unless the principle reads naturally with it).
-- ≤140 chars per line is a soft cap; some lines may run longer when they encode a multi-clause rule. Hard cap is the 2KB file budget.
+- Keep each line readable in a single glance; multi-clause rules may run longer. The only hard cap is the 2KB file budget.
 - Imperative ("Always X" / "Never Y") or declarative ("X over Y") framings — sharp, not hedged.
 
 ## Apply changes
