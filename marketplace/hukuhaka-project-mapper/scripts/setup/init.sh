@@ -4,7 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATES_DIR="$SCRIPT_DIR/../templates"
+TEMPLATES_DIR="$SCRIPT_DIR/templates"
 TARGET_DIR="${1:-.claude}"
 
 if [ ! -d "$TEMPLATES_DIR" ]; then

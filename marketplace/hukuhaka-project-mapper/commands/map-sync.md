@@ -1,17 +1,15 @@
 ---
 name: map-sync
-description: "Full sync pipeline: analyze, write, scatter, validate"
+description: "Full sync pipeline: scatter, analyze, write, validate"
+allowed-tools:
+  - "Bash(bash:*)"
+  - "Task"
+  - "Agent"
 ---
 
-# /hukuhaka-project-mapper:map-sync [path] [options]
+# /hukuhaka-project-mapper:map-sync [path]
 
-Full documentation sync pipeline. Generates `.claude/` docs from codebase analysis.
-
-## Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--depth <n>` | 3 | Max scatter depth for subdirectory CLAUDE.md generation |
+Full documentation sync pipeline. Generates `.claude/` docs from codebase analysis. Reads `.claude/scan.md` as the manifest for which directories receive scattered `CLAUDE.md` — run `/hukuhaka-project-mapper:map-scan` first if scan.md does not exist.
 
 ## Why Separate Agents?
 
@@ -22,7 +20,7 @@ Analyzer uses read-only tools to analyze code. Writer uses edit tools to write d
 Before starting the pipeline, run the bundled preflight script via Bash from the project root (cwd):
 
 ```
-bash ${CLAUDE_PLUGIN_ROOT}/skills/map-sync/scripts/preflight.sh
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/sync/preflight.sh
 ```
 
 The script cats `.claude/map.md`, `.claude/design.md`, `.claude/spec.md` (if they exist) into stdout. Capture this output and pass it to the analyzer agent as context.
@@ -31,32 +29,38 @@ Do NOT use Bash `ls` to enumerate `.claude/` and do NOT skip preflight. If the s
 
 ## Pipeline
 
-Execute these 4 steps **sequentially**. Each step MUST complete before the next begins. Do NOT run steps in parallel.
+Execute these steps **sequentially**. Each step MUST complete before the next begins. Do NOT run steps in parallel.
 
-### Step 1: Analyze
+### Step 1: Scatter
 
-Spawn analyzer agent and wait for JSON result:
+Refresh each scattered `CLAUDE.md` **first**, before top-level analysis. This ordering is deliberate: when the analyzer (Step 2) later reads files inside these directories, Claude Code auto-loads the just-refreshed folder `CLAUDE.md` into the analyzer's context (nested CLAUDE.md on-demand load), so top-level docs are built on current folder summaries.
 
-```
-Agent(subagent_type: "hukuhaka-project-mapper:analyzer", prompt: "Analyze {path}. Context: {map.md + design.md contents}")
-```
+If `.claude/scan.md` is missing from the preflight output, STOP and tell the user to run `/hukuhaka-project-mapper:map-scan` first.
 
-### Step 2: Write
-
-After analyzer completes, spawn writer agent with analyzer output:
+**Select which directories to refresh (incremental).** Run the bundled helper via Bash from the project root:
 
 ```
-Agent(subagent_type: "hukuhaka-project-mapper:writer", prompt: "Generate .claude/ docs from: {analyzer JSON result}")
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/sync/changed-dirs.sh
 ```
 
-### Step 3: Scatter
+It reads `.claude/scan.md` (the scatter manifest) and `.claude/.map-sync-state` (last synced commit), and prints **only the scatter directories that need regeneration**, one per line. The mapping is git-diff based:
 
-After writer completes, generate `CLAUDE.md` in each subdirectory.
+- A changed file refreshes the nearest scatter directory that owns it (its own `## Files`).
+- A brand-new scatter directory (placeholder, from a recent `map-scan`) refreshes itself **and** its parent scatter directory (whose `## See Also` must index the new child).
 
-For each subdirectory (up to `--depth` levels):
+The helper emits **ALL** scatter rows (full sync) when any of these hold — these are the safe, correct defaults; do NOT second-guess them:
+
+- no `.claude/.map-sync-state` yet (first sync after `map-scan`)
+- the recorded commit is invalid (history rewrite)
+- the project is not a git repo
+- the user passed `--full` (force a full refresh — append `--full` to the helper invocation)
+
+Iterate **exactly** the directories the helper prints. Do NOT widen this list back to "all rows", and do NOT narrow it further by your own judgment — the helper already decided scope.
+
+For each directory D the helper prints:
 
 ```
-Agent(subagent_type: "hukuhaka-project-mapper:analyzer", prompt: "scatter: {folder}")
+Agent(subagent_type: "hukuhaka-project-mapper:analyzer", prompt: "scatter: D")
   → wait for result →
 Agent(subagent_type: "hukuhaka-project-mapper:writer", prompt: "scatter: {scatter JSON}")
 ```
@@ -64,15 +68,43 @@ Agent(subagent_type: "hukuhaka-project-mapper:writer", prompt: "scatter: {scatte
 Rules:
 - Never touch root `./CLAUDE.md`
 - Respect `.gitignore` patterns
-- Max depth: `--depth` option (default 3)
+- Refresh exactly the directories `changed-dirs.sh` prints — the helper, not you, owns scope
+
+### Step 2: Analyze
+
+After scatter completes, spawn analyzer agent and wait for JSON result. Because scatter ran first, the analyzer auto-loads each freshly-written folder `CLAUDE.md` as it reads files in those directories:
+
+```
+Agent(subagent_type: "hukuhaka-project-mapper:analyzer", prompt: "Analyze {path}. Context: {map.md + design.md contents}")
+```
+
+### Step 3: Write
+
+After analyzer completes, spawn writer agent with analyzer output:
+
+```
+Agent(subagent_type: "hukuhaka-project-mapper:writer", prompt: "Generate .claude/ docs from: {analyzer JSON result}")
+```
 
 ### Step 4: Validate
 
-After scatter completes, spawn validator agent:
+After write completes, spawn validator agent:
 
 ```
 Agent(subagent_type: "hukuhaka-project-mapper:validator", prompt: "Validate .claude/ links")
 ```
+
+### Step 5: Record sync state
+
+After validation completes successfully, stamp the synced commit so the next run can compute an incremental scatter set. Run via Bash from the project root:
+
+```
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/sync/record-sync.sh
+```
+
+This writes `.claude/.map-sync-state` with the current `HEAD`. It is a no-op on a non-git project (the pipeline simply stays full-sync). Do NOT run this if an earlier step aborted — leaving the state unchanged makes the next run safely re-sync.
+
+Note: `.claude/.map-sync-state` is machine-local state. Add it to the project's `.gitignore` if not already ignored.
 
 ## Final Report
 
@@ -80,18 +112,22 @@ After all steps complete, display:
 
 ```
 Sync complete
-  Step 1 (analyze)
+  Step 1 (scatter)
+    Mode: {incremental | full}
+    CLAUDE.md refreshed: {n} of {total} scatter dirs
+
+  Step 2 (analyze)
     Files scanned: {n}
 
-  Step 2 (write)
+  Step 3 (write)
     Docs generated: 4
-
-  Step 3 (scatter)
-    CLAUDE.md created: {n}
 
   Step 4 (validate)
     Links checked: {n}
     Broken: {n}
+
+  Step 5 (record)
+    Synced commit: {short sha | n/a (non-git)}
 ```
 
 ## On Failure

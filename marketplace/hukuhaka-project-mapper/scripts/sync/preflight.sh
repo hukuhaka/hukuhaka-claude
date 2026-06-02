@@ -11,7 +11,7 @@ if [ ! -d "$TARGET_DIR" ]; then
 fi
 
 loaded=0
-for f in map.md design.md spec.md; do
+for f in map.md design.md spec.md scan.md; do
     path="$TARGET_DIR/$f"
     if [ -f "$path" ]; then
         echo "===== $path ====="
@@ -21,4 +21,4 @@ for f in map.md design.md spec.md; do
     fi
 done
 
-echo "Preflight: loaded $loaded .claude/ doc(s) from $TARGET_DIR (map.md, design.md, spec.md if present)"
+echo "Preflight: loaded $loaded .claude/ doc(s) from $TARGET_DIR (map.md, design.md, spec.md, scan.md if present)"

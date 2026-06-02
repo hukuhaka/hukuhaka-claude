@@ -12,11 +12,12 @@ Claude Code plugins for **spec-first development** — keep a codebase's documen
 
 | Component | Version | What it gives you |
 |-----------|---------|-------------------|
-| **hukuhaka-project-mapper** | `1.0.1` | Skills + agents that generate and maintain `.claude/{map,design,backlog,changelog,spec}.md` from your codebase. Sync, audit, validate, summarize, trace. |
+| **hukuhaka-project-mapper** | `1.0.2` | Commands + agents that generate and maintain `.claude/{map,design,backlog,changelog,spec}.md` from your codebase. Init, scan, sync, summarize, compact, clean. |
 | **hukuhaka-ltm** | `0.5.0` | Long-term memory plugin with three-tier storage (L1 pinned, L2 indexed cards, L3 raw log). Autonomous L3 append via `<ltm-record>` markers parsed by the Stop hook; batch L2 distillation via `/hukuhaka-ltm:ltm-distill`. |
 | **hukuhaka-team** | — | Team lead orchestrator skill. Coordinates 3-5 teammates with distinct file ownership; lead reviews and decides without implementing. |
 | **codex-coworker** | — | Second-opinion skill backed by OpenAI Codex CLI. Ask/review/compare flows; Claude synthesizes Codex's response into a triangulated answer. |
 | **gemini-coworker** | — | Sibling to `codex-coworker` backed by Google Gemini CLI. Same ask/review/compare surface; use either or both for cross-model triangulation. |
+| **hukuhaka-report-builder** | — | Staged-workflow generator for long-form editorial HTML reports — masthead, numbered article, hand-built inline-SVG figures, sources. A preflight locks the design axes before drafting so the visual identity stays fixed. |
 | **CLAUDE.md template** | — | Spec-first router for `~/.claude/CLAUDE.md`: *Approach* / *Rules* / *Reference* structure with explicit decision-proposal format. |
 
 Optional third-party extras (rtk, ccstatusline, agent-teams flag) ride along with the installer.
@@ -43,11 +44,11 @@ After install, in any project:
 You:    /hukuhaka-project-mapper:map-init
 Claude: [scaffolds .claude/{map,design,backlog,changelog}.md]
 
-You:    /hukuhaka-project-mapper:map-sync
-Claude: [analyzer agent reads codebase → writer agent emits docs → validator]
+You:    /hukuhaka-project-mapper:map-scan
+Claude: [writes .claude/scan.md — per-directory CLAUDE.md placement decisions]
 
-You:    /hukuhaka-project-mapper:map-validate
-Claude: [checks every file:symbol link, reports drift]
+You:    /hukuhaka-project-mapper:map-sync
+Claude: [scatter → analyzer reads codebase → writer emits docs → validator checks links]
 ```
 
 For long-term memory:
@@ -59,7 +60,7 @@ Claude: [bootstraps .claude/ltm/ — pinned.md + index/ + log/ + CLAUDE.md rules
 You:    "we decided to ditch X because of Y"
 Claude: [Stop hook captures this via <ltm-record> autonomous marker]
 
-You:    /hukuhaka-ltm:ltm-distill --review-recent
+You:    /hukuhaka-ltm:ltm-distill
 Claude: [batch-reviews auto-recorded entries, promotes into L2 cards]
 ```
 

@@ -3,7 +3,7 @@ name: map-spec
 description: >
   Generate and verify .claude/spec.md — prescriptive project conventions.
   Use when user asks to create spec.md or verify it against codebase.
-  Do NOT use for sync (map-sync), init (map-setup), or validate/compact (map-maintain).
+  Do NOT use for sync (/map-sync command), init (/map-init command), or compact (/map-compact command).
 hooks:
   PreToolUse:
     - matcher: "Write"

@@ -14,7 +14,7 @@ Create `.claude/` documentation scaffolding with 4 template files via bundled in
 Invoke the bundled script via Bash from the project root (cwd):
 
 ```
-bash ${CLAUDE_PLUGIN_ROOT}/skills/map-setup/scripts/init.sh
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup/init.sh
 ```
 
 The script copies 4 templates into `.claude/`:

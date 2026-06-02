@@ -1,6 +1,6 @@
 {
   "name": "hukuhaka-project-mapper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Codebase analysis and .claude/ documentation generation",
   "author": {
     "name": "hukuhaka"

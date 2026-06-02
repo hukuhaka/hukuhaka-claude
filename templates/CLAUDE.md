@@ -1,17 +1,3 @@
-**BEFORE ANY ACTION**: Read `.claude/` docs if present.
-
-- [map.md](.claude/map.md): codebase structure, entry points
-- [design.md](.claude/design.md): tech spec, architecture decisions
-- [backlog.md](.claude/backlog.md): Planned, In Progress, TODOs
-- [changelog.md](.claude/changelog.md): Recent (load) + Archive (on demand)
-- [spec.md](.claude/spec.md): interface contracts, naming rules, definition of done
-
-Bootstrap suggestion if missing: `/hukuhaka-project-mapper:map-init`.
-
-Doc format rules (file:symbol style, llms.txt, line limits, NEVER ASCII): see `hukuhaka-project-mapper:map-sync` skill.
-
----
-
 # Approach
 
 ## Think Before Coding

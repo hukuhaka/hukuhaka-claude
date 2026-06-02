@@ -4,7 +4,6 @@ description: "Code analysis specialist. Returns structured JSON for documentatio
 tools: Read, Grep, Glob
 model: sonnet
 skills:
-  - hukuhaka-project-mapper:map-sync
   - hukuhaka-project-mapper:audit
 ---
 

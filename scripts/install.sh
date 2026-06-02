@@ -186,8 +186,17 @@ fi
 # ── Version resolution ────────────────────────────────────────────────
 
 if [ -z "$VERSION" ]; then
-    VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
-        | grep -o '"tag_name":[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"v\{0,1\}\([^"]*\)"/\1/' || true)
+    if ! release_json=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null); then
+        echo "Error: failed to query GitHub for latest release (network/rate-limit/5xx)." >&2
+        echo "Hint: pass an explicit version, e.g. install.sh v1.0.0" >&2
+        exit 1
+    fi
+    VERSION=$(printf '%s' "$release_json" \
+        | grep -o '"tag_name":[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"v\{0,1\}\([^"]*\)"/\1/')
+    if [ -z "$VERSION" ]; then
+        echo "Error: could not parse tag_name from GitHub API response." >&2
+        exit 1
+    fi
 fi
 
 if [ -n "$VERSION" ]; then
@@ -226,7 +235,8 @@ else
     TMPDIR=$(mktemp -d)
     trap 'rm -rf "$TMPDIR"' EXIT
     echo "Downloading..."
-    curl -fsSL "$ARCHIVE_URL" | tar xz -C "$TMPDIR"
+    curl -fsSL "$ARCHIVE_URL" -o "$TMPDIR/archive.tar.gz"
+    tar xzf "$TMPDIR/archive.tar.gz" -C "$TMPDIR"
     SRC_DIR=$(find "$TMPDIR" -maxdepth 1 -type d ! -path "$TMPDIR" | head -1)
 fi
 

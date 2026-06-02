@@ -51,8 +51,8 @@ NUDGE
 [hukuhaka-ltm] You are about to write to .claude/ltm/pinned.md (L1).
 Every line here lands in every future session's SessionStart context.
 L1 requires explicit user assent — confirm in the same turn before this
-write. If you are promoting from L2, prefer `/ltm:distill --promote
-<log-id>` which records the promotion event as an entry.
+write. If you are promoting from L2, prefer `/ltm:distill`, whose
+L1-update step routes the change through the same user gate.
 This is a reminder, not a block.
 NUDGE
         ;;

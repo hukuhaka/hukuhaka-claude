@@ -10,8 +10,8 @@ Clean up changelog.md and backlog.md via two bundled scripts run in sequence.
 ## Steps
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/map-maintain/scripts/compact-changelog.py
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/map-maintain/scripts/clean-backlog.py
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/maintain/compact-changelog.py
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/maintain/clean-backlog.py
 ```
 
 - `compact-changelog.py`: keeps top 10 entries in `## Recent`, moves older to `## Archive`

@@ -1,5 +1,6 @@
 ---
 description: 6-step skeleton distill — cluster (subagent) → file mapping (main context) → N parallel card writers → per-card validate → L1 update → final review. Single mode; no arguments.
+allowed-tools: Read, Bash, Agent, AskUserQuestion
 ---
 
 # /ltm:distill — skeleton orchestration (v0.4.0)

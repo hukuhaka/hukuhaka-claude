@@ -1,5 +1,6 @@
 ---
 description: Propose and commit a change to .claude/ltm/CLAUDE.md as a recorded rule-evolution event
+allowed-tools: Read, Edit, Bash
 ---
 
 # /ltm:declare-rule — evolve LTM rules

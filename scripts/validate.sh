@@ -28,7 +28,7 @@ echo "JSON syntax:"
 validate_json() {
     local file="$1"
     local label="${file#$REPO_DIR/}"
-    if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+    if python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$file" 2>/dev/null; then
         pass "$label"
     else
         fail "$label — invalid JSON"

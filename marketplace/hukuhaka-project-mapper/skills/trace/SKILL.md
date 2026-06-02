@@ -3,7 +3,7 @@ name: trace
 description: >
   Trace code flow to diagnose bugs, understand data paths, or find error origins.
   Use when user asks to debug, trace, investigate errors, or understand how code
-  flows between components. Do NOT use for audit (audit skill) or documentation (map-sync).
+  flows between components. Do NOT use for audit (audit skill) or documentation (/map-sync command).
 hooks:
   PreToolUse:
     - matcher: "Agent|Write"

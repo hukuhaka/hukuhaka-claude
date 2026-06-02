@@ -12,7 +12,7 @@ Remove all scattered CLAUDE.md files from subdirectories via bundled clean scrip
 Invoke the bundled script via Bash from the project root (cwd):
 
 ```
-bash ${CLAUDE_PLUGIN_ROOT}/skills/map-setup/scripts/clean.sh
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup/clean.sh
 ```
 
 The script removes scattered `CLAUDE.md` files. Root `./CLAUDE.md` is always preserved.

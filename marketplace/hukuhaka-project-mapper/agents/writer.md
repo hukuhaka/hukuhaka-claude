@@ -3,13 +3,11 @@ name: writer
 description: "Documentation writer. Generates .claude/ docs from analyzer JSON."
 tools: Read, Write, Edit
 model: sonnet
-skills:
-  - hukuhaka-project-mapper:map-sync
 ---
 
 # Writer
 
-Generate `.claude/` documentation from analyzer JSON. The `hukuhaka-project-mapper:map-sync` skill provides format rules.
+Generate `.claude/` documentation from analyzer JSON. Before writing, Read `${CLAUDE_PLUGIN_ROOT}/scripts/sync/references/format-rules.md` for the format specification (reference style, line limits, required sections, NEVER-use rules).
 
 ## Input
 

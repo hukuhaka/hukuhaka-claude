@@ -95,7 +95,7 @@ except AttributeError:
         "socket", "sqlite3", "ssl", "stat", "string", "struct", "subprocess",
         "sys", "tarfile", "tempfile", "termios", "textwrap", "threading",
         "time", "tomllib", "traceback", "tty", "typing", "unicodedata",
-        "unittest", "urllib", "uuid", "warnings", "weakref", "xml", "yaml",
+        "unittest", "urllib", "uuid", "warnings", "weakref", "xml",
         "zipfile", "zlib",
     } | ALWAYS_STDLIB
 
@@ -157,7 +157,8 @@ def python_imports(path):
     "react"`) is NOT mistaken for a real python import.
     """
     try:
-        tree = ast.parse(open(path).read())
+        with open(path, encoding="utf-8", errors="replace") as f:
+            tree = ast.parse(f.read())
     except (SyntaxError, OSError):
         return []
     mods = set()

@@ -1,5 +1,6 @@
 ---
 description: Bootstrap or rebootstrap LTM for this project via open Q&A
+allowed-tools: Read, Write, Edit, Bash
 ---
 
 # /ltm:init — bootstrap LTM

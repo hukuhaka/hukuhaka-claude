@@ -58,7 +58,7 @@ if [ -f "$DIGEST_PENDING" ]; then
     digest_body=$(cat "$DIGEST_PENDING" 2>/dev/null || echo "")
     if [ -n "$digest_body" ]; then
         line_count=$(printf "%s" "$digest_body" | grep -c . || echo 0)
-        digest_section=$(printf "## Auto-recorded since last session (%s entries)\n\nReview via \`/ltm:distill --review-recent\`.\n\n%s\n" "$line_count" "$digest_body")
+        digest_section=$(printf "## Auto-recorded since last session (%s entries)\n\nReview via \`/ltm:distill\`.\n\n%s\n" "$line_count" "$digest_body")
     fi
     mkdir -p "$DIGEST_ARCHIVE_DIR" 2>/dev/null
     ts=$(date -u +"%Y%m%dT%H%M%SZ")

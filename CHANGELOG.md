@@ -6,6 +6,42 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.4] — 2026-06-02
+
+### Added
+
+- `hukuhaka-report-builder` skill (`skills/hukuhaka-report-builder/`) —
+  staged-workflow generator for long-form editorial HTML reports
+  (masthead + numbered article + hand-built inline-SVG figures +
+  sources). A preflight locks the report's design axes and scaffolds a
+  per-report directory with its own `spec.md` before drafting, so the
+  visual identity is fixed up front instead of drifting mid-generation.
+- `hukuhaka-project-mapper` `/map-scan` command — emits a
+  `.claude/scan.md` scatter manifest (per-directory keep/scatter
+  decisions) that `/map-sync` then consumes. Classification is
+  script-driven; user overrides live below a marker in the same file.
+
+### Changed
+
+- `hukuhaka-project-mapper` plugin bumped 1.0.1 → 1.0.2.
+  - `/map-sync` reordered to **scatter-first, then incremental**. It now
+    regenerates only the scatter `CLAUDE.md` directories that changed
+    since the last sync (git-diff based) instead of every scatter row on
+    every run — a large cost reduction on big repos. First run, the
+    `--full` flag, or a non-git project falls back to a full sync.
+  - Skill → command collapse: the `map-setup` / `map-scan` /
+    `map-maintain` / `map-sync` skills were folded directly into their
+    slash commands, removing a layer of skill indirection.
+  - A `SessionStart` hook now supplies project context in place of the
+    previous global-`CLAUDE.md` injection.
+- `hukuhaka-ltm`: commands now declare `allowed-tools`, dropping the
+  per-tool permission prompts that previously interrupted runs.
+
+### Removed
+
+- `hukuhaka-project-mapper` `/map-validate` command and its orphaned
+  helper script removed.
+
 ## [1.0.3] — 2026-05-22
 
 ### Changed
