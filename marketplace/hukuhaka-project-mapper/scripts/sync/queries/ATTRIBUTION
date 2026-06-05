@@ -1,0 +1,19 @@
+tags.scm query files in this directory are vendored from the aider project:
+
+  https://github.com/Aider-AI/aider  (aider/queries/tree-sitter-language-pack/
+  and aider/queries/tree-sitter-languages/), fetched 2026-06-05 from branch main.
+
+aider is licensed under the Apache License 2.0:
+  https://github.com/Aider-AI/aider/blob/main/LICENSE.txt
+
+Files: c, cpp, dart, go, java, javascript, kotlin, php, ruby, rust, scala,
+swift, typescript (one <lang>-tags.scm each).
+
+Local modifications (recorded R3 deviations):
+- typescript-tags.scm: appended const/let arrow-function and function-expression
+  captures (copied from javascript-tags.scm patterns) — upstream lacks them and
+  `const X = () =>` is the dominant React/TS declaration style.
+- tsx files reuse typescript-tags.scm (no separate tsx query upstream; the tsx
+  grammar is a TypeScript superset).
+- Objective-C (.m/.mm): no upstream query — files stay on the generic regex
+  fallback by design.

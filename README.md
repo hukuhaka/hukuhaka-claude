@@ -15,8 +15,6 @@ Claude Code plugins for **spec-first development** — keep a codebase's documen
 | **hukuhaka-project-mapper** | `1.0.2` | Commands + agents that generate and maintain `.claude/{map,design,backlog,changelog,spec}.md` from your codebase. Init, scan, sync, summarize, compact, clean. |
 | **hukuhaka-ltm** | `0.5.0` | Long-term memory plugin with three-tier storage (L1 pinned, L2 indexed cards, L3 raw log). Autonomous L3 append via `<ltm-record>` markers parsed by the Stop hook; batch L2 distillation via `/hukuhaka-ltm:ltm-distill`. |
 | **hukuhaka-team** | — | Team lead orchestrator skill. Coordinates 3-5 teammates with distinct file ownership; lead reviews and decides without implementing. |
-| **codex-coworker** | — | Second-opinion skill backed by OpenAI Codex CLI. Ask/review/compare flows; Claude synthesizes Codex's response into a triangulated answer. |
-| **gemini-coworker** | — | Sibling to `codex-coworker` backed by Google Gemini CLI. Same ask/review/compare surface; use either or both for cross-model triangulation. |
 | **hukuhaka-report-builder** | — | Staged-workflow generator for long-form editorial HTML reports — masthead, numbered article, hand-built inline-SVG figures, sources. A preflight locks the design axes before drafting so the visual identity stays fixed. |
 | **CLAUDE.md template** | — | Spec-first router for `~/.claude/CLAUDE.md`: *Approach* / *Rules* / *Reference* structure with explicit decision-proposal format. |
 
@@ -78,7 +76,7 @@ The `.claude/` files are small enough to load in full into the LLM context windo
 | | Required | Optional |
 |--|----------|----------|
 | **Base** | `git`, `python3` (or `jq`), `curl`, `tar` | — |
-| **Extras** | — | `brew` (rtk on macOS), `node`/`npx` (ccstatusline), [`codex` CLI](https://github.com/openai/codex) (codex-coworker) |
+| **Extras** | — | `brew` (rtk on macOS), `node`/`npx` (ccstatusline) |
 
 The installer's preflight check enumerates these per selected component and offers to auto-install via the detected package manager.
 

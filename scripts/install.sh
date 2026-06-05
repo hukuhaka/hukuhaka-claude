@@ -46,8 +46,9 @@ MANIFEST="$CLAUDE_DIR/.hukuhaka-manifest.json"
 
 # Skills whose default-on state should be false even if SKILL.md doesn't
 # self-mark as deprecated. Maintained here when retiring a skill without
-# editing its content.
-DEPRECATED_SKILLS="codex-coworker"
+# editing its content. (Currently empty — codex-coworker and gemini-coworker
+# were removed from the repo entirely, 2026-06-02.)
+DEPRECATED_SKILLS=""
 
 VERSION=""
 UNINSTALL=false

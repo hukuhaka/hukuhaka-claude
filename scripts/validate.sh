@@ -109,6 +109,17 @@ else
     fail "deploy.sh --dry-run failed"
 fi
 
+# ── 4. Skeleton golden tests (deterministic; dual-mode on/off) ──────
+
+echo ""
+echo "Skeleton golden tests:"
+
+if bash "$REPO_DIR/eval/static-checks/skeleton-golden.sh" > /tmp/skeleton-golden.log 2>&1; then
+    pass "skeleton-golden ($(tail -1 /tmp/skeleton-golden.log))"
+else
+    fail "skeleton-golden — $(tail -3 /tmp/skeleton-golden.log | tr '\n' ' ')"
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────
 
 echo ""

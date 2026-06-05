@@ -6,6 +6,61 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.5] — 2026-06-05
+
+### Removed
+
+- `codex-coworker` skill (`skills/codex-coworker/`) — retired. For Codex
+  second opinions, use the official OpenAI plugin
+  (`openai/codex-plugin-cc`) instead.
+- `gemini-coworker` skill (`skills/gemini-coworker/`) — retired alongside
+  its sibling; the Gemini CLI it wraps is being discontinued upstream.
+
+### Changed
+
+- `hukuhaka-project-mapper` plugin bumped 1.0.2 → 1.1.0.
+  - `/map-sync` analyze stage restructured: code structure (symbols,
+    import graph, TODOs, stack) is now extracted **deterministically by
+    bundled scripts** with zero LLM involvement; two restricted agents
+    (`describe`, `synth`) write only the prose over that skeleton from a
+    script-assembled context bundle. Structural hallucination (invented
+    paths/symbols) is rejected at merge time by construction. Generated
+    doc format and quality are unchanged.
+  - Measurably faster and cheaper: on the reference testbed, median sync
+    wall-clock −52% and cost −42% versus the previous exploring
+    analyzer, with the worst-case exploration tail eliminated.
+  - New: when a sync completes, a hook reports the run's wall-clock and
+    exact billed token usage inline.
+  - The `analyzer` agent is unchanged and continues to power `/audit`.
+- `hukuhaka-project-mapper` `/map-sync` structural extraction extended to
+  multi-language repos (follow-up on top of 1.1.0; plugin version
+  unchanged). Previously only Python files got real symbols and dependency
+  edges — non-Python sources fell through to a generic stub:
+  - Optional tree-sitter symbol extraction via `tree-sitter-language-pack`,
+    with vendored tag queries for 13 languages (Apache-2.0, attributed).
+    Without the dependency, every file falls back to the previous regex
+    behavior — worst case is exactly the old output, and the fallback is
+    counted on stderr so degradation is visible.
+  - Import extraction for 9 language families, always on (regex,
+    no extra dependency). Imports that resolve to a repo file become
+    `depends_on` edges; externals are dropped. Resolvers: js/ts (relative
+    + extension inference + `index` barrels), c/c++ (quoted includes,
+    unique-basename fallback), go (`go.mod` module prefix), java/kotlin
+    (package suffix match), ruby (`require_relative`).
+  - Declaration files merge into their definitions when they share a
+    directory and stem (`.h`/`.hpp` vs `.c`/`.cpp`, `.d.ts` vs `.ts`) —
+    headers no longer appear as duplicate components.
+  - Stack detection now reads `build.gradle(.kts)`, `pom.xml`, `go.mod`,
+    `Cargo.toml`, `Gemfile`, and `CMakeLists.txt` in addition to
+    `pyproject.toml`/`package.json`, at any directory depth (monorepo
+    `frontend/`/`backend/` layouts contribute). Manifest-declared entry
+    points (`mainClass`, `bin`, `add_executable`, `[[bin]]`) feed entry
+    detection.
+- Global router template (`templates/CLAUDE.md`) slimmed: "Think Before
+  Coding" renamed to "Think Before Acting"; "Suggestions" and "Team vs
+  Subagent" sections removed; "Proposing Changes" absorbed into a
+  compressed "Reporting"; "Debug" tightened.
+
 ## [1.0.4] — 2026-06-02
 
 ### Added

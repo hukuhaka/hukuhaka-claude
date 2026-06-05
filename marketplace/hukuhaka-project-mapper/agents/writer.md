@@ -20,7 +20,7 @@ Expects structured JSON from analyzer with: `stats`, `entry_points`, `data_flow`
 | map.md | Entry points, data flow, structure. If `depends_on` exists, append ` -> name1, name2` after description; omit `->` when empty/absent | <100 lines |
 | design.md | Stack, patterns, decisions | <100 lines |
 | backlog.md | Planned (preserve), In Progress (preserve), TODOs (rescan) | <80 lines |
-| changelog.md | Recent (10 max) + Archive | <50 entries |
+| changelog.md | Recent (10 max) + Archive. Every sync APPENDS one dated entry to Recent describing this sync (e.g., `- [YYYY-MM-DD] Docs synced: N entry points, M components, K TODOs`) — Recent must never be left empty after a sync | <50 entries |
 
 ## Completion Report
 
@@ -37,9 +37,26 @@ Sync complete
 
 ## Scatter Mode
 
-When prompt starts with `scatter:`, generate folder CLAUDE.md from scatter JSON.
+When prompt starts with `scatter:`, generate folder CLAUDE.md from scatter JSON, exactly this shape:
 
-Only `## Files` and `## See Also` sections. 1 sentence per file. Never modify root `./CLAUDE.md`.
+```
+# {folder_name}
+
+{purpose}
+
+## Files
+
+[{name}]({name}): {purpose}   <- link target is the BARE file name (the link is
+                                  relative to the folder itself — never prefix the
+                                  folder path: [deploy.sh](deploy.sh), NOT
+                                  [deploy.sh](scripts/deploy.sh))
+
+## See Also
+
+[{child}/]({child}/): 1-sentence
+```
+
+1 sentence per file. Never modify root `./CLAUDE.md`.
 
 ## Compact Mode
 

@@ -29,6 +29,10 @@ Return JSON with this structure:
 
 ## Workflow
 
+> Note: standard and scatter modes are retained for legacy/fallback use only —
+> map-sync now uses the skeleton/bundle pipeline with the describe and synth
+> agents. Improve mode is the live path (audit skill).
+
 1. **Code search**: Grep for entry points (main, app, index), core classes/functions, config files
 2. **File structure**: `Glob` for source files, group by directory
 3. **TODO scan**: `Grep` for TODO/FIXME
