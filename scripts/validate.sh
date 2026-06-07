@@ -110,11 +110,17 @@ else
 fi
 
 # ── 4. Skeleton golden tests (deterministic; dual-mode on/off) ──────
+# The harness lives in an internal-only dir that is not part of public
+# releases — skip cleanly when it is absent (e.g. public-repo CI).
+
+GOLDEN="$REPO_DIR/eval/static-checks/skeleton-golden.sh"
 
 echo ""
 echo "Skeleton golden tests:"
 
-if bash "$REPO_DIR/eval/static-checks/skeleton-golden.sh" > /tmp/skeleton-golden.log 2>&1; then
+if [ ! -f "$GOLDEN" ]; then
+    echo "  [skip] skeleton-golden (harness not present in this checkout)"
+elif bash "$GOLDEN" > /tmp/skeleton-golden.log 2>&1; then
     pass "skeleton-golden ($(tail -1 /tmp/skeleton-golden.log))"
 else
     fail "skeleton-golden — $(tail -3 /tmp/skeleton-golden.log | tr '\n' ' ')"
