@@ -1,0 +1,27 @@
+<!-- ============================================================
+component: kpi-tiles (rb-kpi / rb-tile)
+purpose:   3-6 metric tile band — the per-page KPI strip.
+swap:      per tile: .l label · .m metric (+ .u unit) · .d delta text.
+           delta direction: add rb-up / rb-down (from _base.css) to .d.
+           column count: set --kpi-cols on .rb-kpi (default 3).
+keep:      class names, structure, every var(--...). tabular-nums is
+           inherited from _base body — do not remove.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/kpi-tiles.md
+============================================================ -->
+<div class="rb-kpi">
+  <div class="rb-tile"><div class="l">Throughput</div><div class="m rb-tnum">2.4<span class="u">k/s</span></div><div class="d rb-up">▲ 38.2%</div></div>
+  <div class="rb-tile"><div class="l">p95 latency</div><div class="m rb-tnum">128<span class="u">ms</span></div><div class="d rb-down">▼ 6.1%</div></div>
+  <div class="rb-tile"><div class="l">Active users</div><div class="m rb-tnum">1.2<span class="u">M</span></div><div class="d rb-up">▲ 12.0%</div></div>
+  <div class="rb-tile"><div class="l">Error rate</div><div class="m rb-tnum">0.04<span class="u">%</span></div><div class="d rb-up">▲ −0.02</div></div>
+  <div class="rb-tile"><div class="l">Deploys/day</div><div class="m rb-tnum">342</div><div class="d rb-up">▲ 21</div></div>
+  <div class="rb-tile"><div class="l">MTTR</div><div class="m rb-tnum">14<span class="u">m</span></div><div class="d rb-up">▲ −3m</div></div>
+</div>
+<style>
+.rb-kpi{display:grid;grid-template-columns:repeat(var(--kpi-cols,3),1fr);gap:var(--space-3)}
+.rb-tile{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-3);padding:var(--space-4)}
+.rb-tile .l{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-mute)}
+.rb-tile .m{font-size:var(--t-tile);font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:var(--space-2)}
+.rb-tile .m .u{font-size:.5em;color:var(--ink-mute);font-weight:500}
+.rb-tile .d{font-family:var(--mono);font-size:var(--t-sm);margin-top:var(--space-1);font-weight:500}
+</style>

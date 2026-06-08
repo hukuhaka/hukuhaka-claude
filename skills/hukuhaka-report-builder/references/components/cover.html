@@ -1,0 +1,26 @@
+<!-- ============================================================
+component: cover (rb-cover)
+purpose:   identity card — project name + tagline, NOT a summary.
+           wordmark sits at ~1/3 of the in-report hero scale.
+swap:      .k register eyebrow · .wm wordmark · .tg tagline (<=8 words
+           preferred) · .meta chrome strip (version/date/author)
+keep:      class names, structure, every var(--...). No KPI blocks,
+           no paragraph hero, no marketing tagline on a cover.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/cover.md
+============================================================ -->
+<div class="rb-cover">
+  <span class="k">Technical Audit · 2026-Q2</span>
+  <div class="wm">HailoFlow Scheduler</div>
+  <div class="tg">Scheduler comparison on Hailo-8 — MANUAL vs ROUND_ROBIN.</div>
+  <div class="meta"><span>v1.4.0</span><span>2026-06-02</span><span>infra-team</span></div>
+</div>
+<style>
+.rb-cover{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-7);min-height:230px;
+  display:flex;flex-direction:column;justify-content:center}
+.rb-cover .k{font-family:var(--mono);font-size:var(--t-eye);text-transform:uppercase;letter-spacing:.10em;color:var(--accent)}
+.rb-cover .wm{font-size:var(--t-dxl);font-weight:700;letter-spacing:-.03em;line-height:1.0;margin-top:var(--space-3)}
+.rb-cover .tg{color:var(--ink-soft);font-size:var(--t-lead);margin-top:var(--space-3);max-width:34ch}
+.rb-cover .meta{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:var(--space-5);
+  border-top:1px solid var(--hairline);padding-top:var(--space-3);display:flex;gap:var(--space-4);flex-wrap:wrap}
+</style>

@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — spacing scale, page margins, section gaps, vertical and scan rhythm
-read_when: building any page; setting margins, gaps, or scan-rhythm pacing
+read_when: registering a new foundation kit (foundations/REGISTER.md Step 2 normalization); during report builds only for judgment not in tokens — per-register page margins + density/scan rhythm (Stages 4-5)
 ---
 
 ## 8-tier scale

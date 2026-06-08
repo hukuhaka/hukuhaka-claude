@@ -1,0 +1,23 @@
+<!-- ============================================================
+component: badges (rb-badges / rb-pill)
+purpose:   inline status pills — severity (p0/p1), liveness, version.
+swap:      pill text. modifiers: p0 (critical) · p1 (high) · live ·
+           beta · ol (outline, neutral chrome like versions)
+keep:      class names, structure, every var(--...). Severity colors
+           are semantic tokens — never invent new pill colors.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/color.md (semantic layer)
+============================================================ -->
+<div class="rb-badges">
+  <span class="rb-pill p0">P0 · CRITICAL</span><span class="rb-pill p1">P1 · HIGH</span>
+  <span class="rb-pill live">● LIVE</span><span class="rb-pill beta">BETA</span><span class="rb-pill ol">v1.4.0</span>
+</div>
+<style>
+.rb-badges{display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center}
+.rb-pill{font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 9px;border-radius:var(--r-1);letter-spacing:.02em}
+.rb-pill.p0{background:var(--loss-soft);color:var(--loss)}
+.rb-pill.p1{background:var(--warn-soft);color:var(--warn-deep)}
+.rb-pill.live{background:var(--gain-soft);color:var(--gain)}
+.rb-pill.beta{background:var(--sunk);color:var(--ink-soft)}
+.rb-pill.ol{background:transparent;box-shadow:inset 0 0 0 1px var(--hairline-2);color:var(--ink-soft)}
+</style>

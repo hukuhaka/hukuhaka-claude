@@ -1,0 +1,15 @@
+<!-- ============================================================
+component: margin-note (rb-margin-note)
+purpose:   serif-italic aside annotating a nearby body sentence.
+           wide audit/brief layouts only — not for dashboards.
+swap:      text content only
+keep:      class names, structure, every var(--...). Serif italic is
+           the deliberate voice deviation — do not switch to sans.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-margin-note">Margin note — serif italic, set off the body sentence it annotates. Lives only on wide audit/brief layouts.</div>
+<style>
+.rb-margin-note{font-family:var(--serif);font-style:italic;font-size:var(--t-sm);color:var(--ink-soft);margin-top:var(--space-4);
+  padding-left:var(--space-4);border-left:1px solid var(--hairline-2);max-width:34ch}
+</style>

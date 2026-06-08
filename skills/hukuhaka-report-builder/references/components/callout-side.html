@@ -1,0 +1,15 @@
+<!-- ============================================================
+component: callout-side (rb-note-side)
+purpose:   accent-rule side note — neutral methodology/context aside.
+           lighter than callout-highlight; no background tint.
+swap:      .e eyebrow label · .b body text
+keep:      class names, structure, every var(--...).
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-note-side"><div class="e">Note</div><div class="b">One callout per page maximum — overuse turns them into chrome. Left rule + tint, never border + bg + shadow together.</div></div>
+<style>
+.rb-note-side{border-left:2px solid var(--accent);padding:var(--space-1) var(--space-4);margin-top:var(--space-4)}
+.rb-note-side .e{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.rb-note-side .b{font-size:var(--t-sm);color:var(--ink-soft);margin-top:2px;line-height:1.45}
+</style>

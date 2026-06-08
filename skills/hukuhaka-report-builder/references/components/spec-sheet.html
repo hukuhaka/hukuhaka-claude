@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>report-builder — component spec sheet (GENERATED)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,400;0,8..60,600&display=swap');
+/* ============================================================
+   geist.css — report-builder foundation kit: "geist"
+   ------------------------------------------------------------
+   Derived from: templates/DESIGN-Vercel.md (Geist capture)
+                 via the approved spec-sheet mockup (visual truth)
+   Transform:    (1) extract -> (2) normalize-to-report -> (3) tokenize
+   Contract:     provides every token required by _schema.md (55)
+   Rules:        oklch colors only - no pure #fff/#000 - Inter forbidden
+                 (enforced by scripts/lint-foundation.sh)
+   Usage:        inline this whole block into the report's <style>
+                 BEFORE _base.css and any component fragment.
+                 Components consume var(--...) only — never restate
+                 these values.
+   ============================================================ */
+:root{
+  /* ---- chrome: paper & ink -- (2) #fafafa/#171717 -> tinted neutrals ---- */
+  --paper:      oklch(98.6% 0.008 85);   /* page ground, from canvas-soft #fafafa */
+  --surface:    oklch(99.6% 0.004 85);   /* raised card ground */
+  --sunk:       oklch(96.5% 0.008 85);   /* sunk ground: code, bar tracks */
+  --ink:        oklch(22% 0.012 70);     /* from ink #171717 */
+  --ink-soft:   oklch(42% 0.012 70);     /* body text */
+  --ink-mute:   oklch(60% 0.010 70);     /* captions, labels */
+  --hairline:   oklch(90% 0.006 80);     /* default rule */
+  --hairline-2: oklch(82% 0.008 80);     /* stronger rule: header sep */
+
+  /* ---- dark band: inverted surface for voice / hero bands ---- */
+  --dark-band: oklch(24% 0.014 70);
+  --dark-ink:  oklch(95% 0.008 85);
+
+  /* ---- semantic: data meaning -- (2) separated from chrome ---- */
+  --gain:      oklch(58% 0.16 150);
+  --gain-soft: oklch(95% 0.04 150);
+  --loss:      oklch(58% 0.19 27);
+  --loss-soft: oklch(95% 0.04 27);
+  --warn:      oklch(73% 0.15 80);
+  --warn-soft: oklch(96% 0.045 85);
+  --warn-deep: oklch(45% 0.12 70);       /* warn-tone text on warn-soft */
+  --info:      oklch(58% 0.12 245);
+
+  /* ---- accent: ONE hue per report; register picks (ochre = audit/brief) ---- */
+  --accent:      oklch(50% 0.16 75);
+  --accent-soft: oklch(95% 0.04 80);
+  --accent-2:    oklch(62% 0.10 75);     /* series step 2 (stacked charts) */
+  --accent-3:    oklch(74% 0.06 80);     /* series step 3 */
+
+  /* ---- type families -- (1) extracted; (2) Korean fallback, Inter banned ---- */
+  --sans:  'Geist','Apple SD Gothic Neo','IBM Plex Sans',sans-serif;
+  --mono:  'Geist Mono','IBM Plex Mono',monospace;
+  --serif: 'Source Serif 4',Georgia,serif;   /* captions / margin notes only */
+
+  /* ---- weights -- (2) capture display 600 -> report heroes 700-800 ---- */
+  --w-display: 800;
+  --w-head:    700;
+  --w-body:    400;
+
+  /* ---- type scale -- (2) hero ladder added on top of capture scale ---- */
+  --t-hero: 116px;     /* in-report hero metric (ladder 96-140) */
+  --t-sub:  64px;      /* sub-hero              (ladder 56-72)  */
+  --t-tile: 40px;      /* KPI tile value        (ladder 36-44)  */
+  --t-dxl:  44px;      /* display-xl: cover wordmark / page title */
+  --t-dlg:  31px;      /* display-lg: section finding headline */
+  --t-dmd:  23px;      /* display-md: subsection headline */
+  --t-lead: 18px;      /* lead paragraph */
+  --t-body: 16px;
+  --t-sm:   14px;      /* table cells / secondary */
+  --t-caption: 12px;
+  --t-eye:  12px;      /* mono eyebrow */
+  --t-code: 13px;      /* mono code */
+
+  /* ---- spacing: 8-tier scale (craft/spacing.md) ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px;
+
+  /* ---- radius -- (1) extracted, trimmed to 5 steps ---- */
+  --r-0: 0px; --r-1: 3px; --r-2: 6px; --r-3: 8px; --r-4: 12px;
+
+  /* ---- elevation -- (2) capture shadow stack -> flat: ring, then ring+1px ---- */
+  --e-1: 0 0 0 1px var(--hairline);
+  --e-2: 0 1px 2px oklch(20% 0 0 / .05), 0 0 0 1px var(--hairline);
+}
+/* ============================================================
+   _base.css — shared layer consumed by every component fragment
+   ------------------------------------------------------------
+   Load order in a report page:
+     1. foundations/<kit>.css   (tokens)
+     2. this file               (inheritance + shared chrome)
+     3. component fragments     (each carries its own <style>)
+   Why this exists:
+     - body-level inheritance the fragments rely on; dropping
+       font-variant-numeric here misaligns every metric's digits
+     - utilities + chart chrome shared by MULTIPLE fragments —
+       kept here once so fragments cannot drift apart
+   Rules: var(--...) or color-mix(in oklch, var(--...)) only.
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  font-family:var(--sans);background:var(--paper);color:var(--ink);
+  font-size:var(--t-body);line-height:1.5;font-variant-numeric:tabular-nums;
+}
+
+/* utilities (unscoped by design — namespaced rb-) */
+.rb-tnum{font-variant-numeric:tabular-nums}
+.rb-up{color:var(--gain)}
+.rb-down{color:var(--loss)}
+
+/* chart chrome — shared by chart-bar / chart-line / chart-stacked */
+.rb-chart{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-chart .ct{font-size:var(--t-dmd);font-weight:600;letter-spacing:-.015em}
+.rb-chart .cs{color:var(--ink-soft);font-size:var(--t-sm);margin:2px 0 var(--space-5)}
+.rb-cnote{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:var(--space-4);
+  border-top:1px solid var(--hairline);padding-top:var(--space-3)}
+/* demo scaffolding (spec-sheet only — not part of any fragment) */
+.wrap{max-width:1180px;margin:0 auto;padding:72px 32px}
+.mast{padding-bottom:24px;border-bottom:2px solid var(--ink)}
+.mast .k{font-family:var(--mono);font-size:var(--t-eye);text-transform:uppercase;letter-spacing:.10em;color:var(--ink-mute)}
+.mast h1{font-size:var(--t-dlg);font-weight:700;letter-spacing:-.025em;margin-top:8px}
+.mast p{color:var(--ink-soft);font-size:var(--t-sm);margin-top:8px}
+.frag{margin-top:48px}
+.frag-label{font-family:var(--mono);font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--hairline-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="mast">
+  <div class="k">hukuhaka-report-builder · references/components</div>
+  <h1>Component spec sheet</h1>
+  <p>GENERATED by scripts/build-spec-sheet.sh — never hand-edit. Kit: geist.css. Each block below is the verbatim fragment file.</p>
+</div>
+<div class="frag"><div class="frag-label">cover.html</div>
+<!-- ============================================================
+component: cover (rb-cover)
+purpose:   identity card — project name + tagline, NOT a summary.
+           wordmark sits at ~1/3 of the in-report hero scale.
+swap:      .k register eyebrow · .wm wordmark · .tg tagline (<=8 words
+           preferred) · .meta chrome strip (version/date/author)
+keep:      class names, structure, every var(--...). No KPI blocks,
+           no paragraph hero, no marketing tagline on a cover.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/cover.md
+============================================================ -->
+<div class="rb-cover">
+  <span class="k">Technical Audit · 2026-Q2</span>
+  <div class="wm">HailoFlow Scheduler</div>
+  <div class="tg">Scheduler comparison on Hailo-8 — MANUAL vs ROUND_ROBIN.</div>
+  <div class="meta"><span>v1.4.0</span><span>2026-06-02</span><span>infra-team</span></div>
+</div>
+<style>
+.rb-cover{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-7);min-height:230px;
+  display:flex;flex-direction:column;justify-content:center}
+.rb-cover .k{font-family:var(--mono);font-size:var(--t-eye);text-transform:uppercase;letter-spacing:.10em;color:var(--accent)}
+.rb-cover .wm{font-size:var(--t-dxl);font-weight:700;letter-spacing:-.03em;line-height:1.0;margin-top:var(--space-3)}
+.rb-cover .tg{color:var(--ink-soft);font-size:var(--t-lead);margin-top:var(--space-3);max-width:34ch}
+.rb-cover .meta{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:var(--space-5);
+  border-top:1px solid var(--hairline);padding-top:var(--space-3);display:flex;gap:var(--space-4);flex-wrap:wrap}
+</style>
+</div>
+<div class="frag"><div class="frag-label">hero-metric.html</div>
+<!-- ============================================================
+component: hero-metric (rb-hero)
+purpose:   page-defining single metric — legible across a room.
+           one per page maximum; it IS the page's argument.
+swap:      .l label · .m metric text (+ .u unit) · .c support caption
+scale:     .m font-size stays inside the hero ladder 96-140px.
+           96px fits a half-width band; use var(--t-hero) (116px)
+           when the metric owns the full page width.
+keep:      class names, structure, every var(--...). No shadow,
+           no gradient, no icon background — weight does the work.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/kpi-tiles.md (size ladder)
+============================================================ -->
+<div class="rb-hero">
+  <div class="l">Pipeline pass rate</div>
+  <div class="m rb-tnum">94.7<span class="u">%</span></div>
+  <div class="c">Page-defining metric — legible across a room. No shadow, no gradient, no icon background; weight and scale do the work.</div>
+</div>
+<style>
+.rb-hero{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-7) var(--space-6);min-height:230px}
+.rb-hero .l{font-family:var(--mono);font-size:var(--t-eye);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.rb-hero .m{font-size:96px;font-weight:800;letter-spacing:-.03em;line-height:.92;margin-top:var(--space-3)}
+.rb-hero .m .u{font-size:.38em;color:var(--ink-mute);font-weight:600}
+.rb-hero .c{color:var(--ink-soft);font-size:var(--t-sm);margin-top:var(--space-4);max-width:40ch}
+</style>
+</div>
+<div class="frag"><div class="frag-label">kpi-tiles.html</div>
+<!-- ============================================================
+component: kpi-tiles (rb-kpi / rb-tile)
+purpose:   3-6 metric tile band — the per-page KPI strip.
+swap:      per tile: .l label · .m metric (+ .u unit) · .d delta text.
+           delta direction: add rb-up / rb-down (from _base.css) to .d.
+           column count: set --kpi-cols on .rb-kpi (default 3).
+keep:      class names, structure, every var(--...). tabular-nums is
+           inherited from _base body — do not remove.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/kpi-tiles.md
+============================================================ -->
+<div class="rb-kpi">
+  <div class="rb-tile"><div class="l">Throughput</div><div class="m rb-tnum">2.4<span class="u">k/s</span></div><div class="d rb-up">▲ 38.2%</div></div>
+  <div class="rb-tile"><div class="l">p95 latency</div><div class="m rb-tnum">128<span class="u">ms</span></div><div class="d rb-down">▼ 6.1%</div></div>
+  <div class="rb-tile"><div class="l">Active users</div><div class="m rb-tnum">1.2<span class="u">M</span></div><div class="d rb-up">▲ 12.0%</div></div>
+  <div class="rb-tile"><div class="l">Error rate</div><div class="m rb-tnum">0.04<span class="u">%</span></div><div class="d rb-up">▲ −0.02</div></div>
+  <div class="rb-tile"><div class="l">Deploys/day</div><div class="m rb-tnum">342</div><div class="d rb-up">▲ 21</div></div>
+  <div class="rb-tile"><div class="l">MTTR</div><div class="m rb-tnum">14<span class="u">m</span></div><div class="d rb-up">▲ −3m</div></div>
+</div>
+<style>
+.rb-kpi{display:grid;grid-template-columns:repeat(var(--kpi-cols,3),1fr);gap:var(--space-3)}
+.rb-tile{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-3);padding:var(--space-4)}
+.rb-tile .l{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-mute)}
+.rb-tile .m{font-size:var(--t-tile);font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:var(--space-2)}
+.rb-tile .m .u{font-size:.5em;color:var(--ink-mute);font-weight:500}
+.rb-tile .d{font-family:var(--mono);font-size:var(--t-sm);margin-top:var(--space-1);font-weight:500}
+</style>
+</div>
+<div class="frag"><div class="frag-label">badges.html</div>
+<!-- ============================================================
+component: badges (rb-badges / rb-pill)
+purpose:   inline status pills — severity (p0/p1), liveness, version.
+swap:      pill text. modifiers: p0 (critical) · p1 (high) · live ·
+           beta · ol (outline, neutral chrome like versions)
+keep:      class names, structure, every var(--...). Severity colors
+           are semantic tokens — never invent new pill colors.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/color.md (semantic layer)
+============================================================ -->
+<div class="rb-badges">
+  <span class="rb-pill p0">P0 · CRITICAL</span><span class="rb-pill p1">P1 · HIGH</span>
+  <span class="rb-pill live">● LIVE</span><span class="rb-pill beta">BETA</span><span class="rb-pill ol">v1.4.0</span>
+</div>
+<style>
+.rb-badges{display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:center}
+.rb-pill{font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 9px;border-radius:var(--r-1);letter-spacing:.02em}
+.rb-pill.p0{background:var(--loss-soft);color:var(--loss)}
+.rb-pill.p1{background:var(--warn-soft);color:var(--warn-deep)}
+.rb-pill.live{background:var(--gain-soft);color:var(--gain)}
+.rb-pill.beta{background:var(--sunk);color:var(--ink-soft)}
+.rb-pill.ol{background:transparent;box-shadow:inset 0 0 0 1px var(--hairline-2);color:var(--ink-soft)}
+</style>
+</div>
+<div class="frag"><div class="frag-label">source-line.html</div>
+<!-- ============================================================
+component: source-line (rb-srcline)
+purpose:   data provenance strip — source path, sample size, CI.
+           every chart/table cluster gets one.
+swap:      text content only (keep the "SOURCE ·" prefix idiom)
+keep:      class names, structure, every var(--...).
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/charts.md (annotation discipline)
+============================================================ -->
+<div class="rb-srcline">SOURCE · bench/2026-q2/run-3187.json · n=1,204 · 95% CI</div>
+<style>
+.rb-srcline{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:var(--space-3);
+  border-top:1px solid var(--hairline);padding-top:var(--space-2)}
+</style>
+</div>
+<div class="frag"><div class="frag-label">margin-note.html</div>
+<!-- ============================================================
+component: margin-note (rb-margin-note)
+purpose:   serif-italic aside annotating a nearby body sentence.
+           wide audit/brief layouts only — not for dashboards.
+swap:      text content only
+keep:      class names, structure, every var(--...). Serif italic is
+           the deliberate voice deviation — do not switch to sans.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-margin-note">Margin note — serif italic, set off the body sentence it annotates. Lives only on wide audit/brief layouts.</div>
+<style>
+.rb-margin-note{font-family:var(--serif);font-style:italic;font-size:var(--t-sm);color:var(--ink-soft);margin-top:var(--space-4);
+  padding-left:var(--space-4);border-left:1px solid var(--hairline-2);max-width:34ch}
+</style>
+</div>
+<div class="frag"><div class="frag-label">section-head.html</div>
+<!-- ============================================================
+component: section-head (rb-shc)
+purpose:   section opener — the TITLE STATES THE FINDING, so the
+           page scans without reading prose.
+swap:      .k kicker (e.g. "Finding 02") · h3 finding claim ·
+           p one-paragraph support
+keep:      class names, structure, every var(--...). If the h3 reads
+           as a topic label ("Methodology"), the section is wrong —
+           rewrite the title as a claim before building on.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     SKILL.md (section titles are findings) + craft/typography.md
+============================================================ -->
+<div class="rb-shc">
+  <div class="k">Finding 02</div>
+  <h3>Latency regressed only on the EU edge.</h3>
+  <div class="hr"></div>
+  <p>The heading carries the conclusion, so the page is scannable without reading prose. The argument lives in the titles.</p>
+</div>
+<style>
+.rb-shc{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-shc .k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.rb-shc h3{font-size:var(--t-dmd);font-weight:600;letter-spacing:-.018em;margin-top:var(--space-2);line-height:1.15}
+.rb-shc .hr{height:2px;background:var(--ink);width:38px;margin-top:var(--space-3)}
+.rb-shc p{color:var(--ink-soft);font-size:var(--t-sm);margin-top:var(--space-3)}
+</style>
+</div>
+<div class="frag"><div class="frag-label">callout-highlight.html</div>
+<!-- ============================================================
+component: callout-highlight (rb-hl)
+purpose:   warn-tinted highlight box — the page's ONE caveat/risk.
+           one per page MAXIMUM; overuse turns it into chrome.
+swap:      .e eyebrow label · .b body text
+keep:      class names, structure, every var(--...). Left rule + tint
+           only — never border + bg + shadow together.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-hl"><div class="e">⚠ Caveat</div><div class="b">eu-central p95 rose 31% week-over-week; us/ap edges held flat. Scope the rollback to the EU region only.</div></div>
+<style>
+.rb-hl{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 var(--r-2) var(--r-2) 0;padding:var(--space-4) var(--space-5)}
+.rb-hl .e{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--warn-deep)}
+.rb-hl .b{font-size:var(--t-sm);font-weight:600;color:var(--ink);margin-top:var(--space-1);line-height:1.45}
+</style>
+</div>
+<div class="frag"><div class="frag-label">callout-side.html</div>
+<!-- ============================================================
+component: callout-side (rb-note-side)
+purpose:   accent-rule side note — neutral methodology/context aside.
+           lighter than callout-highlight; no background tint.
+swap:      .e eyebrow label · .b body text
+keep:      class names, structure, every var(--...).
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-note-side"><div class="e">Note</div><div class="b">One callout per page maximum — overuse turns them into chrome. Left rule + tint, never border + bg + shadow together.</div></div>
+<style>
+.rb-note-side{border-left:2px solid var(--accent);padding:var(--space-1) var(--space-4);margin-top:var(--space-4)}
+.rb-note-side .e{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.rb-note-side .b{font-size:var(--t-sm);color:var(--ink-soft);margin-top:2px;line-height:1.45}
+</style>
+</div>
+<div class="frag"><div class="frag-label">data-table.html</div>
+<!-- ============================================================
+component: data-table (rb-dt)
+purpose:   dense numeric table — hairline rules, right-aligned mono
+           numbers, semantic deltas. Dense material looks dense.
+swap:      thead labels · tbody rows. cell classes: .name (left, 500)
+           · .num (right, mono) · .um unit suffix · delta cells get
+           rb-up / rb-down (from _base.css)
+keep:      class names, structure, every var(--...). Numbers right,
+           text left, no vertical rules, no zebra by default.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/tables.md
+============================================================ -->
+<table class="rb-dt">
+  <thead><tr><th>Region</th><th class="num">p50</th><th class="num">p95</th><th class="num">p99</th><th class="num">req/s</th><th class="num">Δ p95 wk</th></tr></thead>
+  <tbody>
+    <tr><td class="name">us-east</td><td class="num">42<span class="um">ms</span></td><td class="num">96</td><td class="num">181</td><td class="num">2,410</td><td class="num rb-up">−4%</td></tr>
+    <tr><td class="name">us-west</td><td class="num">51</td><td class="num">108</td><td class="num">205</td><td class="num">1,980</td><td class="num rb-up">−2%</td></tr>
+    <tr><td class="name">eu-central</td><td class="num">88</td><td class="num">214</td><td class="num">498</td><td class="num">1,140</td><td class="num rb-down">+31%</td></tr>
+    <tr><td class="name">ap-south</td><td class="num">73</td><td class="num">169</td><td class="num">331</td><td class="num">1,505</td><td class="num rb-up">−1%</td></tr>
+  </tbody>
+</table>
+<style>
+table.rb-dt{width:100%;border-collapse:collapse;background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-3);overflow:hidden}
+table.rb-dt thead th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);
+  text-align:left;padding:var(--space-3) var(--space-4);border-bottom:2px solid var(--hairline-2);font-weight:500}
+table.rb-dt th.num,table.rb-dt td.num{text-align:right}
+table.rb-dt tbody td{padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--hairline);font-size:var(--t-sm);line-height:1.6}
+table.rb-dt tbody tr:last-child td{border-bottom:0}
+table.rb-dt td.name{font-weight:500}
+table.rb-dt td .um{font-family:var(--mono);color:var(--ink-mute);font-size:.85em}
+table.rb-dt td.num{font-family:var(--mono)}
+</style>
+</div>
+<div class="frag"><div class="frag-label">chart-bar.html</div>
+<!-- ============================================================
+component: chart-bar (rb-bars / rb-brow, inside rb-chart from _base)
+purpose:   RANKING message -> horizontal bars. Zero baseline,
+           direct-labeled, the finding bar inked (.hl-bar).
+swap:      .ct title · .cs subtitle · per row: .bn name · .bf
+           style width % (data) · .bv value · .rb-cnote rule line.
+           mark exactly ONE row .hl-bar — the finding.
+keep:      class names, structure, every var(--...). No legend,
+           no gridlines for ranking bars, no 3D, no gradients.
+needs:     foundations/<kit>.css + components/_base.css (rb-chart,
+           rb-cnote live there) in page
+craft:     references/craft/charts.md
+============================================================ -->
+<div class="rb-chart">
+  <div class="ct">p95 latency by region</div>
+  <div class="cs">Ranking → horizontal bar. Zero baseline, direct-labeled, the finding inked.</div>
+  <div class="rb-bars">
+    <div class="rb-brow"><div class="bn">us-east</div><div class="bt"><div class="bf" style="width:45%"></div></div><div class="bv">96</div></div>
+    <div class="rb-brow"><div class="bn">us-west</div><div class="bt"><div class="bf" style="width:50%"></div></div><div class="bv">108</div></div>
+    <div class="rb-brow hl-bar"><div class="bn">eu-central</div><div class="bt"><div class="bf" style="width:100%"></div></div><div class="bv">214</div></div>
+    <div class="rb-brow"><div class="bn">ap-south</div><div class="bt"><div class="bf" style="width:79%"></div></div><div class="bv">169</div></div>
+  </div>
+  <div class="rb-cnote">RULE · bars from 0 · labeled in place, no legend · only the finding bar is ink, rest accent</div>
+</div>
+<style>
+.rb-bars{display:flex;flex-direction:column;gap:var(--space-3)}
+.rb-brow{display:grid;grid-template-columns:120px 1fr 56px;gap:var(--space-4);align-items:center}
+.rb-brow .bn{font-size:var(--t-sm);color:var(--ink-soft)}
+.rb-brow .bt{height:22px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.rb-brow .bf{height:100%;background:var(--accent);border-radius:3px}
+.rb-brow.hl-bar .bf{background:var(--ink)}
+.rb-brow .bv{font-family:var(--mono);font-size:var(--t-sm);font-weight:500;text-align:right}
+</style>
+</div>
+<div class="frag"><div class="frag-label">chart-line.html</div>
+<!-- ============================================================
+component: chart-line (svg inside rb-chart from _base)
+purpose:   CHANGE-OVER-TIME message -> line. Horizontal gridlines
+           only, real date ticks, the INFLECTION annotated (not
+           every point).
+swap:      .ct title · .cs subtitle · polyline points (data) ·
+           circle cx/cy + leader line + annotation text · date ticks
+keep:      class names, structure, every var(--...) (SVG colors via
+           style attributes — presentation attrs can't take var()).
+           Zero-suppressed y is allowed for lines, never for bars.
+needs:     foundations/<kit>.css + components/_base.css (rb-chart,
+           rb-cnote live there) in page
+craft:     references/craft/charts.md
+============================================================ -->
+<div class="rb-chart">
+  <div class="ct">p95 over the quarter</div>
+  <div class="cs">Change-over-time → line. Annotate the inflection, not every point.</div>
+  <svg viewBox="0 0 360 150" width="100%" height="150" style="overflow:visible">
+    <line x1="0" y1="40" x2="360" y2="40" style="stroke:var(--hairline);stroke-width:1"/>
+    <line x1="0" y1="80" x2="360" y2="80" style="stroke:var(--hairline);stroke-width:1"/>
+    <line x1="0" y1="120" x2="360" y2="120" style="stroke:var(--hairline);stroke-width:1"/>
+    <polyline points="0,112 60,104 120,108 180,96 240,84 300,46 360,30" fill="none" style="stroke:var(--accent);stroke-width:2"/>
+    <circle cx="300" cy="46" r="3.5" style="fill:var(--ink)"/>
+    <line x1="300" y1="46" x2="300" y2="14" style="stroke:var(--hairline-2);stroke-width:1"/>
+    <text x="300" y="9" text-anchor="middle" font-size="10" style="font-family:var(--mono);fill:var(--ink-soft)">deploy 0c1f → +31%</text>
+    <text x="0" y="140" font-size="10" style="font-family:var(--mono);fill:var(--ink-mute)">Apr</text>
+    <text x="340" y="140" font-size="10" style="font-family:var(--mono);fill:var(--ink-mute)">Jun</text>
+  </svg>
+  <div class="rb-cnote">RULE · real date ticks · horizontal gridlines only · inflection annotated</div>
+</div>
+</div>
+<div class="frag"><div class="frag-label">chart-stacked.html</div>
+<!-- ============================================================
+component: chart-stacked (rb-stack / rb-legend, inside rb-chart)
+purpose:   PART-TO-WHOLE message -> single stacked bar with the
+           total annotated. Never a pie.
+swap:      .ct title · .cs subtitle · spans: width % + label text ·
+           legend labels + total. Series colors come ONLY from
+           --accent / --accent-2 / --accent-3 / --sunk in that order;
+           text on accent segments uses --surface, on light segments
+           --ink / --ink-soft.
+keep:      class names, structure, every var(--...) or
+           color-mix(in oklch, var(--...)). Max 4 segments — more
+           means the message is not part-to-whole.
+needs:     foundations/<kit>.css + components/_base.css (rb-chart,
+           rb-cnote live there) in page
+craft:     references/craft/charts.md
+============================================================ -->
+<div class="rb-chart">
+  <div class="ct">Request mix — part-to-whole</div>
+  <div class="cs">Composition → stacked bar with total annotated (not a pie).</div>
+  <div class="rb-stack">
+    <span style="width:46%;background:var(--accent)">read 46%</span>
+    <span style="width:31%;background:var(--accent-2)">write 31%</span>
+    <span style="width:14%;background:var(--accent-3);color:var(--ink)">batch 14%</span>
+    <span style="width:9%;background:var(--sunk);color:var(--ink-soft)">other 9%</span>
+  </div>
+  <div class="rb-legend"><span><i style="background:var(--accent)"></i>read</span><span><i style="background:var(--accent-2)"></i>write</span><span><i style="background:var(--accent-3)"></i>batch</span><span><i style="background:var(--sunk)"></i>other</span><span style="color:var(--ink-mute)">· total 1.20M req</span></div>
+</div>
+<style>
+.rb-stack{display:flex;height:34px;border-radius:3px;overflow:hidden;box-shadow:inset 0 0 0 1px color-mix(in oklch, var(--ink) 8%, transparent)}
+.rb-stack span{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--surface)}
+.rb-legend{display:flex;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-3);font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+.rb-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:baseline}
+</style>
+</div>
+<div class="frag"><div class="frag-label">diagram.html</div>
+<!-- ============================================================
+component: diagram (rb-diagram / rb-figcap)
+purpose:   hand-built SVG system diagram — NEVER Mermaid. One accent
+           path marks the finding (the regressed hop, the bottleneck);
+           ink strokes carry the rest. Serif italic caption below.
+swap:      svg contents (nodes/edges/labels — keep stroke discipline:
+           one width 1.5px for structure, 2px ONLY on the accent path)
+           · .rb-figcap caption text ("Fig. N — ...")
+keep:      class names, wrapper structure, every var(--...) (SVG
+           colors via style attributes). Exactly ONE accent path per
+           diagram. Mono labels. No icon libraries, no drop shadows.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/diagrams.md
+============================================================ -->
+<div class="rb-diagram">
+  <svg viewBox="0 0 760 130" width="100%" height="130">
+    <g font-size="12" style="font-family:var(--mono);fill:var(--ink)">
+      <rect x="8" y="40" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="83" y="70" text-anchor="middle">ingress</text>
+      <rect x="240" y="40" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="315" y="70" text-anchor="middle">scheduler</text>
+      <rect x="472" y="40" width="150" height="50" rx="6" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="2"/>
+      <text x="547" y="70" text-anchor="middle">eu-edge</text>
+      <rect x="688" y="40" width="64" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="720" y="70" text-anchor="middle">db</text>
+      <line x1="158" y1="65" x2="238" y2="65" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="390" y1="65" x2="470" y2="65" style="stroke:var(--accent)" stroke-width="2"/>
+      <line x1="622" y1="65" x2="686" y2="65" stroke="currentColor" stroke-width="1.5"/>
+      <text x="430" y="30" text-anchor="middle" font-size="10" style="fill:var(--accent)">+31% p95</text>
+    </g>
+  </svg>
+  <div class="rb-figcap">Fig. 1 — Request path. The accent edge marks the regressed hop; ink strokes carry the rest.</div>
+</div>
+<style>
+.rb-diagram{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-figcap{font-family:var(--serif);font-style:italic;font-size:var(--t-sm);color:var(--ink-soft);margin-top:var(--space-3)}
+</style>
+</div>
+<div class="frag"><div class="frag-label">code-block.html</div>
+<!-- ============================================================
+component: code-block (rb-code)
+purpose:   code excerpt with file:line caption, subdued accent
+           highlight (.hl), diff borders (.add/.del). For audit /
+           incident registers.
+swap:      .fn file:line caption · pre contents. line classes:
+           .ln (every line) · .ln.hl finding line · .ln.add / .ln.del
+           diff lines. inline: .cm comment · .kw keyword
+keep:      class names, structure, every var(--...) or
+           color-mix(in oklch, var(--...)). Subdued highlighting —
+           no full syntax rainbow, the finding line carries the eye.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/code-blocks.md
+============================================================ -->
+<div class="rb-code">
+  <div class="fn">src/scheduler/route.ts : 41</div>
+  <pre><span class="ln"><span class="cm">// pin EU traffic to the nearest healthy edge</span></span><span class="ln"><span class="kw">const</span> edge = pickEdge(region)</span><span class="ln del">-  timeout: 250,</span><span class="ln add">+  timeout: 800,   <span class="cm">// EU cold-start budget</span></span><span class="ln hl"><span class="kw">return</span> route(edge, { timeout })  <span class="cm">// ← regressed hop</span></span></pre>
+</div>
+<style>
+.rb-code{background:var(--sunk);box-shadow:var(--e-1);border-radius:var(--r-2);overflow:hidden}
+.rb-code .fn{font-family:var(--mono);font-size:11px;color:var(--ink-mute);padding:var(--space-2) var(--space-4);
+  border-bottom:1px solid var(--hairline)}
+.rb-code pre{font-family:var(--mono);font-size:var(--t-code);line-height:1.55;padding:var(--space-3) var(--space-4);
+  overflow-x:auto;color:var(--ink)}
+.rb-code .ln{display:block;padding-left:var(--space-3);border-left:2px solid transparent}
+.rb-code .ln.hl{border-left-color:var(--accent);background:color-mix(in oklch, var(--accent) 4%, transparent)}
+.rb-code .ln.add{border-left-color:var(--gain)}
+.rb-code .ln.del{border-left-color:var(--loss);color:var(--ink-mute)}
+.rb-code .cm{color:var(--ink-mute);font-style:italic}
+.rb-code .kw{font-weight:600}
+</style>
+</div>
+</div>
+</body>
+</html>

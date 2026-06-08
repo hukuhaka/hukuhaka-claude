@@ -507,10 +507,15 @@ validate_components() {
 
 DISCOVERY_FILE=$(mktemp)
 cleanup_install() {
+    # Capture the real exit status first: on success this is 0, and a
+    # short-circuited cleanup &&-chain below must not leak its falsy status
+    # as the script's exit code (this runs as the EXIT trap on success too).
+    local rc=$?
     [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && rm -rf "$TMPDIR"
     [ -n "${DISCOVERY_FILE:-}" ] && [ -f "$DISCOVERY_FILE" ] && rm -f "$DISCOVERY_FILE"
     [ -n "${PREFLIGHT_ALL_JSON:-}" ] && [ -f "$PREFLIGHT_ALL_JSON" ] && rm -f "$PREFLIGHT_ALL_JSON"
     [ -n "${PREFLIGHT_JSON:-}" ] && [ -f "$PREFLIGHT_JSON" ] && rm -f "$PREFLIGHT_JSON"
+    return $rc
 }
 trap cleanup_install EXIT
 discover_components "$SRC_DIR" > "$DISCOVERY_FILE"

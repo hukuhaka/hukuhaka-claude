@@ -1,0 +1,32 @@
+/* ============================================================
+   _base.css — shared layer consumed by every component fragment
+   ------------------------------------------------------------
+   Load order in a report page:
+     1. foundations/<kit>.css   (tokens)
+     2. this file               (inheritance + shared chrome)
+     3. component fragments     (each carries its own <style>)
+   Why this exists:
+     - body-level inheritance the fragments rely on; dropping
+       font-variant-numeric here misaligns every metric's digits
+     - utilities + chart chrome shared by MULTIPLE fragments —
+       kept here once so fragments cannot drift apart
+   Rules: var(--...) or color-mix(in oklch, var(--...)) only.
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  font-family:var(--sans);background:var(--paper);color:var(--ink);
+  font-size:var(--t-body);line-height:1.5;font-variant-numeric:tabular-nums;
+}
+
+/* utilities (unscoped by design — namespaced rb-) */
+.rb-tnum{font-variant-numeric:tabular-nums}
+.rb-up{color:var(--gain)}
+.rb-down{color:var(--loss)}
+
+/* chart chrome — shared by chart-bar / chart-line / chart-stacked */
+.rb-chart{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-chart .ct{font-size:var(--t-dmd);font-weight:600;letter-spacing:-.015em}
+.rb-chart .cs{color:var(--ink-soft);font-size:var(--t-sm);margin:2px 0 var(--space-5)}
+.rb-cnote{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:var(--space-4);
+  border-top:1px solid var(--hairline);padding-top:var(--space-3)}

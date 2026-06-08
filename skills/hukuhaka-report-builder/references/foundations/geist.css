@@ -1,0 +1,82 @@
+/* ============================================================
+   geist.css — report-builder foundation kit: "geist"
+   ------------------------------------------------------------
+   Derived from: templates/DESIGN-Vercel.md (Geist capture)
+                 via the approved spec-sheet mockup (visual truth)
+   Transform:    (1) extract -> (2) normalize-to-report -> (3) tokenize
+   Contract:     provides every token required by _schema.md (55)
+   Rules:        oklch colors only - no pure #fff/#000 - Inter forbidden
+                 (enforced by scripts/lint-foundation.sh)
+   Usage:        inline this whole block into the report's <style>
+                 BEFORE _base.css and any component fragment.
+                 Components consume var(--...) only — never restate
+                 these values.
+   ============================================================ */
+/* @kit-color-mode: light */  /* mode(s) this kit provides — Stage 1 axis #4; syntax fixed in _schema.md */
+/* @kit-brand: none */        /* brand layer the capture carries — Stage 1 axis #9 */
+:root{
+  /* ---- chrome: paper & ink -- (2) #fafafa/#171717 -> tinted neutrals ---- */
+  --paper:      oklch(98.6% 0.008 85);   /* page ground, from canvas-soft #fafafa */
+  --surface:    oklch(99.6% 0.004 85);   /* raised card ground */
+  --sunk:       oklch(96.5% 0.008 85);   /* sunk ground: code, bar tracks */
+  --ink:        oklch(22% 0.012 70);     /* from ink #171717 */
+  --ink-soft:   oklch(42% 0.012 70);     /* body text */
+  --ink-mute:   oklch(60% 0.010 70);     /* captions, labels */
+  --hairline:   oklch(90% 0.006 80);     /* default rule */
+  --hairline-2: oklch(82% 0.008 80);     /* stronger rule: header sep */
+
+  /* ---- dark band: inverted surface for voice / hero bands ---- */
+  --dark-band: oklch(24% 0.014 70);
+  --dark-ink:  oklch(95% 0.008 85);
+
+  /* ---- semantic: data meaning -- (2) separated from chrome ---- */
+  --gain:      oklch(58% 0.16 150);
+  --gain-soft: oklch(95% 0.04 150);
+  --loss:      oklch(58% 0.19 27);
+  --loss-soft: oklch(95% 0.04 27);
+  --warn:      oklch(73% 0.15 80);
+  --warn-soft: oklch(96% 0.045 85);
+  --warn-deep: oklch(45% 0.12 70);       /* warn-tone text on warn-soft */
+  --info:      oklch(58% 0.12 245);
+
+  /* ---- accent: ONE hue per report; register picks (ochre = audit/brief) ---- */
+  --accent:      oklch(50% 0.16 75);
+  --accent-soft: oklch(95% 0.04 80);
+  --accent-2:    oklch(62% 0.10 75);     /* series step 2 (stacked charts) */
+  --accent-3:    oklch(74% 0.06 80);     /* series step 3 */
+
+  /* ---- type families -- (1) extracted; (2) Korean fallback, Inter banned ---- */
+  --sans:  'Geist','Apple SD Gothic Neo','IBM Plex Sans',sans-serif;
+  --mono:  'Geist Mono','IBM Plex Mono',monospace;
+  --serif: 'Source Serif 4',Georgia,serif;   /* captions / margin notes only */
+
+  /* ---- weights -- (2) capture display 600 -> report heroes 700-800 ---- */
+  --w-display: 800;
+  --w-head:    700;
+  --w-body:    400;
+
+  /* ---- type scale -- (2) hero ladder added on top of capture scale ---- */
+  --t-hero: 116px;     /* in-report hero metric (ladder 96-140) */
+  --t-sub:  64px;      /* sub-hero              (ladder 56-72)  */
+  --t-tile: 40px;      /* KPI tile value        (ladder 36-44)  */
+  --t-dxl:  44px;      /* display-xl: cover wordmark / page title */
+  --t-dlg:  31px;      /* display-lg: section finding headline */
+  --t-dmd:  23px;      /* display-md: subsection headline */
+  --t-lead: 18px;      /* lead paragraph */
+  --t-body: 16px;
+  --t-sm:   14px;      /* table cells / secondary */
+  --t-caption: 12px;
+  --t-eye:  12px;      /* mono eyebrow */
+  --t-code: 13px;      /* mono code */
+
+  /* ---- spacing: 8-tier scale (craft/spacing.md) ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px;
+
+  /* ---- radius -- (1) extracted, trimmed to 5 steps ---- */
+  --r-0: 0px; --r-1: 3px; --r-2: 6px; --r-3: 8px; --r-4: 12px;
+
+  /* ---- elevation -- (2) capture shadow stack -> flat: ring, then ring+1px ---- */
+  --e-1: 0 0 0 1px var(--hairline);
+  --e-2: 0 1px 2px oklch(20% 0 0 / .05), 0 0 0 1px var(--hairline);
+}

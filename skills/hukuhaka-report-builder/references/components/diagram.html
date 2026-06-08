@@ -1,0 +1,37 @@
+<!-- ============================================================
+component: diagram (rb-diagram / rb-figcap)
+purpose:   hand-built SVG system diagram — NEVER Mermaid. One accent
+           path marks the finding (the regressed hop, the bottleneck);
+           ink strokes carry the rest. Serif italic caption below.
+swap:      svg contents (nodes/edges/labels — keep stroke discipline:
+           one width 1.5px for structure, 2px ONLY on the accent path)
+           · .rb-figcap caption text ("Fig. N — ...")
+keep:      class names, wrapper structure, every var(--...) (SVG
+           colors via style attributes). Exactly ONE accent path per
+           diagram. Mono labels. No icon libraries, no drop shadows.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/diagrams.md
+============================================================ -->
+<div class="rb-diagram">
+  <svg viewBox="0 0 760 130" width="100%" height="130">
+    <g font-size="12" style="font-family:var(--mono);fill:var(--ink)">
+      <rect x="8" y="40" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="83" y="70" text-anchor="middle">ingress</text>
+      <rect x="240" y="40" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="315" y="70" text-anchor="middle">scheduler</text>
+      <rect x="472" y="40" width="150" height="50" rx="6" style="fill:var(--accent-soft);stroke:var(--accent)" stroke-width="2"/>
+      <text x="547" y="70" text-anchor="middle">eu-edge</text>
+      <rect x="688" y="40" width="64" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="720" y="70" text-anchor="middle">db</text>
+      <line x1="158" y1="65" x2="238" y2="65" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="390" y1="65" x2="470" y2="65" style="stroke:var(--accent)" stroke-width="2"/>
+      <line x1="622" y1="65" x2="686" y2="65" stroke="currentColor" stroke-width="1.5"/>
+      <text x="430" y="30" text-anchor="middle" font-size="10" style="fill:var(--accent)">+31% p95</text>
+    </g>
+  </svg>
+  <div class="rb-figcap">Fig. 1 — Request path. The accent edge marks the regressed hop; ink strokes carry the rest.</div>
+</div>
+<style>
+.rb-diagram{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-figcap{font-family:var(--serif);font-style:italic;font-size:var(--t-sm);color:var(--ink-soft);margin-top:var(--space-3)}
+</style>

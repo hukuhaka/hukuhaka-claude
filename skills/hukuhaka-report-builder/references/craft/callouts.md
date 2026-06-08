@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — sidebars, margin notes, highlight boxes, pull-quotes
-read_when: presenting commentary that should not flow as body prose
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
 ---
 
 ## When to use

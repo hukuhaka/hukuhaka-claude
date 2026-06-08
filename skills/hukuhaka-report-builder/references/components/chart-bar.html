@@ -1,0 +1,33 @@
+<!-- ============================================================
+component: chart-bar (rb-bars / rb-brow, inside rb-chart from _base)
+purpose:   RANKING message -> horizontal bars. Zero baseline,
+           direct-labeled, the finding bar inked (.hl-bar).
+swap:      .ct title · .cs subtitle · per row: .bn name · .bf
+           style width % (data) · .bv value · .rb-cnote rule line.
+           mark exactly ONE row .hl-bar — the finding.
+keep:      class names, structure, every var(--...). No legend,
+           no gridlines for ranking bars, no 3D, no gradients.
+needs:     foundations/<kit>.css + components/_base.css (rb-chart,
+           rb-cnote live there) in page
+craft:     references/craft/charts.md
+============================================================ -->
+<div class="rb-chart">
+  <div class="ct">p95 latency by region</div>
+  <div class="cs">Ranking → horizontal bar. Zero baseline, direct-labeled, the finding inked.</div>
+  <div class="rb-bars">
+    <div class="rb-brow"><div class="bn">us-east</div><div class="bt"><div class="bf" style="width:45%"></div></div><div class="bv">96</div></div>
+    <div class="rb-brow"><div class="bn">us-west</div><div class="bt"><div class="bf" style="width:50%"></div></div><div class="bv">108</div></div>
+    <div class="rb-brow hl-bar"><div class="bn">eu-central</div><div class="bt"><div class="bf" style="width:100%"></div></div><div class="bv">214</div></div>
+    <div class="rb-brow"><div class="bn">ap-south</div><div class="bt"><div class="bf" style="width:79%"></div></div><div class="bv">169</div></div>
+  </div>
+  <div class="rb-cnote">RULE · bars from 0 · labeled in place, no legend · only the finding bar is ink, rest accent</div>
+</div>
+<style>
+.rb-bars{display:flex;flex-direction:column;gap:var(--space-3)}
+.rb-brow{display:grid;grid-template-columns:120px 1fr 56px;gap:var(--space-4);align-items:center}
+.rb-brow .bn{font-size:var(--t-sm);color:var(--ink-soft)}
+.rb-brow .bt{height:22px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.rb-brow .bf{height:100%;background:var(--accent);border-radius:3px}
+.rb-brow.hl-bar .bf{background:var(--ink)}
+.rb-brow .bv{font-family:var(--mono);font-size:var(--t-sm);font-weight:500;text-align:right}
+</style>

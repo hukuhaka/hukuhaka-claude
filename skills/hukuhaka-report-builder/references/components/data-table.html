@@ -1,0 +1,32 @@
+<!-- ============================================================
+component: data-table (rb-dt)
+purpose:   dense numeric table — hairline rules, right-aligned mono
+           numbers, semantic deltas. Dense material looks dense.
+swap:      thead labels · tbody rows. cell classes: .name (left, 500)
+           · .num (right, mono) · .um unit suffix · delta cells get
+           rb-up / rb-down (from _base.css)
+keep:      class names, structure, every var(--...). Numbers right,
+           text left, no vertical rules, no zebra by default.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/tables.md
+============================================================ -->
+<table class="rb-dt">
+  <thead><tr><th>Region</th><th class="num">p50</th><th class="num">p95</th><th class="num">p99</th><th class="num">req/s</th><th class="num">Δ p95 wk</th></tr></thead>
+  <tbody>
+    <tr><td class="name">us-east</td><td class="num">42<span class="um">ms</span></td><td class="num">96</td><td class="num">181</td><td class="num">2,410</td><td class="num rb-up">−4%</td></tr>
+    <tr><td class="name">us-west</td><td class="num">51</td><td class="num">108</td><td class="num">205</td><td class="num">1,980</td><td class="num rb-up">−2%</td></tr>
+    <tr><td class="name">eu-central</td><td class="num">88</td><td class="num">214</td><td class="num">498</td><td class="num">1,140</td><td class="num rb-down">+31%</td></tr>
+    <tr><td class="name">ap-south</td><td class="num">73</td><td class="num">169</td><td class="num">331</td><td class="num">1,505</td><td class="num rb-up">−1%</td></tr>
+  </tbody>
+</table>
+<style>
+table.rb-dt{width:100%;border-collapse:collapse;background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-3);overflow:hidden}
+table.rb-dt thead th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);
+  text-align:left;padding:var(--space-3) var(--space-4);border-bottom:2px solid var(--hairline-2);font-weight:500}
+table.rb-dt th.num,table.rb-dt td.num{text-align:right}
+table.rb-dt tbody td{padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--hairline);font-size:var(--t-sm);line-height:1.6}
+table.rb-dt tbody tr:last-child td{border-bottom:0}
+table.rb-dt td.name{font-weight:500}
+table.rb-dt td .um{font-family:var(--mono);color:var(--ink-mute);font-size:.85em}
+table.rb-dt td.num{font-family:var(--mono)}
+</style>

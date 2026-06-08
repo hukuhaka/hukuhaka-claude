@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — chart styling for any register
-read_when: designing any chart, plot, bar, line, scatter, or data-vis figure
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
 ---
 
 ## Default

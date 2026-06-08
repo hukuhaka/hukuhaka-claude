@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — hero numbers, KPI tiles, stat cards, oversized metrics
-read_when: building any oversized metric, hero number, KPI grid, or stat card
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
 ---
 
 ## Hero number scale

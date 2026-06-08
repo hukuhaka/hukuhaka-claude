@@ -1,0 +1,16 @@
+<!-- ============================================================
+component: callout-highlight (rb-hl)
+purpose:   warn-tinted highlight box — the page's ONE caveat/risk.
+           one per page MAXIMUM; overuse turns it into chrome.
+swap:      .e eyebrow label · .b body text
+keep:      class names, structure, every var(--...). Left rule + tint
+           only — never border + bg + shadow together.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/callouts.md
+============================================================ -->
+<div class="rb-hl"><div class="e">⚠ Caveat</div><div class="b">eu-central p95 rose 31% week-over-week; us/ap edges held flat. Scope the rollback to the EU region only.</div></div>
+<style>
+.rb-hl{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 var(--r-2) var(--r-2) 0;padding:var(--space-4) var(--space-5)}
+.rb-hl .e{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--warn-deep)}
+.rb-hl .b{font-size:var(--t-sm);font-weight:600;color:var(--ink);margin-top:var(--space-1);line-height:1.45}
+</style>

@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — code snippets in technical audit and engineering reports
-read_when: including any code snippet, config block, command, file path, or log excerpt
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
 ---
 
 ## When code belongs

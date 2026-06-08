@@ -176,15 +176,23 @@ for cname in components:
     if cpath is None:
         # statusline / agent-teams / claude-md / unknown — no scan
         continue
+    # Intra-package imports (sibling .py modules within the same component,
+    # e.g. `from changed_dirs import …`) are not third-party deps — collect
+    # their stems so the scan doesn't flag them as missing packages.
+    local_mods = {p.stem for p in cpath.rglob("*.py")}
     for root, _dirs, files in os.walk(cpath):
         for f in files:
             full = Path(root) / f
             if f.endswith(".py"):
                 add_req("python3", "system", True, cname)
                 for mod in python_imports(full):
-                    if mod in stdlib_modules:
+                    if mod in stdlib_modules or mod in local_mods:
                         continue
-                    add_req(mod, "python", True, cname)
+                    # Plugin runtime python deps are non-blocking: the
+                    # installer only copies files. Accel libs like
+                    # tree-sitter are import-guarded and degrade at runtime
+                    # (never fatal), so a missing one must not block install.
+                    add_req(mod, "python", False, cname)
             elif f.endswith(".sh"):
                 sb = shebang(full)
                 if "bash" in sb:

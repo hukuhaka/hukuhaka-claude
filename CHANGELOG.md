@@ -6,6 +6,21 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.6] — 2026-06-08
+
+### Fixed
+
+- Installing `hukuhaka-project-mapper` on a host without `tree-sitter` is no
+  longer blocked. The dependency preflight mistook the plugin's own internal
+  Python modules for missing third-party packages and trapped the installer
+  in a dependency prompt that could never be satisfied. Plugin Python imports
+  are now treated as non-blocking, and `tree-sitter` is correctly optional
+  (it accelerates symbol extraction; map-sync falls back to a generic
+  extractor when it is absent). Regression introduced in 1.0.5.
+- `install.sh` now exits `0` on a successful run (it previously leaked a
+  non-zero status from its cleanup step), so `curl … | bash` callers that
+  check the exit code see success.
+
 ## [1.0.5] — 2026-06-05
 
 ### Removed

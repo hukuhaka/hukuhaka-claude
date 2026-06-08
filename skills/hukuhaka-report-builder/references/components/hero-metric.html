@@ -1,0 +1,25 @@
+<!-- ============================================================
+component: hero-metric (rb-hero)
+purpose:   page-defining single metric — legible across a room.
+           one per page maximum; it IS the page's argument.
+swap:      .l label · .m metric text (+ .u unit) · .c support caption
+scale:     .m font-size stays inside the hero ladder 96-140px.
+           96px fits a half-width band; use var(--t-hero) (116px)
+           when the metric owns the full page width.
+keep:      class names, structure, every var(--...). No shadow,
+           no gradient, no icon background — weight does the work.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/kpi-tiles.md (size ladder)
+============================================================ -->
+<div class="rb-hero">
+  <div class="l">Pipeline pass rate</div>
+  <div class="m rb-tnum">94.7<span class="u">%</span></div>
+  <div class="c">Page-defining metric — legible across a room. No shadow, no gradient, no icon background; weight and scale do the work.</div>
+</div>
+<style>
+.rb-hero{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-7) var(--space-6);min-height:230px}
+.rb-hero .l{font-family:var(--mono);font-size:var(--t-eye);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.rb-hero .m{font-size:96px;font-weight:800;letter-spacing:-.03em;line-height:.92;margin-top:var(--space-3)}
+.rb-hero .m .u{font-size:.38em;color:var(--ink-mute);font-weight:600}
+.rb-hero .c{color:var(--ink-soft);font-size:var(--t-sm);margin-top:var(--space-4);max-width:40ch}
+</style>

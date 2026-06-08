@@ -33,7 +33,7 @@ Assembly is mechanical — sections are already verified individually. Last gate
 1. Re-read spec.md end-to-end. Verify every Build log line exists (Stage 4 + Stage 5 / P2..PN).
 2. Combine cover + all sections into `.claude/reports/<short-name>/report.html` if not already a single file.
 3. Ensure shared `<head>` / `<style>` is at the top (font load, palette tokens, page CSS, print rules matching Preflight `print mode` axis).
-4. Verify font-family chain (per `craft/typography.md`): NO `-apple-system / sans-serif`-only fallback.
+4. Verify font-family chain (per the kit contract — lint enforced; `craft/typography.md` is the canon source): NO `-apple-system / sans-serif`-only fallback.
 5. Run the 6 Self-Tests from SKILL.md against the final artifact:
    - 30-second scan
    - Title-only summary

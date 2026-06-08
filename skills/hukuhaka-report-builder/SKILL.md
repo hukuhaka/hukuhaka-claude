@@ -1,6 +1,6 @@
 ---
 name: hukuhaka-report-builder
-description: "Build visual-first reports — artifacts read by SCANNING page-by-page, not top-to-bottom. Hero numbers, KPI tiles, charts, tables, and annotated diagrams carry the page; prose is reference, not narrative. Generates intentional standalone HTML — never blog-essays inside report wrappers, never PPT-as-HTML, never generic Tailwind-card internal-doc look. Triggers — ANY of: report, writeup, summary, audit, benchmark, comparison, analysis, brief, deck, dashboard, slides, presentation, poster, memo, postmortem, retrospective, scorecard, dossier, recap, overview, findings, evaluation, review, walkthrough, technical writeup, executive summary, status update, incident report. Registers (pick one per artifact, never blend): analytic dashboard, executive brief, technical audit, IR-style earnings deck, academic conference poster, status update, forensic incident report, research recap, customer-facing release notes. New registers extend by adding a craft lock under references/craft/. Subjects: code / architecture audit, ML benchmark, model comparison, research finding, system performance, capacity report, A/B test result, financial metrics, ops postmortem, security incident, product launch recap, regulatory submission, infra inventory. Audiences: executive, engineering peer, researcher, regulator, customer, board, investor, oncall. Outputs HTML with hand-built CSS (no Tailwind, no UI library shell, no Mermaid). Locked typography defaults to Geist + Geist Mono; register-specific deviations under references/craft/. Skip when: long-form essay, blog post, marketing copy, API reference, changelog list, chat-style transcript, pure narrative documentation."
+description: "Build visual-first reports — artifacts read by SCANNING page-by-page, not top-to-bottom. Hero numbers, KPI tiles, charts, tables, and annotated diagrams carry the page; prose is reference, not narrative. Generates intentional standalone HTML — never blog-essays inside report wrappers, never PPT-as-HTML, never generic Tailwind-card internal-doc look. Triggers — ANY of: report, writeup, summary, audit, benchmark, comparison, analysis, brief, deck, dashboard, slides, presentation, poster, memo, postmortem, retrospective, scorecard, dossier, recap, overview, findings, evaluation, review, walkthrough, technical writeup, executive summary, status update, incident report. Registers (pick one per artifact, never blend): analytic dashboard, executive brief, technical audit, IR-style earnings deck, academic conference poster, status update, forensic incident report, research recap, customer-facing release notes. New registers extend by adding a row to the Stage-1 register-defaults table. Subjects: code / architecture audit, ML benchmark, model comparison, research finding, system performance, capacity report, A/B test result, financial metrics, ops postmortem, security incident, product launch recap, regulatory submission, infra inventory. Audiences: executive, engineering peer, researcher, regulator, customer, board, investor, oncall. Outputs HTML with hand-built CSS (no Tailwind, no UI library shell, no Mermaid). Typography, palette, and spacing are pinned by a foundation kit (v1: geist — Geist + Geist Mono); pages assemble from token-driven component fragments under references/components/. Skip when: long-form essay, blog post, marketing copy, API reference, changelog list, chat-style transcript, pure narrative documentation."
 ---
 
 This skill guides creation of visual-first reports through a **staged workflow with user verification at each step**. A report's job is to deliver findings at the speed of *flipping pages*: the reader scans, the eye lands on hero numbers and charts, and prose is consulted only to look up a detail after the scan has already delivered the takeaway.
@@ -15,11 +15,11 @@ Run the stages in order. Do NOT batch stages. The verification gate at the end o
 
 | # | File | Purpose | Verification gate |
 |---|---|---|---|
-| 1 | `stages/1-preflight.md` | Lock the 12-axis format spec (6 required + 6 recommended), create `.claude/reports/<short-name>/spec.md` | User confirms each axis (or accepts defaults) |
+| 1 | `stages/1-pick-kit.md` | Pick kit + register, auto-derive the other 10 axes, create `.claude/reports/<short-name>/spec.md` | User batch-confirms the filled 12-axis checklist (per-axis override allowed); FAIL CLOSED on any unrecorded axis |
 | 2 | `stages/2-lock-subject.md` | Subject (1 sentence) + Hero finding (1 sentence) + finalize short-name | User confirms all three |
 | 3 | `stages/3-outline-sections.md` | Section titles + per-section anchor, appended to spec.md | User confirms titles form an argument |
-| 4 | `stages/4-build-cover.md` | Render cover-only HTML to `.claude/reports/<short-name>/cover.html`, screenshot | User confirms 3-second register identity |
-| 5 | `stages/5-build-section.md` | Build one section, append to report.html, screenshot, verify, loop | Per-section user confirmation (no batching) |
+| 4 | `stages/4-build-cover.md` | Assemble cover from `components/cover.html`, render to `.claude/reports/<short-name>/cover.html`, screenshot | User confirms 3-second register identity |
+| 5 | `stages/5-build-section.md` | Build one section from matching component fragments, append to report.html, screenshot, verify, loop | Per-section user confirmation (no batching) |
 | 6 | `stages/6-assemble.md` | Finalize directory + Self-Test + screenshots | User final OK after Self-Test |
 
 **Open the stage file BEFORE executing that stage.** Do not work from memory. Each stage file has its own prereq / deliverable / process / failure-modes that the skill body cannot replicate without going stale.
@@ -60,7 +60,7 @@ CRITICAL: a well-executed *brief* beats a half-blended brief-dashboard. The defa
 
 ## Visual-First Craft (principles, applied across Stages 4-5)
 
-The stages reference these principles when building cover and sections. Each principle points to its craft lock file for the concrete decisions.
+The stages reference these principles when building cover and sections. The concrete decisions behind each principle are already baked into the kit tokens (`references/foundations/<kit>.css`) and the component fragments (`references/components/`); the cited craft file is the canon source, read at kit-registration / fragment-authoring time (each file's `read_when` says when) plus the named build-time judgment scopes.
 
 - **Cover is identity, not summary.** The cover answers "what is this?" at a glance — name + brief tagline. A reader should identify the project in 3 seconds. See `references/craft/cover.md` for scale (the 1/3 rule), forbidden patterns, and tagline craft.
 
@@ -95,42 +95,47 @@ A Self-Test failure flagged at Stage 6 that was not caught earlier means the fai
 
 ## Implementation Notes (cross-cutting rules — apply in any stage)
 
-- Hand-build CSS. No Tailwind, no UI-library shell. Inline `<style>` or a single linked stylesheet, written from scratch for this report. Convergence to the generic "AI internal-doc" look lives in library defaults — escape it by not loading them.
-- Hand-author SVG for any diagram. Never Mermaid in this context. See `references/craft/diagrams.md` for stroke / label / annotation discipline.
-- Charts: Chart.js *with explicit styling overrides* (no defaults), or hand-built SVG. Either works; both require intentional palette, axis, label, and annotation choices. See `references/craft/charts.md`.
-- Typography: default to **Geist + Geist Mono** for clean report registers. See `references/craft/typography.md` for the lock, weight mappings, deviation rules, and fallback alternates. **Inter is FORBIDDEN as a fallback**; CSS `font-family` chains must never end with `-apple-system / sans-serif` alone (silent failure path — see typography.md CSS chain rule).
-- Color: build a palette per register. Reserve semantic colors (comparison pair, success/warning, callout types) separate from chrome colors. Avoid pure `#ffffff` paper and pure `#000000` ink. See `references/craft/color.md`.
-- Spacing: use the 8-tier scale, never one-off values. Section gap must exceed paragraph gap by at least 2 tiers. See `references/craft/spacing.md`.
-- Code blocks (audit / incident registers): see `references/craft/code-blocks.md` for typography, subdued highlighting, and density rules.
-- Light/dark mode is optional. If you ship it, both modes must look intentional — not one designed and one derived.
+- **Assemble, don't improvise.** Pages are built from `references/components/` fragments + `references/foundations/<kit>.css` tokens. No Tailwind, no UI-library shell. Never restyle a fragment per report; never introduce non-token colors, spacing, or type sizes. If no fragment fits a section's anchor, flag the gap to the user instead of hand-building — the generic "AI internal-doc" look lives in improvised CSS, and the kit exists so none gets written.
+- Hand-author SVG for any diagram *content*. Never Mermaid in this context. `components/diagram.html` carries the stroke / label / annotation conventions; `references/craft/diagrams.md` is the canon source.
+- Charts assemble from `components/chart-{bar,line,stacked}.html` — CSS bars + inline SVG, no charting library. The section's message type picks the fragment (RANKING → bar, CHANGE-OVER-TIME → line, PART-TO-WHOLE → stacked; each fragment's header comment says so). Axis / annotation judgment: `references/craft/charts.md`.
+- Typography is pinned by the kit — use `var(--sans)` / `var(--mono)` / `var(--serif)`, never a raw `font-family` value. **Inter is FORBIDDEN anywhere in a chain** and chains must end in a generic family — both lint-enforced (`scripts/lint-foundation.sh`, `scripts/lint-components.sh`).
+- Color comes from kit tokens, already split into three layers (chrome / semantic / accent) in `foundations/<kit>.css`. Never raw hex/rgb/hsl in a report. Comparison pairs bind to the kit's accent tokens consistently across every surface — semantic-assignment judgment: `references/craft/color.md`.
+- Spacing uses kit tokens `--space-1..8`, never one-off values. Section gap must exceed paragraph gap by at least 2 tiers. Per-register margins + density rhythm judgment: `references/craft/spacing.md`.
+- Code blocks (audit / incident registers): start from `components/code-block.html`.
+- Color mode is a kit declaration (`@kit-color-mode`, read at Stage 1 as axis #4). A kit declaring `light` has no dark toggle — dark is a separate kit file, not a per-report variant.
 - **Verify named entities against source.** Every command name, file path, agent name, class, API, version number, or count you cite must be confirmed by reading or grepping the actual source before printing. Memory and inference are not verification — they invent confidence the artifact does not earn. If you are not sure of a name, omit the citation or mark it explicitly as uncertain rather than fabricate one.
 
 ## References
 
-`stages/` holds the workflow protocol. `references/craft/` holds the craft locks. Open each at the right time:
+`stages/` holds the workflow protocol. `references/foundations/` + `references/components/` hold the kit assets reports assemble from. `references/craft/` holds the craft canon, consumed at kit-registration / fragment-authoring time.
 
 **`stages/`** — workflow steps. Open each stage file when entering that stage.
-- `stages/1-preflight.md` — 12-axis format spec lock + spec.md creation
+- `stages/1-pick-kit.md` — kit + register pick, 10 axes auto-derived, 12-axis checklist batch confirm, spec.md creation
 - `stages/2-lock-subject.md` — subject + hero finding lock + short-name derive
 - `stages/3-outline-sections.md` — section titles + page anchors
-- `stages/4-build-cover.md` — cover-only render + screenshot gate
-- `stages/5-build-section.md` — per-section build loop with per-section gate
+- `stages/4-build-cover.md` — cover assembled from the cover fragment + screenshot gate
+- `stages/5-build-section.md` — per-section fragment-assembly loop with per-section gate
 - `stages/6-assemble.md` — final assembly + Self-Test + user OK
 
-**`references/spec-schema.md`** — the spec.md template. Every stage appends a block per this schema. Always referenced by `stages/1-preflight.md` (creator) and re-read by every later stage (drift control).
+**`references/spec-schema.md`** — the spec.md template. Created by `stages/1-pick-kit.md`, re-read by every later stage (drift control). Each of the 12 Preflight axes carries a provenance tag (`kit-default` / `register-default` / `user`).
 
-**`references/craft/`** — craft locks applied across stages. These are constraints, not catalogs to mine.
-- `craft/typography.md` — font lock (Geist + Geist Mono), weight mappings, CSS fallback chain rule (Inter forbidden)
-- `craft/color.md` — three-layer palette (chrome / semantic / accent), per-register guidance, print/PDF contrast
-- `craft/spacing.md` — 8-tier scale, per-register page margins, scan-rhythm rules
-- `craft/cover.md` — cover scale discipline (1/3 rule), forbidden patterns, tagline craft
-- `craft/tables.md` — table density, alignment, color, typography
-- `craft/charts.md` — axes, palette, annotation, strip-defaults
-- `craft/kpi-tiles.md` — hero number scale, tile structure, tabular-nums
-- `craft/diagrams.md` — hand-built SVG conventions, stroke discipline, labels
-- `craft/callouts.md` — sidebar / margin note / highlight box / pull-quote patterns
-- `craft/code-blocks.md` — code typography, subdued highlighting, density
+**`references/foundations/`** — one CSS file per kit; the only place design-system values live.
+- `foundations/_schema.md` — the token contract every kit must satisfy (55 required tokens, oklch-only, kit declarations)
+- `foundations/geist.css` — the v1 kit (Geist / Geist Mono / Source Serif 4)
+- `foundations/REGISTER.md` — procedure for registering a new kit from a DESIGN capture; the only place design-system judgment happens
 
-**`references/fixtures/{source}/`** — captured aesthetic systems. Currently `fixtures/figma/` (marketing-site applicability — usually NOT applied to data reports; v5 isolation test confirmed subagents correctly skip it for analytic registers). Each sub-file declares `applicability` in frontmatter; skip sub-files whose applicability does not match your register. **Mine, never clone.**
+**`references/components/`** — 15 token-driven HTML fragments + `_base.css`. Reports copy a fragment and pour content; fragments are never restyled per report.
+- `components/spec-sheet.html` — generated catalog of every fragment (`scripts/build-spec-sheet.sh <kit>`); regenerate, never hand-edit
+
+**`scripts/`** — mechanical contract checks.
+- `scripts/lint-foundation.sh <kit.css>` — token contract + kit declarations
+- `scripts/lint-components.sh` — fragment token purity + class drift
+- `scripts/build-spec-sheet.sh <kit>` — spec-sheet generator; reused to verify a kit swap renders cleanly
+
+**`references/craft/`** — craft canon. NOT read during report builds, except for the judgment scopes named in each file's `read_when` frontmatter.
+- `craft/typography.md` / `craft/color.md` / `craft/spacing.md` — normalization rule sources for kit registration (`foundations/REGISTER.md` Step 2). Build-time judgment scopes: semantic-color assignment (color.md), per-register margins + density rhythm (spacing.md); typography.md has none (fully baked into kit chains)
+- `craft/cover.md` / `craft/kpi-tiles.md` / `craft/tables.md` / `craft/charts.md` / `craft/diagrams.md` / `craft/callouts.md` / `craft/code-blocks.md` — baked into the matching fragment's code + comments at authoring time. Build-time judgment scopes: 1/3 scale rule + tagline craft (cover.md, Stage 4); density / per-register choice (the rest, Stage 5)
+
+**`references/fixtures/{source}/`** — captured aesthetic systems. Currently `fixtures/figma/` (marketing-site applicability — usually NOT applied to data reports; v5 isolation test confirmed subagents correctly skip it for analytic registers). Each sub-file declares `applicability` in frontmatter; skip sub-files whose applicability does not match your register. **Mine, never clone.** (Not staged in this variant directory — capture sources feed `foundations/REGISTER.md`, not report builds.)
 
 Remember: a report's quality is measured by what the reader takes away in 30 seconds of flipping. Optimize for *that*, not for completeness, not for polish, not for word count. A short, severe, legible report beats a thorough, polished, unscanned one.

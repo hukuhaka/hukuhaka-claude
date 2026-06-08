@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — default typography lock + register-specific deviations
-read_when: any time you need to pick fonts for a report
+read_when: registering a new foundation kit (foundations/REGISTER.md Step 2 normalization); NEVER during report builds — the font lock is baked into the kit's --sans / --mono / --serif chains
 ---
 
 ## Default Lock — Geist

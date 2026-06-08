@@ -1,0 +1,25 @@
+<!-- ============================================================
+component: section-head (rb-shc)
+purpose:   section opener — the TITLE STATES THE FINDING, so the
+           page scans without reading prose.
+swap:      .k kicker (e.g. "Finding 02") · h3 finding claim ·
+           p one-paragraph support
+keep:      class names, structure, every var(--...). If the h3 reads
+           as a topic label ("Methodology"), the section is wrong —
+           rewrite the title as a claim before building on.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     SKILL.md (section titles are findings) + craft/typography.md
+============================================================ -->
+<div class="rb-shc">
+  <div class="k">Finding 02</div>
+  <h3>Latency regressed only on the EU edge.</h3>
+  <div class="hr"></div>
+  <p>The heading carries the conclusion, so the page is scannable without reading prose. The argument lives in the titles.</p>
+</div>
+<style>
+.rb-shc{background:var(--surface);box-shadow:var(--e-1);border-radius:var(--r-4);padding:var(--space-6)}
+.rb-shc .k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.rb-shc h3{font-size:var(--t-dmd);font-weight:600;letter-spacing:-.018em;margin-top:var(--space-2);line-height:1.15}
+.rb-shc .hr{height:2px;background:var(--ink);width:38px;margin-top:var(--space-3)}
+.rb-shc p{color:var(--ink-soft);font-size:var(--t-sm);margin-top:var(--space-3)}
+</style>

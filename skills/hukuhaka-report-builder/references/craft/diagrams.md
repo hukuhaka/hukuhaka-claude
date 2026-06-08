@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — hand-built SVG conventions for diagrams, schematics, flows
-read_when: building any diagram, schematic, flow, architecture illustration, or system map
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
 ---
 
 ## Hand-author rule

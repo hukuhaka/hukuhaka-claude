@@ -1,0 +1,31 @@
+<!-- ============================================================
+component: code-block (rb-code)
+purpose:   code excerpt with file:line caption, subdued accent
+           highlight (.hl), diff borders (.add/.del). For audit /
+           incident registers.
+swap:      .fn file:line caption · pre contents. line classes:
+           .ln (every line) · .ln.hl finding line · .ln.add / .ln.del
+           diff lines. inline: .cm comment · .kw keyword
+keep:      class names, structure, every var(--...) or
+           color-mix(in oklch, var(--...)). Subdued highlighting —
+           no full syntax rainbow, the finding line carries the eye.
+needs:     foundations/<kit>.css + components/_base.css in page
+craft:     references/craft/code-blocks.md
+============================================================ -->
+<div class="rb-code">
+  <div class="fn">src/scheduler/route.ts : 41</div>
+  <pre><span class="ln"><span class="cm">// pin EU traffic to the nearest healthy edge</span></span><span class="ln"><span class="kw">const</span> edge = pickEdge(region)</span><span class="ln del">-  timeout: 250,</span><span class="ln add">+  timeout: 800,   <span class="cm">// EU cold-start budget</span></span><span class="ln hl"><span class="kw">return</span> route(edge, { timeout })  <span class="cm">// ← regressed hop</span></span></pre>
+</div>
+<style>
+.rb-code{background:var(--sunk);box-shadow:var(--e-1);border-radius:var(--r-2);overflow:hidden}
+.rb-code .fn{font-family:var(--mono);font-size:11px;color:var(--ink-mute);padding:var(--space-2) var(--space-4);
+  border-bottom:1px solid var(--hairline)}
+.rb-code pre{font-family:var(--mono);font-size:var(--t-code);line-height:1.55;padding:var(--space-3) var(--space-4);
+  overflow-x:auto;color:var(--ink)}
+.rb-code .ln{display:block;padding-left:var(--space-3);border-left:2px solid transparent}
+.rb-code .ln.hl{border-left-color:var(--accent);background:color-mix(in oklch, var(--accent) 4%, transparent)}
+.rb-code .ln.add{border-left-color:var(--gain)}
+.rb-code .ln.del{border-left-color:var(--loss);color:var(--ink-mute)}
+.rb-code .cm{color:var(--ink-mute);font-style:italic}
+.rb-code .kw{font-weight:600}
+</style>

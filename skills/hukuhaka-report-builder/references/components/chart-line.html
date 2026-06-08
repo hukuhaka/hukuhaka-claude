@@ -1,0 +1,30 @@
+<!-- ============================================================
+component: chart-line (svg inside rb-chart from _base)
+purpose:   CHANGE-OVER-TIME message -> line. Horizontal gridlines
+           only, real date ticks, the INFLECTION annotated (not
+           every point).
+swap:      .ct title · .cs subtitle · polyline points (data) ·
+           circle cx/cy + leader line + annotation text · date ticks
+keep:      class names, structure, every var(--...) (SVG colors via
+           style attributes — presentation attrs can't take var()).
+           Zero-suppressed y is allowed for lines, never for bars.
+needs:     foundations/<kit>.css + components/_base.css (rb-chart,
+           rb-cnote live there) in page
+craft:     references/craft/charts.md
+============================================================ -->
+<div class="rb-chart">
+  <div class="ct">p95 over the quarter</div>
+  <div class="cs">Change-over-time → line. Annotate the inflection, not every point.</div>
+  <svg viewBox="0 0 360 150" width="100%" height="150" style="overflow:visible">
+    <line x1="0" y1="40" x2="360" y2="40" style="stroke:var(--hairline);stroke-width:1"/>
+    <line x1="0" y1="80" x2="360" y2="80" style="stroke:var(--hairline);stroke-width:1"/>
+    <line x1="0" y1="120" x2="360" y2="120" style="stroke:var(--hairline);stroke-width:1"/>
+    <polyline points="0,112 60,104 120,108 180,96 240,84 300,46 360,30" fill="none" style="stroke:var(--accent);stroke-width:2"/>
+    <circle cx="300" cy="46" r="3.5" style="fill:var(--ink)"/>
+    <line x1="300" y1="46" x2="300" y2="14" style="stroke:var(--hairline-2);stroke-width:1"/>
+    <text x="300" y="9" text-anchor="middle" font-size="10" style="font-family:var(--mono);fill:var(--ink-soft)">deploy 0c1f → +31%</text>
+    <text x="0" y="140" font-size="10" style="font-family:var(--mono);fill:var(--ink-mute)">Apr</text>
+    <text x="340" y="140" font-size="10" style="font-family:var(--mono);fill:var(--ink-mute)">Jun</text>
+  </svg>
+  <div class="rb-cnote">RULE · real date ticks · horizontal gridlines only · inflection annotated</div>
+</div>
