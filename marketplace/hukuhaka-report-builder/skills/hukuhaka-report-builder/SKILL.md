@@ -5,9 +5,9 @@ description: "Build visual-first reports — artifacts read by SCANNING page-by-
 
 This skill guides creation of visual-first reports through a **staged workflow with user verification at each step**. A report's job is to deliver findings at the speed of *flipping pages*: the reader scans, the eye lands on hero numbers and charts, and prose is consulted only to look up a detail after the scan has already delivered the takeaway.
 
-The skill operates in **6 stages**, each producing a single small deliverable and surfacing it for user verification before the next stage begins. This replaces the "generate the whole report and hand it over" pattern that loses 3-5 decisions per render to LLM convergence — instead, decisions are made one at a time with the user in the loop, and any decision can be revised without invalidating the others.
+The skill operates as **Stage 0 intake + 5 build stages**, each producing a single small deliverable and surfacing it for user verification before the next stage begins. This replaces the "generate the whole report and hand it over" pattern that loses 3-5 decisions per render to LLM convergence — instead, decisions are made one at a time with the user in the loop, and any decision can be revised without invalidating the others.
 
-The user provides report material: data, findings, code analysis, benchmark results, audit notes, research output. They may include audience (executive, engineering peer, customer, regulator) and the publication context (internal doc, customer-facing PDF, embedded artifact).
+The real entry is a natural-language request ("write up the Q1 benchmark", "audit this service", "이 프로젝트 코드구조 설명 문서 만들어줘") — NOT pre-classified material. So the skill opens with **"I request / you analyze"**: Stage 0 investigates the target briefly and proposes 3 framings (subject material / audience / publication) for confirmation; Stage 1 reads deeper and turns the framings into a locked spec. The user never fills a form — they confirm a grounded proposal.
 
 ## Workflow
 
@@ -15,16 +15,16 @@ Run the stages in order. Do NOT batch stages. The verification gate at the end o
 
 | # | File | Purpose | Verification gate |
 |---|---|---|---|
-| 1 | `stages/1-pick-kit.md` | Pick kit + register, auto-derive the other 10 axes, create `.claude/reports/<short-name>/spec.md` | User batch-confirms the filled 12-axis checklist (per-axis override allowed); FAIL CLOSED on any unrecorded axis |
-| 2 | `stages/2-lock-subject.md` | Subject (1 sentence) + Hero finding (1 sentence) + finalize short-name | User confirms all three |
-| 3 | `stages/3-outline-sections.md` | Section titles + per-section anchor, appended to spec.md | User confirms titles form an argument |
-| 4 | `stages/4-build-cover.md` | Assemble cover from `components/cover.html`, render to `.claude/reports/<short-name>/cover.html`, screenshot | User confirms 3-second register identity |
-| 5 | `stages/5-build-section.md` | Build one section from matching component fragments, append to report.html, screenshot, verify, loop | Per-section user confirmation (no batching) |
-| 6 | `stages/6-assemble.md` | Finalize directory + Self-Test + screenshots | User final OK after Self-Test |
+| 0 | `stages/0-intake.md` | Brief investigation → propose 3 framings (subject material / audience / publication); spec.md born at `.claude/reports/tmp-draft/` with the Intake block | User confirms/edits the 3 framings |
+| 1 | `stages/1-pick-kit.md` | Read deeper, pick register (judgment), derive the other 11 axes deterministically, render a register-identity seed; overwrite spec.md with Intake + Preflight | User approves the RECEIPT (12-axis checklist + register + rendered seed); FAIL CLOSED on any unrecorded axis |
+| 2 | `stages/2-argument.md` | Argument lock: Subject + Hero finding (2a, with an inline checkpoint) → Outline derived from the Hero (2b) → combined gate (2c); appends Subject+Hero + Outline blocks, renames `tmp-draft` | User confirms subject + hero + outline form one argument |
+| 3 | `stages/3-build-cover.md` | Inherit the Stage-1 seed `cover.html` and complete it with the locked Subject/Hero, screenshot | User confirms 3-second register identity |
+| 4 | `stages/4-build-section.md` | Build one section from matching component fragments, append to report.html, screenshot, verify, loop | Per-section user confirmation (no batching) |
+| 5 | `stages/5-assemble.md` | Finalize directory + Self-Test + screenshots | User final OK after Self-Test |
 
 **Open the stage file BEFORE executing that stage.** Do not work from memory. Each stage file has its own prereq / deliverable / process / failure-modes that the skill body cannot replicate without going stale.
 
-**When a later stage uncovers a decision that should have been made earlier, loop back to the failing stage** — do not patch the symptom in the current stage. Example: if Stage 5 keeps producing prose-shaped sections, the failure is Stage 3 (outline titles weren't claim-shaped). Fix Stage 3, then re-walk forward. The cost of replaying 1-2 cheap stages beats the cost of fighting symptoms downstream.
+**When a later stage uncovers a decision that should have been made earlier, loop back to the failing stage** — do not patch the symptom in the current stage. Example: if Stage 4 keeps producing prose-shaped sections, the failure is Stage 2 (outline titles weren't claim-shaped). Fix Stage 2, then re-walk forward. The cost of replaying 1-2 cheap stages beats the cost of fighting symptoms downstream.
 
 The workflow is the skill. Skipping the gates — "I'll generate the whole thing and show you the result" — is the failure mode this skill exists to prevent.
 
@@ -34,21 +34,21 @@ Each report is built into its own directory. Locks and the artifact live togethe
 
 ```
 .claude/reports/<short-name>/
-  ├── spec.md           ← Preflight + Subject+Hero + Outline + Build log (grows stage-by-stage)
-  ├── report.html       ← final assembled artifact (Stage 6)
-  ├── cover.html        ← Stage 4 standalone (kept for reference)
+  ├── spec.md           ← Intake (Stage 0) + Preflight (Stage 1) + Subject+Hero + Outline + Build log (grows stage-by-stage)
+  ├── report.html       ← final assembled artifact (Stage 5)
+  ├── cover.html        ← Stage-1 seed, completed at Stage 3 (kept for reference)
   └── screenshots/
       ├── fullpage.png
       └── p1.png ... pN.png
 ```
 
-`<short-name>` is derived from SUBJECT in Stage 2 (kebab-case, ≤24 chars, no register suffix). Stage 1 uses a `tmp-<register>` placeholder; Stage 2 renames the directory on user confirm.
+`spec.md` is **born at Stage 0** under `.claude/reports/tmp-draft/` (Intake block only), overwritten by Stage 1 (Intake + Preflight). `<short-name>` is derived from SUBJECT in Stage 2 (kebab-case, ≤24 chars, no register suffix); the directory is renamed `tmp-draft` → `<short-name>` on user confirm.
 
 `spec.md` is the lock record — every stage's first action is to re-read it. See `references/spec-schema.md` for the full template.
 
 ## Report Thinking (primitives the stages consume)
 
-Stages 1-3 commit these primitives; Stages 4-6 honor them.
+Stages 1-2 commit these primitives; Stages 3-5 honor them.
 
 - **Subject** (locked Stage 2): what the report is *about* in a single sentence. A report about HPM is not a report about HPM's outputs; a report about ViT is not a report about ML benchmarking in general. Confusing the subject with its inputs, outputs, or surrounding domain produces drift by page 2 — the surest sign is a section narrating "what X produces" when the report should be describing X itself.
 - **Register** (locked Stage 1): one of *analytic-dashboard / executive-brief / technical-audit / IR-deck / academic-poster / forensic-incident*, or one of the deferred-lock registers (status-update / research-recap / customer-facing-release-notes). Each has its own scan rhythm, density, chart-vs-prose ratio, and tonal authority. Blending registers is the default failure mode — pick one and execute it with conviction.
@@ -58,7 +58,7 @@ Stages 1-3 commit these primitives; Stages 4-6 honor them.
 
 CRITICAL: a well-executed *brief* beats a half-blended brief-dashboard. The default LLM failure is to produce a "report-shaped wrapper with paragraph content" — cover page + TOC + numbered sections, but every section is essay prose. Refuse this. The register must show on every page, not only in the chrome.
 
-## Visual-First Craft (principles, applied across Stages 4-5)
+## Visual-First Craft (principles, applied across Stages 3-4)
 
 The stages reference these principles when building cover and sections. The concrete decisions behind each principle are already baked into the kit tokens (`references/foundations/<kit>.css`) and the component fragments (`references/components/`); the cited craft file is the canon source, read at kit-registration / fragment-authoring time (each file's `read_when` says when) plus the named build-time judgment scopes.
 
@@ -80,7 +80,7 @@ NEVER produce: blog-essay rhetorical structure (intro / body / conclusion paragr
 
 **IMPORTANT**: match implementation complexity to the register. A *brief* is short, dense, and severe — minimal chrome, three pages, every word earns space. A *dashboard* is grid-heavy with many small data units. An *audit* threads diagrams between findings. A *poster* is one dense surface, no scroll. Picking the register is picking the implementation effort.
 
-## Self-Test (Stage 6 applies these)
+## Self-Test (Stage 5 applies these)
 
 After rendering, open the HTML and apply these tests yourself. Failing any one means rework — do not deliver.
 
@@ -91,11 +91,14 @@ After rendering, open the HTML and apply these tests yourself. Failing any one m
 5. **Comparison eye-grab**: if the report compares two things, can the reader see the winner of each comparison without reading any label? If not, semantic color is not committed.
 6. **Subject check**: state the report's subject in one sentence. Does every section relate to *the subject*, not to its outputs or sources? If a section reads as "about [output of subject]" — e.g., a report about a documentation-generation plugin that ends up narrating the documents the plugin produces — the meta-frame is wrong. Rewrite the section to be about the subject's relationship to those outputs, not the outputs themselves.
 
-A Self-Test failure flagged at Stage 6 that was not caught earlier means the failing stage's verification gate needs strengthening — loop back to that stage, not full re-render.
+A Self-Test failure flagged at Stage 5 that was not caught earlier means the failing stage's verification gate needs strengthening — loop back to that stage, not full re-render.
 
 ## Implementation Notes (cross-cutting rules — apply in any stage)
 
+- **Determinism-split (Stage 0/1).** The setup axes split into two kinds and are handled differently. **Mechanical axes** — the 7 register-default + 2 kit-default axes — are table/kit-derived and recorded *silently*: same input → same value. **Judgment** — the register pick (and Subject/Hero/Outline in later stages) — gets investigate→recommend→gate. The new analysis layer attaches ONLY to judgment; turning a mechanical axis into a per-report pros/cons decision re-improvises the layer the pinned kit exists to make deterministic. "Confident → auto-decide" means *table-derivable*, not gut.
+- **register↔kit invariant.** Picking a register MUST NOT alter any kit token (palette, type, spacing). A register-keyed accent ("audit = ochre") is invention, not capture — the kit is fixed regardless of register. Token derivation is a kit-registration concern (`foundations/REGISTER.md`), never a per-report or per-register tweak.
 - **Assemble, don't improvise.** Pages are built from `references/components/` fragments + `references/foundations/<kit>.css` tokens. No Tailwind, no UI-library shell. Never restyle a fragment per report; never introduce non-token colors, spacing, or type sizes. If no fragment fits a section's anchor, flag the gap to the user instead of hand-building — the generic "AI internal-doc" look lives in improvised CSS, and the kit exists so none gets written.
+- **Spec-lock is hook-enforced.** A PreToolUse hook (`hooks/hooks.json` → `scripts/hook-validate-spec.sh` → `validate-spec.sh`) denies a write of an incomplete `spec.md` and denies building `cover.html`/`report.html` against an unlocked spec. The gates below are not honor-system at the spec boundary — they fail closed by construction. (The hook enforces record-completeness, not that the user was consulted; the human gate still matters.)
 - Hand-author SVG for any diagram *content*. Never Mermaid in this context. `components/diagram.html` carries the stroke / label / annotation conventions; `references/craft/diagrams.md` is the canon source.
 - Charts assemble from `components/chart-{bar,line,stacked}.html` — CSS bars + inline SVG, no charting library. The section's message type picks the fragment (RANKING → bar, CHANGE-OVER-TIME → line, PART-TO-WHOLE → stacked; each fragment's header comment says so). Axis / annotation judgment: `references/craft/charts.md`.
 - Typography is pinned by the kit — use `var(--sans)` / `var(--mono)` / `var(--serif)`, never a raw `font-family` value. **Inter is FORBIDDEN anywhere in a chain** and chains must end in a generic family — both lint-enforced (`scripts/lint-foundation.sh`, `scripts/lint-components.sh`).
@@ -110,14 +113,14 @@ A Self-Test failure flagged at Stage 6 that was not caught earlier means the fai
 `stages/` holds the workflow protocol. `references/foundations/` + `references/components/` hold the kit assets reports assemble from. `references/craft/` holds the craft canon, consumed at kit-registration / fragment-authoring time.
 
 **`stages/`** — workflow steps. Open each stage file when entering that stage.
-- `stages/1-pick-kit.md` — kit + register pick, 10 axes auto-derived, 12-axis checklist batch confirm, spec.md creation
-- `stages/2-lock-subject.md` — subject + hero finding lock + short-name derive
-- `stages/3-outline-sections.md` — section titles + page anchors
-- `stages/4-build-cover.md` — cover assembled from the cover fragment + screenshot gate
-- `stages/5-build-section.md` — per-section fragment-assembly loop with per-section gate
-- `stages/6-assemble.md` — final assembly + Self-Test + user OK
+- `stages/0-intake.md` — brief investigation → 3 framings (subject material / audience / publication); spec.md born with the Intake block
+- `stages/1-pick-kit.md` — deeper read, register pick (judgment), 11 axes derived deterministically, register-identity seed render, receipt gate; overwrites spec.md with Intake + Preflight
+- `stages/2-argument.md` — argument lock: subject + hero finding (inline checkpoint) → outline derived from the hero → combined gate; appends Subject+Hero + Outline blocks + `tmp-draft` rename
+- `stages/3-build-cover.md` — inherit the Stage-1 seed cover.html, complete with locked Subject/Hero + screenshot gate
+- `stages/4-build-section.md` — per-section fragment-assembly loop with per-section gate
+- `stages/5-assemble.md` — final assembly + Self-Test + user OK
 
-**`references/spec-schema.md`** — the spec.md template. Created by `stages/1-pick-kit.md`, re-read by every later stage (drift control). Each of the 12 Preflight axes carries a provenance tag (`kit-default` / `register-default` / `user`).
+**`references/spec-schema.md`** — the spec.md template. Born at `stages/0-intake.md` (Intake block), filled by `stages/1-pick-kit.md` (Preflight), re-read by every later stage (drift control). The Intake block holds 3 framings; each of the 12 Preflight axes carries a provenance tag (`kit-default` / `register-default` / `user`). It is the contract source for `scripts/validate-spec.sh`.
 
 **`references/foundations/`** — one CSS file per kit; the only place design-system values live.
 - `foundations/_schema.md` — the token contract every kit must satisfy (55 required tokens, oklch-only, kit declarations)
@@ -131,10 +134,11 @@ A Self-Test failure flagged at Stage 6 that was not caught earlier means the fai
 - `scripts/lint-foundation.sh <kit.css>` — token contract + kit declarations
 - `scripts/lint-components.sh` — fragment token purity + class drift
 - `scripts/build-spec-sheet.sh <kit>` — spec-sheet generator; reused to verify a kit swap renders cleanly
+- `scripts/validate-spec.sh [--require=intake,preflight] [<spec.md>]` — spec completeness gate (present-blocks-only; stage self-check + backs the PreToolUse hook). The hook wrapper `hook-validate-spec.sh` lives at the plugin root (`${CLAUDE_PLUGIN_ROOT}/scripts/`), wired by `hooks/hooks.json`.
 
 **`references/craft/`** — craft canon. NOT read during report builds, except for the judgment scopes named in each file's `read_when` frontmatter.
 - `craft/typography.md` / `craft/color.md` / `craft/spacing.md` — normalization rule sources for kit registration (`foundations/REGISTER.md` Step 2). Build-time judgment scopes: semantic-color assignment (color.md), per-register margins + density rhythm (spacing.md); typography.md has none (fully baked into kit chains)
-- `craft/cover.md` / `craft/kpi-tiles.md` / `craft/tables.md` / `craft/charts.md` / `craft/diagrams.md` / `craft/callouts.md` / `craft/code-blocks.md` — baked into the matching fragment's code + comments at authoring time. Build-time judgment scopes: 1/3 scale rule + tagline craft (cover.md, Stage 4); density / per-register choice (the rest, Stage 5)
+- `craft/cover.md` / `craft/kpi-tiles.md` / `craft/tables.md` / `craft/charts.md` / `craft/diagrams.md` / `craft/callouts.md` / `craft/code-blocks.md` — baked into the matching fragment's code + comments at authoring time. Build-time judgment scopes: 1/3 scale rule + tagline craft (cover.md, Stage 3); density / per-register choice (the rest, Stage 4)
 
 **`references/fixtures/{source}/`** — captured aesthetic systems. Currently `fixtures/figma/` (marketing-site applicability — usually NOT applied to data reports; v5 isolation test confirmed subagents correctly skip it for analytic registers). Each sub-file declares `applicability` in frontmatter; skip sub-files whose applicability does not match your register. **Mine, never clone.** (Not staged in this variant directory — capture sources feed `foundations/REGISTER.md`, not report builds.)
 

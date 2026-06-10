@@ -1,7 +1,7 @@
 ---
-stage: 5
+stage: 4
 purpose: build ONE section at a time from component fragments, render, verify, then proceed to next
-prereq: Stage 4 cover.html locked at .claude/reports/<short-name>/cover.html
+prereq: Stage 3 cover.html locked at .claude/reports/<short-name>/cover.html
 deliverable: per-section page appended to .claude/reports/<short-name>/report.html, screenshotted, user-approved
 verification_gate: per section, user confirms scan-deliverability before next section
 ---
@@ -38,7 +38,7 @@ For section i in spec.md Outline:
    - "Does the anchor read at scan speed?"
    - "Does the section title earn the claim?"
    - "Is the density OK (not gray-wall, not empty)?"
-6. If OK → append `Stage 5 / P<i>: built + verified <date>` to spec.md Build log → next section.
+6. If OK → append `Stage 4 / P<i>: built + verified <date>` to spec.md Build log → next section.
 7. If not OK → fix ONLY this section (Edit on the marker, not Write the whole file), re-verify.
 
 ## Output (per loop iteration)

@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — palette construction per register
-read_when: registering a new foundation kit (foundations/REGISTER.md Step 2 normalization); during report builds only for judgment not in tokens — semantic-color assignment for comparisons (Stages 4-5)
+read_when: registering a new foundation kit (foundations/REGISTER.md Step 2 normalization); during report builds only for judgment not in tokens — semantic-color assignment for comparisons (Stages 3-4)
 ---
 
 ## Three-layer foundation

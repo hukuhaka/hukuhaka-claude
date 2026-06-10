@@ -6,6 +6,35 @@ All notable changes to hukuhaka-claude are documented here. The project follows
 Plugin versions (`marketplace/<plugin>/.claude-plugin/plugin.json`) are
 independent — see those files for their own history.
 
+## [1.0.7] — 2026-06-10
+
+### Added
+
+- **`hukuhaka-report-builder` promoted from a standalone skill to a marketplace
+  plugin** (`hukuhaka-report-builder@0.2.0`). The build now opens with an
+  **intake stage**: instead of assuming pre-classified material, it briefly
+  investigates the target and proposes three framings (subject / audience /
+  publication) for confirmation, then renders a register-identity preview before
+  any section is built. A bundled `PreToolUse` hook mechanically blocks building
+  a report against an incomplete spec — the design axes must be locked first.
+
+### Changed
+
+- **`hukuhaka-project-mapper` map-sync rebuilt around a deterministic skeleton.**
+  Structure extraction (symbols, imports, file counts, the import graph) now
+  runs as a zero-token script; the LLM agents only write prose over that fixed
+  skeleton from a script-assembled context bundle, with no exploration tools of
+  their own. On code-heavy projects this cut sync cost ~40% and wall-clock ~50%
+  while keeping the same `.claude/` output contract.
+
+### Fixed
+
+- **`hukuhaka-project-mapper` map-sync no longer silently produces empty output
+  on large projects.** When a project's context bundle was big enough to need
+  more than one read, the analyze step could finish without generating the
+  architecture docs. The fix lets that step run to completion regardless of
+  bundle size.
+
 ## [1.0.6] — 2026-06-08
 
 ### Fixed

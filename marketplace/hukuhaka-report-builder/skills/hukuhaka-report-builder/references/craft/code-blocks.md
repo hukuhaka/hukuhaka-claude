@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — code snippets in technical audit and engineering reports
-read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 4-5)
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment rules fragments cannot carry — density / per-register choice (Stages 3-4)
 ---
 
 ## When code belongs

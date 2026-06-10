@@ -12,10 +12,10 @@ Claude Code plugins for **spec-first development** — keep a codebase's documen
 
 | Component | Version | What it gives you |
 |-----------|---------|-------------------|
-| **hukuhaka-project-mapper** | `1.1.0` | Commands + agents that generate and maintain `.claude/{map,design,backlog,changelog,spec}.md` from your codebase. Init, scan, sync, summarize, compact, clean. |
+| **hukuhaka-project-mapper** | `1.1.1` | Commands + agents that generate and maintain `.claude/{map,design,backlog,changelog,spec}.md` from your codebase. Init, scan, sync, summarize, compact, clean. |
 | **hukuhaka-ltm** | `0.5.0` | Long-term memory plugin with three-tier storage (L1 pinned, L2 indexed cards, L3 raw log). Autonomous L3 append via `<ltm-record>` markers parsed by the Stop hook; batch L2 distillation via `/hukuhaka-ltm:ltm-distill`. |
 | **hukuhaka-team** | — | Team lead orchestrator skill. Coordinates 3-5 teammates with distinct file ownership; lead reviews and decides without implementing. |
-| **hukuhaka-report-builder** | — | Staged-workflow generator for long-form editorial HTML reports — masthead, numbered article, hand-built inline-SVG figures, sources. A preflight locks the design axes before drafting so the visual identity stays fixed. |
+| **hukuhaka-report-builder** | `0.2.0` | Visual-first report builder — a staged workflow producing intentional standalone HTML (hero numbers, KPI tiles, charts, annotated diagrams), not blog-essays in a report wrapper. An intake stage frames subject/audience/publication, then a spec-lock PreToolUse hook mechanically enforces the locked design axes before any page is built. |
 | **CLAUDE.md template** | — | Spec-first router for `~/.claude/CLAUDE.md`: *Approach* / *Rules* / *Reference* structure with explicit decision-proposal format. |
 
 Optional third-party extras (rtk, ccstatusline, agent-teams flag) ride along with the installer.

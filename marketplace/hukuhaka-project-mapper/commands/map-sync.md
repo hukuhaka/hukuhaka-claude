@@ -168,7 +168,16 @@ Sync complete
 
   Step 5 (record)
     Synced commit: {short sha | n/a (non-git)}
+
+  Usage
+    {wall} | tokens {total} (out {output}, cache {cache})
 ```
+
+The `Usage` line is supplied by the sync-cost hook, which fires after the
+Step 5 `record-sync.sh` call and injects the figures into context via
+`additionalContext`. Copy them verbatim from that injected
+`map-sync usage for this run ...` note into the block above. If the note is
+absent (non-git project, or the hook did not run), omit the `Usage` block.
 
 ## On Failure
 

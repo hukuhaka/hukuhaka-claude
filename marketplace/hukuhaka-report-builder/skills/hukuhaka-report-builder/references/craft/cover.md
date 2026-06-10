@@ -1,6 +1,6 @@
 ---
 applicability: report-builder skill — cover page sizing, identity, and tagline discipline
-read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment the fragment cannot carry — the 1/3 scale rule + tagline craft (Stage 4)
+read_when: authoring or extending a component fragment (references/components/); during report builds only for judgment the fragment cannot carry — the 1/3 scale rule + tagline craft (Stage 3)
 ---
 
 ## Cover Is Identity, Not Summary

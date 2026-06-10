@@ -4,7 +4,6 @@ description: "Architecture synthesizer. Produces data_flow, patterns, decisions 
 tools: Read
 disallowedTools: Grep, Glob, Bash, Edit, Write, Agent
 model: sonnet
-maxTurns: 2
 ---
 
 # Synth

@@ -4,7 +4,6 @@ description: "Description filler. Writes entry_point/component/directory descrip
 tools: Read
 disallowedTools: Grep, Glob, Bash, Edit, Write, Agent
 model: sonnet
-maxTurns: 2
 ---
 
 # Describe

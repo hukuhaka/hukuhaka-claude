@@ -1,0 +1,16 @@
+{
+  "name": "hukuhaka-report-builder",
+  "version": "0.2.0",
+  "description": "Visual-first report builder — staged workflow producing intentional standalone HTML (hero numbers, KPI tiles, charts, annotated diagrams) with a PreToolUse spec-lock enforcement hook.",
+  "author": {
+    "name": "hukuhaka"
+  },
+  "keywords": [
+    "report",
+    "visual-first",
+    "html",
+    "dashboard",
+    "audit",
+    "hukuhaka-report-builder"
+  ]
+}

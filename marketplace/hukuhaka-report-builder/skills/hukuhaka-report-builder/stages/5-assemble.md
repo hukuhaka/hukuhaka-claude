@@ -1,7 +1,7 @@
 ---
-stage: 6
+stage: 5
 purpose: final assembly + 6-item Self-Test, then ship
-prereq: All Stage 5 sections appended to report.html and individually verified
+prereq: All Stage 4 sections appended to report.html and individually verified
 deliverable: .claude/reports/<short-name>/ directory complete (report.html + spec.md finalized + screenshots/)
 verification_gate: 6-item Self-Test from SKILL.md, then user final read-through
 ---
@@ -19,9 +19,9 @@ Assembly is mechanical — sections are already verified individually. Last gate
 
 ```
 .claude/reports/<short-name>/
-  ├── spec.md           ← Preflight + Subject+Hero + Outline + Build log + Screenshots index
+  ├── spec.md           ← Intake + Preflight + Subject+Hero + Outline + Build log + Screenshots index
   ├── report.html       ← final assembled artifact
-  ├── cover.html        ← Stage 4 standalone (kept for reference)
+  ├── cover.html        ← Stage-1 seed, completed at Stage 3 (kept for reference)
   └── screenshots/
       ├── fullpage.png
       ├── p1.png
@@ -30,7 +30,7 @@ Assembly is mechanical — sections are already verified individually. Last gate
 
 ## Process
 
-1. Re-read spec.md end-to-end. Verify every Build log line exists (Stage 4 + Stage 5 / P2..PN).
+1. Re-read spec.md end-to-end. Verify every Build log line exists (Stage 3 + Stage 4 / P2..PN).
 2. Combine cover + all sections into `.claude/reports/<short-name>/report.html` if not already a single file.
 3. Ensure shared `<head>` / `<style>` is at the top (font load, palette tokens, page CSS, print rules matching Preflight `print mode` axis).
 4. Verify font-family chain (per the kit contract — lint enforced; `craft/typography.md` is the canon source): NO `-apple-system / sans-serif`-only fallback.
@@ -42,7 +42,7 @@ Assembly is mechanical — sections are already verified individually. Last gate
    - Comparison eye-grab (if applicable)
    - Subject check (Self-Test #6)
 6. Generate fullpage screenshot + per-page screenshots via Playwright into `.claude/reports/<short-name>/screenshots/`.
-7. Append to spec.md Build log: `Stage 6: assembled, Self-Test pass <date>` and the Screenshots index block.
+7. Append to spec.md Build log: `Stage 5: assembled, Self-Test pass <date>` and the Screenshots index block.
 8. Show user the screenshots. Final approval.
 
 ## Output
@@ -62,7 +62,7 @@ User final OK. If they flag a Self-Test failure that wasn't caught earlier:
 
 - That is data — note which stage's verification should have caught it
 - Loop on the FAILING STAGE, not a full re-render
-- E.g., if Self-Test #6 (Subject check) fails → back to Stage 2 (subject lock) + Stage 3 (outline regenerate)
+- E.g., if Self-Test #6 (Subject check) fails → back to Stage 2 (the Subject+Hero+Outline argument lock — revise the subject and regenerate the outline together)
 - If the failure traces to a Preflight axis (wrong page format, wrong register) → back to Stage 1 and revise the axis in spec.md, then re-walk
 
 ## Failure modes
